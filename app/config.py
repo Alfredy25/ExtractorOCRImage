@@ -8,7 +8,7 @@ load_dotenv()
 
 # Modelo OpenAI (fijo)
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Timeout para llamadas API
 TIMEOUT_SECONDS = int(os.getenv("TIMEOUT_SECONDS", "60"))

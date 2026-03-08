@@ -37,9 +37,9 @@ Instrucciones de extracción:
 1) Analiza ÚNICAMENTE la etiqueta blanca del DESTINATARIO en la imagen adjunta.
 2) Devuelve EXACTAMENTE este JSON (sin código, sin ``` y sin la palabra json):
 
-{
+{{
   "destinatario_raw": "",
-  "campos": {
+  "campos": {{
     "nombre_o_titulo": "",
     "cargo_dependencia": "",
     "direccion": "",
@@ -50,9 +50,9 @@ Instrucciones de extracción:
     "extras": "",
     "contacto": "",
     "indicaciones": ""
-  },
+  }},
   "observaciones_ia": ""
-}
+}}
 
 Definiciones y criterios:
 - "destinatario_raw": TODO el texto del destinatario tal cual aparece en la etiqueta, respetando saltos de línea. Incluye: nombre/título, cargo/dependencia, calle y número, colonia, municipio o alcaldía, estado, código postal, teléfonos, horarios, referencias, "con copia al", "asunto", etc. (si están visibles en la etiqueta del destinatario).
