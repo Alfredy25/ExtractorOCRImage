@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.idea/
+# Virtualenv
+.venv/
+venv/
+
+# PyInstaller
+proyecto_extraccion_OCR/build/
+proyecto_extraccion_OCR/dist/
+dist/
+build/
+*.spec
+
+# Otros
+*.log
+*.env
+.env

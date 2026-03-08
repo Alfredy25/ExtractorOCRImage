@@ -1,0 +1,25 @@
+# Extractor OCR - Aplicación de escritorio
+# Python 3.11+
+
+# UI
+PySide6>=6.6.0
+
+# Imagen
+opencv-python>=4.9.0
+numpy>=1.26.0
+
+# Base de datos y validación
+pydantic>=2.5.0
+
+# API OpenAI
+openai>=1.12.0
+
+# Configuración
+python-dotenv>=1.0.0
+
+# Exportación
+pandas>=2.1.0
+openpyxl>=3.1.0
+
+# Empaquetado (opcional)
+pyinstaller>=6.0.0
