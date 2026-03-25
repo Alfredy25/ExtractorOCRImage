@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import QThread, Signal, Qt
-from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow,
     QSplitter,
@@ -24,6 +24,7 @@ from app.ui.image_viewer import ImageViewer
 from app.ui.panels.left_panel import LeftPanel
 from app.ui.panels.right_panel import RightPanel, FIELD_KEYS
 from app.ui.panels.export_dialog import ExportDialog
+from app.ui.themes import apply_theme, save_theme, get_saved_theme, THEME_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +83,8 @@ class MainWindow(QMainWindow):
         self._current_display_np = None  # Imagen mostrada (rotada)
         self._current_crop_np = None  # Recorte aplicado (para enviar a IA)
         self._ai_worker: AIWorker | None = None
+        # Caché de estado por imagen (hasta que se guarde): foto, recorte, datos IA
+        self._image_states: dict[str, dict] = {}
 
         self._setup_ui()
         self._setup_menus()
@@ -130,6 +133,18 @@ class MainWindow(QMainWindow):
 
         # Ver
         view_menu = menubar.addMenu("Ver")
+        theme_grp = QActionGroup(self)
+        theme_grp.setExclusive(True)
+        self._theme_actions = {}
+        for theme_id, theme_label in THEME_NAMES.items():
+            act = QAction(theme_label, self)
+            act.setCheckable(True)
+            act.setChecked(get_saved_theme() == theme_id)
+            act.triggered.connect(lambda checked, t=theme_id: self._on_theme_changed(t))
+            theme_grp.addAction(act)
+            self._theme_actions[theme_id] = act
+            view_menu.addAction(act)
+        view_menu.addSeparator()
         act_fit = QAction("Ajustar a ventana", self)
         act_fit.triggered.connect(self._viewer.reset_view)
         view_menu.addAction(act_fit)
@@ -196,17 +211,65 @@ class MainWindow(QMainWindow):
         if paths and not self._current_image_path:
             self._on_image_activated(paths[0])
 
+    def _save_current_state(self):
+        """Guarda el estado de la imagen actual en el caché (antes de cambiar)."""
+        if self._current_image_path is None:
+            return
+        key = str(self._current_image_path)
+        crop_rect = self._viewer.get_current_crop()
+        form_data = self._right.get_form_data()
+        # Solo guardar si hay algo que recuperar (datos IA, recorte o rotación)
+        has_data = (
+            any(form_data.get("campos", {}).values())
+            or form_data.get("destinatario_raw")
+            or form_data.get("observaciones_ia")
+            or crop_rect is not None
+            or self._viewer.rotation_deg != 0
+        )
+        if not has_data:
+            return
+        self._image_states[key] = {
+            "rotation_deg": self._viewer.rotation_deg,
+            "crop_rect": crop_rect,
+            "form_data": form_data,
+            "aspect_mode": self._left.square_mode(),
+        }
+
     def _on_image_activated(self, path: Path):
+        # Guardar estado de la imagen actual antes de cambiar
+        self._save_current_state()
+
         self._current_image_path = path
         self._left.set_current_image(path)
         img = load_image(path)
-        if img is not None:
-            self._current_image_np = img
-            self._current_display_np = img.copy()
-            self._current_crop_np = None
+        if img is None:
+            self._update_send_enabled()
+            return
+
+        self._current_image_np = img
+        self._current_display_np = img.copy()
+        self._current_crop_np = None
+
+        state = self._image_states.get(str(path))
+        if state:
+            # Restaurar: imagen con rotación, recorte y datos de IA
+            rot = state.get("rotation_deg", 0)
+            self._viewer.set_image(img, rot)
+            self._left.set_square_mode(state.get("aspect_mode", False))
+            self._viewer.set_square_mode(state.get("aspect_mode", False))
+            if state.get("crop_rect"):
+                self._viewer.set_crop_rect(state["crop_rect"])
+                self._current_crop_np = self._viewer.get_cropped_image()
+            self._right.set_form_data(state.get("form_data", {}))
+        else:
             self._viewer.set_image(img)
             self._right.clear_form()
+
         self._update_send_enabled()
+
+    def _on_theme_changed(self, theme_id: str):
+        apply_theme(theme_id)
+        save_theme(theme_id)
 
     def _on_sede_changed(self, sede: str):
         self._update_send_enabled()
@@ -287,12 +350,29 @@ class MainWindow(QMainWindow):
             "aspect_mode": "SQUARE" if self._left.square_mode() else "FREE",
         }
         record = _to_db_record(form_data, meta)
+        saved_path = self._current_image_path
         try:
             insert_extraction(record)
             QMessageBox.information(self, "Guardado", "Registro guardado correctamente.")
         except Exception as e:
             logger.exception("Error al guardar")
             QMessageBox.critical(self, "Error", f"No se pudo guardar: {e}")
+            return
+
+        # Eliminar de caché y lista; deseleccionar SEDE; pasar a la siguiente imagen
+        self._image_states.pop(str(saved_path), None)
+        self._left.clear_sede()
+        next_path = self._left.remove_image(saved_path)
+        # Limpiar estado actual para que _save_current_state no guarde al cambiar
+        self._current_image_path = None
+        self._current_image_np = None
+        self._current_display_np = None
+        self._current_crop_np = None
+        self._viewer.set_image(None)
+        self._right.clear_form()
+        if next_path is not None:
+            self._on_image_activated(next_path)
+        self._update_send_enabled()
 
     def _on_export(self):
         dlg = ExportDialog(self)

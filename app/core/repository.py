@@ -130,3 +130,15 @@ def list_by_date_range(desde: date, hasta: date) -> list[dict]:
         return [dict(row) for row in rows]
     finally:
         conn.close()
+
+def get_registros():
+    DB_PATH = r"C:\Users\\Alfredo\\OneDrive - FGC\\Escritorio\\ExtractorOcrImagenes\\app\\data\\db.sqlite3"
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        cur = conn.execute("SELECT * FROM extractions;")
+        rows = cur.fetchall()
+        return rows
+    finally:
+        conn.close()
+
+# print(get_registros())

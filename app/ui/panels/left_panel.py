@@ -151,8 +151,38 @@ class LeftPanel(QWidget):
                 self._list.setCurrentRow(i)
                 return
 
+    def remove_image(self, path: Path) -> Path | None:
+        """
+        Elimina la imagen de la lista. Retorna la siguiente imagen a mostrar
+        (la que estaba después, o la primera si era la última, o None si queda vacía).
+        """
+        try:
+            idx = self._images.index(path)
+        except ValueError:
+            return None
+        self._images.pop(idx)
+        self._populate_list()
+        if not self._images:
+            return None
+        next_idx = min(idx, len(self._images) - 1)
+        return self._images[next_idx]
+
+    def get_images(self) -> list[Path]:
+        return list(self._images)
+
     def sede(self) -> str | None:
         return self._sede
 
     def square_mode(self) -> bool:
         return self._square_check.isChecked()
+
+    def set_square_mode(self, checked: bool):
+        self._square_check.setChecked(checked)
+
+    def clear_sede(self):
+        """Deselecciona la SEDE para dejar limpio tras guardar."""
+        self._sede_group.setExclusive(False)
+        for rb in self._sede_group.buttons():
+            rb.setChecked(False)
+        self._sede_group.setExclusive(True)
+        self._sede = None

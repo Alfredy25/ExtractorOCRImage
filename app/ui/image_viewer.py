@@ -51,10 +51,10 @@ class ImageViewer(QGraphicsView):
         self.viewport().setMouseTracking(True)
         self.viewport().installEventFilter(self)
 
-    def set_image(self, image_np: np.ndarray | None):
-        """Establece la imagen a mostrar (BGR numpy)."""
+    def set_image(self, image_np: np.ndarray | None, rotation_deg: int = 0):
+        """Establece la imagen a mostrar (BGR numpy). Opcionalmente con rotación previa."""
         self._image_np = image_np.copy() if image_np is not None else None
-        self._rotation_deg = 0
+        self._rotation_deg = rotation_deg
         self._refresh_display()
         self._clear_selection()
 
@@ -91,6 +91,14 @@ class ImageViewer(QGraphicsView):
         self._clear_selection()
         self.crop_changed.emit()
 
+    def set_rotation_deg(self, deg: int):
+        """Establece la rotación directamente (0, 90, 180, 270)."""
+        if self._image_np is None:
+            return
+        self._rotation_deg = deg % 360
+        self._refresh_display()
+        self.crop_changed.emit()
+
     def set_square_mode(self, square: bool):
         """Activa/desactiva modo recorte cuadrado 1:1."""
         self._square_mode = square
@@ -109,6 +117,31 @@ class ImageViewer(QGraphicsView):
     def clear_selection(self):
         """Limpia la selección (público, para Reintentar recorte)."""
         self._clear_selection()
+
+    def set_crop_rect(self, rect: tuple[int, int, int, int] | None):
+        """
+        Restaura la selección de recorte desde coordenadas de escena (x, y, w, h).
+        Útil para recuperar el estado al cambiar entre imágenes.
+        """
+        if rect is None or self._display_np is None:
+            self._clear_selection()
+            return
+        x, y, w, h = rect
+        if w < 5 or h < 5:
+            self._clear_selection()
+            return
+        top_left = self.mapFromScene(QPointF(x, y))
+        bottom_right = self.mapFromScene(QPointF(x + w, y + h))
+        if self._rubber_band is None:
+            self._rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self.viewport())
+        rx = min(top_left.x(), bottom_right.x())
+        ry = min(top_left.y(), bottom_right.y())
+        rw = abs(bottom_right.x() - top_left.x())
+        rh = abs(bottom_right.y() - top_left.y())
+        self._last_valid_rect = QRect(int(rx), int(ry), int(rw), int(rh))
+        self._rubber_band.setGeometry(self._last_valid_rect)
+        self._rubber_band.show()
+        self.crop_changed.emit()
 
     def get_current_crop(self) -> tuple[int, int, int, int] | None:
         """
@@ -172,7 +205,6 @@ class ImageViewer(QGraphicsView):
             self._origin = self.mapToScene(event.position().toPoint())
             if self._rubber_band is None:
                 self._rubber_band = QRubberBand(QRubberBand.Shape.Rectangle, self.viewport())
-                self._rubber_band.setStyleSheet("background-color: rgba(0,120,215,60); border: 2px solid #0078d7;")
             # Iniciar nueva selección; si fue solo un clic, restauraremos la anterior en release
             self._rubber_band.setGeometry(0, 0, 0, 0)
             self._rubber_band.show()

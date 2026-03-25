@@ -88,11 +88,15 @@ class RightPanel(QWidget):
 
     def set_result(self, data: dict):
         """Rellena el formulario con el resultado de la IA."""
-        self._destinatario_raw.setPlainText(data.get("destinatario_raw", ""))
+        self.set_form_data(data)
+
+    def set_form_data(self, data: dict):
+        """Rellena el formulario con datos (IA o restaurados)."""
+        self._destinatario_raw.setPlainText(data.get("destinatario_raw", "") or "")
         campos = data.get("campos") or {}
         for key, le in self._fields.items():
-            le.setText(campos.get(key, ""))
-        self._observaciones.setPlainText(data.get("observaciones_ia", ""))
+            le.setText(campos.get(key, "") or "")
+        self._observaciones.setPlainText(data.get("observaciones_ia", "") or "")
 
     def get_form_data(self) -> dict:
         """Devuelve los datos del formulario para guardar."""

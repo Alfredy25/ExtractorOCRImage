@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 
 from app.config import APP_ROOT
 from app.ui.main_window import MainWindow
+from app.ui.themes import apply_theme, get_saved_theme
 
 
 def setup_logging():
@@ -45,6 +46,8 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("Extractor OCR")
     app.setApplicationDisplayName("Extractor OCR - Destinatarios")
+
+    apply_theme(get_saved_theme())
 
     window = MainWindow()
     window.show()
