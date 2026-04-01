@@ -226,7 +226,7 @@ THEME_DARK = f"""
 
 THEME_WARM = f"""
     QMainWindow, QWidget {{
-        background-color: {PALETTE["pale_blue"]};
+        background-color: {PALETTE["light_blue"]};
     }}
     QDockWidget {{
         background-color: {PALETTE["light_blue"]};
@@ -348,7 +348,7 @@ THEME_WARM = f"""
         border: none;
     }}
     QScrollBar:vertical {{
-        background-color: {PALETTE["pale_blue"]};
+        background-color: {PALETTE["light_blue"]};
         width: 12px;
         border-radius: 6px;
         margin: 2px;
@@ -365,7 +365,7 @@ THEME_WARM = f"""
         height: 0;
     }}
     QProgressBar {{
-        background-color: {PALETTE["pale_blue"]};
+        background-color: {PALETTE["light_blue"]};
         border-radius: 6px;
         text-align: center;
         color: {PALETTE["navy"]};
