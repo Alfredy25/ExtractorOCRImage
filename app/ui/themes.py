@@ -1,43 +1,80 @@
-"""Temas visuales usando la paleta de colores."""
+"""Temas visuales: modo cálido y modo oscuro (paletas design tokens)."""
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import QSettings
 
-# Paleta: #1F3A5F, #4d648d, #acc2ef, #3D5A80, #cee8ff, #0F1C2E, #1f2b3e, #374357, #FFFFFF, #e0e0e0
-PALETTE = {
-    "dark_blue": "#1F3A5F",
-    "medium_blue": "#4d648d",
-    "light_blue": "#acc2ef",
-    "blue_gray": "#3D5A80",
-    "pale_blue": "#cee8ff",
-    "navy": "#0F1C2E",
-    "dark_slate": "#1f2b3e",
-    "slate": "#374357",
-    "white": "#FFFFFF",
-    "light_gray": "#e0e0e0",
+# --- Modo cálido (referencia: fondo crema, tarjetas suaves, acentos azul claro) ---
+PALETTE_WARM = {
+    "primary_100": "#d4eaf7",
+    "primary_200": "#b6ccd8",
+    "primary_300": "#3b3c3d",
+    "accent_100": "#71c4ef",
+    "accent_200": "#00668c",
+    "text_100": "#1d1c1c",
+    "text_200": "#313d44",
+    "bg_100": "#fffefb",
+    # Fondo principal del área de trabajo (sólido, como la referencia)
+    "bg_main": "#f5f4f1",
+    "bg_200": "#f5f4f1",
+    "bg_300": "#cccbc8",
+    # Degradado horizontal tipo tarjeta: izq. azul muy claro → der. #b6ccd8 (línea x:0→1; equiv. RTL x:1→0)
+    "grad_surface_0": "#f0f8fc",
+    "grad_surface_1": "#d4eaf7",
+    "grad_surface_2": "#b6ccd8",
+    # Bordes suaves (evita aspecto “negro” en modo claro)
+    "border_soft": "#e6e4e0",
+    "border_mist": "#d8ecf5",
+    # Degradados botón (tonos claros → acento; sin bordes oscuros)
+    "grad_btn_0": "#f5fbfe",
+    "grad_btn_1": "#d4eaf7",
+    "grad_btn_2": "#9fd4f0",
+    "grad_btn_hover_0": "#d4eaf7",
+    "grad_btn_hover_1": "#8ecfef",
+    "grad_btn_pressed": "#c5dce8",
 }
 
-THEME_DARK = f"""
+# --- Modo oscuro (referencia: dashboard alto contraste, azul #0085ff) ---
+PALETTE_DARK = {
+    "primary_100": "#0085ff",
+    "primary_200": "#69b4ff",
+    "primary_300": "#e0ffff",
+    "accent_100": "#006fff",
+    "accent_200": "#e1ffff",
+    "text_100": "#FFFFFF",
+    "text_200": "#9e9e9e",
+    "bg_100": "#1E1E1E",
+    "bg_200": "#2d2d2d",
+    "bg_300": "#454545",
+}
+
+R_MAIN = "12px"
+R_CTRL = "10px"
+R_INPUT = "8px"
+
+
+def _theme_dark() -> str:
+    p = PALETTE_DARK
+    return f"""
     QMainWindow, QWidget {{
-        background-color: {PALETTE["navy"]};
+        background-color: {p["bg_100"]};
     }}
     QDockWidget {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["white"]};
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
         titlebar-close-icon: none;
         titlebar-normal-icon: none;
         font-weight: 500;
     }}
     QDockWidget::title {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["pale_blue"]};
+        background-color: {p["bg_200"]};
+        color: {p["primary_200"]};
         padding: 8px 12px;
         font-size: 13px;
     }}
     QGroupBox {{
-        background-color: {PALETTE["slate"]};
-        color: {PALETTE["white"]};
-        border: 1px solid {PALETTE["blue_gray"]};
-        border-radius: 8px;
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
+        border-radius: {R_MAIN};
         margin-top: 12px;
         padding: 12px 12px 8px 12px;
         font-weight: 500;
@@ -47,203 +84,213 @@ THEME_DARK = f"""
         subcontrol-position: top left;
         left: 12px;
         padding: 0 6px;
-        color: {PALETTE["pale_blue"]};
+        color: {p["primary_200"]};
     }}
     QPushButton {{
-        background-color: {PALETTE["blue_gray"]};
-        color: {PALETTE["white"]};
-        border: 1px solid {PALETTE["medium_blue"]};
-        border-radius: 8px;
+        background-color: {p["primary_100"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["accent_100"]};
+        border-radius: {R_CTRL};
         padding: 10px 16px;
-        font-weight: 500;
+        font-weight: 600;
     }}
     QPushButton:hover {{
-        background-color: {PALETTE["medium_blue"]};
-        border-color: {PALETTE["light_blue"]};
+        background-color: {p["primary_200"]};
+        border-color: {p["primary_100"]};
     }}
     QPushButton:pressed {{
-        background-color: {PALETTE["dark_blue"]};
+        background-color: {p["accent_100"]};
     }}
     QPushButton:disabled {{
-        background-color: {PALETTE["slate"]};
-        color: {PALETTE["light_gray"]};
-        border-color: {PALETTE["blue_gray"]};
+        background-color: {p["bg_300"]};
+        color: {p["text_200"]};
+        border-color: {p["bg_300"]};
     }}
     QLineEdit, QTextEdit, QPlainTextEdit {{
-        background-color: {PALETTE["slate"]};
-        color: {PALETTE["pale_blue"]};
-        border: 1px solid {PALETTE["blue_gray"]};
-        border-radius: 6px;
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
+        border-radius: {R_INPUT};
         padding: 8px 12px;
-        selection-background-color: {PALETTE["medium_blue"]};
+        selection-background-color: {p["accent_100"]};
     }}
     QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {{
-        border-color: {PALETTE["light_blue"]};
+        border-color: {p["primary_100"]};
     }}
     QLineEdit::placeholder, QTextEdit::placeholder, QPlainTextEdit::placeholder {{
-        color: {PALETTE["medium_blue"]};
+        color: {p["text_200"]};
     }}
     QLabel {{
-        color: {PALETTE["light_gray"]};
+        color: {p["text_200"]};
     }}
     QListWidget {{
-        background-color: {PALETTE["slate"]};
-        color: {PALETTE["white"]};
-        border: 1px solid {PALETTE["blue_gray"]};
-        border-radius: 8px;
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
+        border-radius: {R_MAIN};
         padding: 6px;
         outline: none;
     }}
     QListWidget::item {{
         padding: 8px;
-        border-radius: 6px;
+        border-radius: 8px;
     }}
     QListWidget::item:selected {{
-        background-color: {PALETTE["blue_gray"]};
-        color: {PALETTE["white"]};
+        background-color: {p["primary_100"]};
+        color: {p["text_100"]};
     }}
     QListWidget::item:hover {{
-        background-color: {PALETTE["medium_blue"]};
+        background-color: {p["bg_300"]};
     }}
     QRadioButton {{
-        color: {PALETTE["light_gray"]};
+        color: {p["text_200"]};
         spacing: 8px;
     }}
     QRadioButton::indicator {{
         width: 18px;
         height: 18px;
         border-radius: 9px;
-        border: 2px solid {PALETTE["medium_blue"]};
-        background-color: {PALETTE["slate"]};
+        border: 2px solid {p["primary_200"]};
+        background-color: {p["bg_200"]};
     }}
     QRadioButton::indicator:checked {{
-        background-color: {PALETTE["medium_blue"]};
-        border-color: {PALETTE["light_blue"]};
+        background-color: {p["primary_100"]};
+        border-color: {p["primary_300"]};
     }}
     QCheckBox {{
-        color: {PALETTE["light_gray"]};
+        color: {p["text_200"]};
         spacing: 8px;
     }}
     QCheckBox::indicator {{
         width: 18px;
         height: 18px;
         border-radius: 4px;
-        border: 2px solid {PALETTE["medium_blue"]};
-        background-color: {PALETTE["slate"]};
+        border: 2px solid {p["primary_200"]};
+        background-color: {p["bg_200"]};
     }}
     QCheckBox::indicator:checked {{
-        background-color: {PALETTE["medium_blue"]};
-        border-color: {PALETTE["light_blue"]};
+        background-color: {p["primary_100"]};
+        border-color: {p["accent_100"]};
     }}
     QScrollArea {{
         background-color: transparent;
         border: none;
     }}
     QScrollBar:vertical {{
-        background-color: {PALETTE["slate"]};
+        background-color: {p["bg_200"]};
         width: 12px;
         border-radius: 6px;
         margin: 2px;
     }}
     QScrollBar::handle:vertical {{
-        background-color: {PALETTE["medium_blue"]};
+        background-color: {p["bg_300"]};
         border-radius: 6px;
         min-height: 30px;
     }}
     QScrollBar::handle:vertical:hover {{
-        background-color: {PALETTE["light_blue"]};
+        background-color: {p["primary_200"]};
     }}
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
         height: 0;
     }}
     QProgressBar {{
-        background-color: {PALETTE["slate"]};
-        border-radius: 6px;
+        background-color: {p["bg_200"]};
+        border-radius: {R_INPUT};
         text-align: center;
-        color: {PALETTE["white"]};
+        color: {p["text_100"]};
     }}
     QProgressBar::chunk {{
-        background-color: {PALETTE["medium_blue"]};
-        border-radius: 6px;
+        background-color: {p["primary_100"]};
+        border-radius: {R_INPUT};
     }}
     QMenuBar {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["white"]};
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
     }}
     QMenuBar::item:selected {{
-        background-color: {PALETTE["blue_gray"]};
-        color: {PALETTE["pale_blue"]};
+        background-color: {p["bg_300"]};
+        color: {p["primary_300"]};
     }}
     QMenu {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["white"]};
-        border: 1px solid {PALETTE["blue_gray"]};
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
     }}
     QMenu::item:selected {{
-        background-color: {PALETTE["blue_gray"]};
+        background-color: {p["bg_300"]};
     }}
     QComboBox {{
-        background-color: {PALETTE["slate"]};
-        color: {PALETTE["white"]};
-        border: 1px solid {PALETTE["blue_gray"]};
-        border-radius: 6px;
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
+        border-radius: {R_INPUT};
         padding: 8px 12px;
     }}
     QComboBox:hover {{
-        border-color: {PALETTE["medium_blue"]};
+        border-color: {p["primary_100"]};
     }}
     QComboBox::drop-down {{
         border: none;
     }}
     QDateEdit {{
-        background-color: {PALETTE["slate"]};
-        color: {PALETTE["white"]};
-        border: 1px solid {PALETTE["blue_gray"]};
-        border-radius: 6px;
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
+        border-radius: {R_INPUT};
         padding: 8px;
     }}
     QCalendarWidget QWidget {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["white"]};
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
     }}
     QGraphicsView {{
-        background-color: {PALETTE["navy"]};
+        background-color: {p["bg_100"]};
     }}
     QRubberBand {{
-        background-color: rgba(77, 100, 141, 0.5);
-        border: 2px solid {PALETTE["light_blue"]};
+        background-color: rgba(0, 133, 255, 0.35);
+        border: 2px solid {p["primary_200"]};
     }}
     QDialog {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["white"]};
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
     }}
     QMessageBox {{
-        background-color: {PALETTE["dark_slate"]};
-        color: {PALETTE["white"]};
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
     }}
 """
 
 
-THEME_WARM = f"""
+def _theme_warm() -> str:
+    w = PALETTE_WARM
+    return f"""
     QMainWindow, QWidget {{
-        background-color: {PALETTE["light_blue"]};
+        background-color: {w["bg_main"]};
     }}
     QDockWidget {{
-        background-color: {PALETTE["light_blue"]};
-        color: {PALETTE["navy"]};
+        background-color: {w["bg_main"]};
+        color: {w["text_100"]};
+        titlebar-close-icon: none;
+        titlebar-normal-icon: none;
+        font-weight: 500;
+        border: none;
     }}
     QDockWidget::title {{
-        background-color: {PALETTE["light_blue"]};
-        color: {PALETTE["dark_blue"]};
+        background-color: transparent;
+        color: {w["text_200"]};
         padding: 8px 12px;
         font-size: 13px;
         font-weight: 600;
     }}
     QGroupBox {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
-        border: 1px solid {PALETTE["light_blue"]};
-        border-radius: 8px;
+        /* Degradado horizontal: derecha #b6ccd8 ← izquierda azul clarito (vector x 1→0 = RTL) */
+        background: qlineargradient(x1:1, y1:0, x2:0, y2:0,
+            stop:0 {w["grad_surface_2"]},
+            stop:0.55 {w["grad_surface_1"]},
+            stop:1 {w["grad_surface_0"]});
+        color: {w["text_100"]};
+        border: none;
+        border-radius: {R_MAIN};
         margin-top: 12px;
         padding: 12px 12px 8px 12px;
         font-weight: 600;
@@ -253,186 +300,199 @@ THEME_WARM = f"""
         subcontrol-position: top left;
         left: 12px;
         padding: 0 6px;
-        color: {PALETTE["dark_blue"]};
+        color: {w["text_200"]};
     }}
     QPushButton {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["dark_blue"]};
-        border: 1px solid {PALETTE["medium_blue"]};
-        border-radius: 8px;
+        color: {w["text_100"]};
+        border: 1px solid {w["border_mist"]};
+        border-radius: {R_CTRL};
         padding: 10px 16px;
-        font-weight: 500;
+        font-weight: 600;
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+            stop:0 {w["grad_btn_0"]},
+            stop:0.5 {w["grad_btn_1"]},
+            stop:1 {w["grad_btn_2"]});
     }}
     QPushButton:hover {{
-        background-color: {PALETTE["light_blue"]};
-        border-color: {PALETTE["blue_gray"]};
-        color: {PALETTE["navy"]};
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+            stop:0 {w["grad_btn_hover_0"]},
+            stop:1 {w["grad_btn_hover_1"]});
+        border: 1px solid {w["accent_100"]};
+        color: {w["text_100"]};
     }}
     QPushButton:pressed {{
-        background-color: {PALETTE["medium_blue"]};
-        color: {PALETTE["white"]};
+        background: {w["grad_btn_pressed"]};
+        border: 1px solid {w["primary_200"]};
+        color: {w["text_100"]};
     }}
     QPushButton:disabled {{
-        background-color: {PALETTE["light_gray"]};
-        color: {PALETTE["slate"]};
-        border-color: {PALETTE["light_blue"]};
+        background: {w["bg_main"]};
+        color: {w["text_200"]};
+        border: 1px solid {w["border_soft"]};
     }}
     QLineEdit, QTextEdit, QPlainTextEdit {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
-        border: 1px solid {PALETTE["light_blue"]};
-        border-radius: 6px;
+        background-color: {w["bg_100"]};
+        color: {w["text_100"]};
+        border: 1px solid {w["border_soft"]};
+        border-radius: {R_INPUT};
         padding: 8px 12px;
-        selection-background-color: {PALETTE["light_blue"]};
+        selection-background-color: {w["primary_100"]};
     }}
     QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {{
-        border-color: {PALETTE["blue_gray"]};
+        border: 1px solid {w["border_mist"]};
     }}
     QLineEdit::placeholder, QTextEdit::placeholder, QPlainTextEdit::placeholder {{
-        color: {PALETTE["medium_blue"]};
+        color: {w["text_200"]};
     }}
     QLabel {{
-        color: {PALETTE["navy"]};
+        color: {w["text_100"]};
     }}
     QListWidget {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
-        border: 1px solid {PALETTE["light_blue"]};
-        border-radius: 8px;
+        background-color: {w["bg_main"]};
+        color: {w["text_100"]};
+        border: 1px solid {w["border_soft"]};
+        border-radius: {R_MAIN};
         padding: 6px;
         outline: none;
     }}
     QListWidget::item {{
         padding: 8px;
-        border-radius: 6px;
+        border-radius: 8px;
     }}
     QListWidget::item:selected {{
-        background-color: {PALETTE["light_blue"]};
-        color: {PALETTE["navy"]};
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 {w["primary_100"]},
+            stop:1 {w["accent_100"]});
+        color: {w["text_100"]};
     }}
     QListWidget::item:hover {{
-        background-color: {PALETTE["pale_blue"]};
+        background-color: rgba(212, 234, 247, 0.65);
     }}
     QRadioButton {{
-        color: {PALETTE["navy"]};
+        color: {w["text_100"]};
         spacing: 8px;
     }}
     QRadioButton::indicator {{
         width: 18px;
         height: 18px;
         border-radius: 9px;
-        border: 2px solid {PALETTE["medium_blue"]};
-        background-color: {PALETTE["white"]};
+        border: 2px solid {w["border_mist"]};
+        background-color: {w["bg_100"]};
     }}
     QRadioButton::indicator:checked {{
-        background-color: {PALETTE["medium_blue"]};
-        border-color: {PALETTE["dark_blue"]};
+        background-color: {w["accent_100"]};
+        border: 2px solid {w["accent_100"]};
     }}
     QCheckBox {{
-        color: {PALETTE["navy"]};
+        color: {w["text_100"]};
         spacing: 8px;
     }}
     QCheckBox::indicator {{
         width: 18px;
         height: 18px;
         border-radius: 4px;
-        border: 2px solid {PALETTE["medium_blue"]};
-        background-color: {PALETTE["white"]};
+        border: 2px solid {w["border_mist"]};
+        background-color: {w["bg_100"]};
     }}
     QCheckBox::indicator:checked {{
-        background-color: {PALETTE["medium_blue"]};
-        border-color: {PALETTE["dark_blue"]};
+        background-color: {w["accent_100"]};
+        border: 2px solid {w["accent_100"]};
     }}
     QScrollArea {{
         background-color: transparent;
         border: none;
     }}
     QScrollBar:vertical {{
-        background-color: {PALETTE["light_blue"]};
+        background-color: {w["bg_main"]};
         width: 12px;
         border-radius: 6px;
         margin: 2px;
     }}
     QScrollBar::handle:vertical {{
-        background-color: {PALETTE["medium_blue"]};
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 {w["primary_200"]},
+            stop:1 {w["accent_100"]});
         border-radius: 6px;
         min-height: 30px;
     }}
     QScrollBar::handle:vertical:hover {{
-        background-color: {PALETTE["blue_gray"]};
+        background-color: {w["accent_100"]};
     }}
     QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
         height: 0;
     }}
     QProgressBar {{
-        background-color: {PALETTE["light_blue"]};
-        border-radius: 6px;
+        background-color: {w["bg_main"]};
+        border: 1px solid {w["border_soft"]};
+        border-radius: {R_INPUT};
         text-align: center;
-        color: {PALETTE["navy"]};
+        color: {w["text_100"]};
     }}
     QProgressBar::chunk {{
-        background-color: {PALETTE["medium_blue"]};
-        border-radius: 6px;
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+            stop:0 {w["accent_100"]},
+            stop:1 {w["primary_100"]});
+        border-radius: {R_INPUT};
     }}
     QMenuBar {{
-        background-color: {PALETTE["light_blue"]};
-        color: {PALETTE["navy"]};
+        background-color: {w["bg_main"]};
+        color: {w["text_100"]};
     }}
     QMenuBar::item:selected {{
-        background-color: {PALETTE["pale_blue"]};
-        color: {PALETTE["dark_blue"]};
+        background-color: {w["primary_100"]};
+        color: {w["text_100"]};
     }}
     QMenu {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
-        border: 1px solid {PALETTE["light_blue"]};
+        background-color: {w["bg_100"]};
+        color: {w["text_100"]};
+        border: 1px solid {w["border_soft"]};
     }}
     QMenu::item:selected {{
-        background-color: {PALETTE["pale_blue"]};
+        background-color: {w["primary_100"]};
     }}
     QComboBox {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
-        border: 1px solid {PALETTE["light_blue"]};
-        border-radius: 6px;
+        background-color: {w["bg_100"]};
+        color: {w["text_100"]};
+        border: 1px solid {w["border_soft"]};
+        border-radius: {R_INPUT};
         padding: 8px 12px;
     }}
     QComboBox:hover {{
-        border-color: {PALETTE["medium_blue"]};
+        border: 1px solid {w["border_mist"]};
     }}
     QComboBox::drop-down {{
         border: none;
     }}
     QDateEdit {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
-        border: 1px solid {PALETTE["light_blue"]};
-        border-radius: 6px;
+        background-color: {w["bg_100"]};
+        color: {w["text_100"]};
+        border: 1px solid {w["border_soft"]};
+        border-radius: {R_INPUT};
         padding: 8px;
     }}
     QCalendarWidget QWidget {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
+        background-color: {w["bg_100"]};
+        color: {w["text_100"]};
     }}
     QGraphicsView {{
-        background-color: {PALETTE["light_gray"]};
+        background-color: {w["bg_main"]};
     }}
     QRubberBand {{
-        background-color: rgba(77, 100, 141, 0.4);
-        border: 2px solid {PALETTE["blue_gray"]};
+        background-color: rgba(113, 196, 239, 0.35);
+        border: 2px solid {w["accent_100"]};
     }}
     QDialog {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
+        background-color: {w["bg_main"]};
+        color: {w["text_100"]};
     }}
     QMessageBox {{
-        background-color: {PALETTE["white"]};
-        color: {PALETTE["navy"]};
+        background-color: {w["bg_main"]};
+        color: {w["text_100"]};
     }}
 """
 
 
-THEMES = {"dark": THEME_DARK, "warm": THEME_WARM}
+THEMES = {"dark": _theme_dark(), "warm": _theme_warm()}
 THEME_NAMES = {"dark": "Modo oscuro", "warm": "Modo cálido"}
 
 
@@ -450,7 +510,7 @@ def save_theme(theme: str) -> None:
 
 def apply_theme(theme: str) -> None:
     """Aplica el tema a la aplicación."""
-    qss = THEMES.get(theme, THEME_DARK)
+    qss = THEMES.get(theme, THEMES["dark"])
     app = QApplication.instance()
     if app:
         app.setStyleSheet(qss)
