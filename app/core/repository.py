@@ -1,9 +1,23 @@
 """Repositorio SQLite para extracciones."""
 import sqlite3
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 from app.config import DB_PATH, DATA_DIR
+
+# Migración: renombrar columnas antiguas campos_* en SQLite.
+_LEGACY_CAMPOS_TO_COLUMN = [
+    ("campos_nombre_o_titulo", "nombre_o_titulo"),
+    ("campos_cargo_dependencia", "cargo_dependencia"),
+    ("campos_direccion", "direccion"),
+    ("campos_colonia", "colonia"),
+    ("campos_municipio_o_alcaldia", "municipio_o_alcaldia"),
+    ("campos_estado", "estado"),
+    ("campos_codigo_postal", "codigo_postal"),
+    ("campos_extras", "extras"),
+    ("campos_contacto", "contacto"),
+    ("campos_indicaciones", "indicaciones"),
+]
 
 
 def _ensure_data_dir():
@@ -35,16 +49,16 @@ def create_tables(conn: sqlite3.Connection):
             sede TEXT NOT NULL CHECK (sede IN ('AJUSCO', 'COYOACÁN')),
             nombre_imagen TEXT NOT NULL,
             destinatario_raw TEXT NOT NULL,
-            campos_nombre_o_titulo TEXT,
-            campos_cargo_dependencia TEXT,
-            campos_direccion TEXT,
-            campos_colonia TEXT,
-            campos_municipio_o_alcaldia TEXT,
-            campos_estado TEXT,
-            campos_codigo_postal TEXT,
-            campos_extras TEXT,
-            campos_contacto TEXT,
-            campos_indicaciones TEXT,
+            nombre_o_titulo TEXT,
+            cargo_dependencia TEXT,
+            direccion TEXT,
+            colonia TEXT,
+            municipio_o_alcaldia TEXT,
+            estado TEXT,
+            codigo_postal TEXT,
+            extras TEXT,
+            contacto TEXT,
+            indicaciones TEXT,
             observaciones_ia TEXT,
             crop_x INTEGER,
             crop_y INTEGER,
@@ -62,12 +76,32 @@ def create_tables(conn: sqlite3.Connection):
     conn.commit()
 
 
+def migrate_extractions_legacy_columns(conn: sqlite3.Connection) -> None:
+    """
+    Renombra columnas campos_* a nombres sin prefijo en BD existentes (SQLite 3.25+).
+    """
+    cur = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='extractions'"
+    )
+    if not cur.fetchone():
+        return
+    cur = conn.execute("PRAGMA table_info(extractions)")
+    cols = {row[1] for row in cur.fetchall()}
+    for old, new in _LEGACY_CAMPOS_TO_COLUMN:
+        if old in cols and new not in cols:
+            conn.execute(f'ALTER TABLE extractions RENAME COLUMN "{old}" TO "{new}"')
+            cols.remove(old)
+            cols.add(new)
+    conn.commit()
+
+
 def get_connection() -> sqlite3.Connection:
     """Obtiene una conexión a la BD y crea tablas si no existen."""
     _ensure_data_dir()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     create_tables(conn)
+    migrate_extractions_legacy_columns(conn)
     return conn
 
 
@@ -79,26 +113,27 @@ def insert_extraction(record: dict) -> int:
             """
             INSERT INTO extractions (
                 sede, nombre_imagen, destinatario_raw,
-                campos_nombre_o_titulo, campos_cargo_dependencia, campos_direccion,
-                campos_colonia, campos_municipio_o_alcaldia, campos_estado,
-                campos_codigo_postal, campos_extras, campos_contacto, campos_indicaciones,
+                nombre_o_titulo, cargo_dependencia, direccion,
+                colonia, municipio_o_alcaldia, estado,
+                codigo_postal, extras, contacto, indicaciones,
                 observaciones_ia, crop_x, crop_y, crop_w, crop_h, rotation_deg, aspect_mode
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 _field_to_db(record.get("sede"), False) or record.get("sede", "").upper(),
-                _field_to_db(record.get("nombre_imagen"), False) or record.get("nombre_imagen", "").upper(),
+                _field_to_db(record.get("nombre_imagen"), False)
+                or record.get("nombre_imagen", "").upper(),
                 _field_to_db(record.get("destinatario_raw"), True) or "",
-                _field_to_db(record.get("campos_nombre_o_titulo")),
-                _field_to_db(record.get("campos_cargo_dependencia")),
-                _field_to_db(record.get("campos_direccion")),
-                _field_to_db(record.get("campos_colonia")),
-                _field_to_db(record.get("campos_municipio_o_alcaldia")),
-                _field_to_db(record.get("campos_estado")),
-                _field_to_db(record.get("campos_codigo_postal")),
-                _field_to_db(record.get("campos_extras")),
-                _field_to_db(record.get("campos_contacto")),
-                _field_to_db(record.get("campos_indicaciones")),
+                _field_to_db(record.get("nombre_o_titulo")),
+                _field_to_db(record.get("cargo_dependencia")),
+                _field_to_db(record.get("direccion")),
+                _field_to_db(record.get("colonia")),
+                _field_to_db(record.get("municipio_o_alcaldia")),
+                _field_to_db(record.get("estado")),
+                _field_to_db(record.get("codigo_postal")),
+                _field_to_db(record.get("extras")),
+                _field_to_db(record.get("contacto")),
+                _field_to_db(record.get("indicaciones")),
                 _field_to_db(record.get("observaciones_ia")),
                 record.get("crop_x"),
                 record.get("crop_y"),
@@ -130,15 +165,3 @@ def list_by_date_range(desde: date, hasta: date) -> list[dict]:
         return [dict(row) for row in rows]
     finally:
         conn.close()
-
-def get_registros():
-    DB_PATH = r"C:\Users\\Alfredo\\OneDrive - FGC\\Escritorio\\ExtractorOcrImagenes\\app\\data\\db.sqlite3"
-    conn = sqlite3.connect(DB_PATH)
-    try:
-        cur = conn.execute("SELECT * FROM extractions;")
-        rows = cur.fetchall()
-        return rows
-    finally:
-        conn.close()
-
-# print(get_registros())

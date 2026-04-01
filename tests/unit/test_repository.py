@@ -5,15 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from app.core.repository import (
-    create_tables,
-    get_connection,
-    insert_extraction,
-    list_by_date_range,
-)
-from app.config import DB_PATH
-
-
+from app.core.repository import insert_extraction, list_by_date_range
 @pytest.fixture
 def temp_db(monkeypatch):
     with tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False) as f:
@@ -27,23 +19,20 @@ def temp_db(monkeypatch):
 
 
 def test_insert_and_list(temp_db):
-    conn = get_connection()
-    create_tables(conn)
-
     record = {
         "sede": "AJUSCO",
         "nombre_imagen": "test.jpg",
         "destinatario_raw": "TEXTO",
-        "campos_nombre_o_titulo": "Juan",
-        "campos_cargo_dependencia": None,
-        "campos_direccion": "",
-        "campos_colonia": "ILEGIBLE",
-        "campos_municipio_o_alcaldia": None,
-        "campos_estado": "CDMX",
-        "campos_codigo_postal": None,
-        "campos_extras": None,
-        "campos_contacto": None,
-        "campos_indicaciones": None,
+        "nombre_o_titulo": "Juan",
+        "cargo_dependencia": None,
+        "direccion": "",
+        "colonia": "ILEGIBLE",
+        "municipio_o_alcaldia": None,
+        "estado": "CDMX",
+        "codigo_postal": None,
+        "extras": None,
+        "contacto": None,
+        "indicaciones": None,
         "observaciones_ia": "Sin observaciones",
         "crop_x": 0,
         "crop_y": 0,
@@ -59,5 +48,5 @@ def test_insert_and_list(temp_db):
     assert len(rows) >= 1
     r = next(x for x in rows if x["nombre_imagen"] == "TEST.JPG")
     assert r["sede"] == "AJUSCO"
-    assert r["campos_colonia"] == "ILEGIBLE"
-    assert r["campos_nombre_o_titulo"] == "JUAN"
+    assert r["colonia"] == "ILEGIBLE"
+    assert r["nombre_o_titulo"] == "JUAN"

@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def _to_db_record(form_data: dict, meta: dict) -> dict:
-    """Construye el record para insert_extraction con mapeo UI->BD."""
+    """Construye el record para insert_extraction (claves alineadas con columnas SQLite)."""
     campos = form_data.get("campos", {})
     record = {
         "sede": meta.get("sede", ""),
@@ -45,7 +45,7 @@ def _to_db_record(form_data: dict, meta: dict) -> dict:
         "aspect_mode": meta.get("aspect_mode", "FREE"),
     }
     for k in FIELD_KEYS:
-        record[f"campos_{k}"] = campos.get(k, "")
+        record[k] = campos.get(k, "")
     return record
 
 
