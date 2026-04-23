@@ -10,8 +10,26 @@ load_dotenv()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# Timeout para llamadas API
+# Timeout para llamadas API (OpenAI)
 TIMEOUT_SECONDS = int(os.getenv("TIMEOUT_SECONDS", "60"))
+
+# --- Backend FastAPI (login JWT, CRUD registros OCR vía HTTP) ---
+# URL base sin barra final; en desarrollo suele ser http://127.0.0.1:8000, en producción https://dominio
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+# Rutas relativas a API_BASE_URL (deben empezar por /)
+LOGIN_ENDPOINT = os.getenv("LOGIN_ENDPOINT", "/auth/login")
+REGISTROS_ENDPOINT = os.getenv("REGISTROS_ENDPOINT", "/registros")
+# TIMEOUT del cliente HTTP hacia FastAPI (login, POST/GET /registros), independiente del timeout de OpenAI
+API_TIMEOUT_SECONDS = int(os.getenv("API_TIMEOUT_SECONDS", "60"))
+
+
+def api_abs_url(path: str) -> str:
+    """URL absoluta del backend: API_BASE_URL + path (path con o sin '/' inicial)."""
+    p = path.strip()
+    if not p.startswith("/"):
+        p = "/" + p
+    return f"{API_BASE_URL}{p}"
+
 
 # Carpeta de exportaciones por defecto
 EXPORT_DIR = os.getenv("EXPORT_DIR", str(Path(__file__).parent / "data" / "exports"))
