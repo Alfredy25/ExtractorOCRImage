@@ -1,6 +1,6 @@
 """Tests del repositorio."""
 import tempfile
-from datetime import date
+from datetime import date, datetime, time
 from pathlib import Path
 
 import pytest
@@ -46,10 +46,13 @@ def test_insert_and_list(temp_db):
     rowid = insert_extraction(record)
     assert rowid > 0
 
-    rows = list_by_date_range(date.today(), date.today())
+    day = date.today()
+    start = datetime.combine(day, time.min)
+    end = datetime.combine(day, time(23, 59, 59))
+    rows = list_by_date_range(start, end)
     assert len(rows) >= 1
     r = next(x for x in rows if x["nombre_imagen"] == "TEST.JPG")
-    rows_ajusco = list_by_date_range(date.today(), date.today(), "AJUSCO")
+    rows_ajusco = list_by_date_range(start, end, "AJUSCO")
     assert any(x["nombre_imagen"] == "TEST.JPG" for x in rows_ajusco)
     assert r["sede"] == "AJUSCO"
     assert r["colonia"] == "ILEGIBLE"

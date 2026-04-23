@@ -232,7 +232,25 @@ def _theme_dark() -> str:
     QComboBox::drop-down {{
         border: none;
     }}
+    QComboBox QAbstractItemView {{
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        selection-background-color: {p["bg_300"]};
+        selection-color: {p["text_100"]};
+        outline: none;
+    }}
+    QComboBox QAbstractItemView::item {{
+        min-height: 22px;
+        padding: 4px 8px;
+    }}
     QDateEdit {{
+        background-color: {p["bg_200"]};
+        color: {p["text_100"]};
+        border: 1px solid {p["bg_300"]};
+        border-radius: {R_INPUT};
+        padding: 8px;
+    }}
+    QTimeEdit {{
         background-color: {p["bg_200"]};
         color: {p["text_100"]};
         border: 1px solid {p["bg_300"]};
@@ -464,6 +482,13 @@ def _theme_warm() -> str:
         border: none;
     }}
     QDateEdit {{
+        background-color: {w["bg_100"]};
+        color: {w["text_100"]};
+        border: 1px solid {w["border_soft"]};
+        border-radius: {R_INPUT};
+        padding: 8px;
+    }}
+    QTimeEdit {{
         background-color: {w["bg_100"]};
         color: {w["text_100"]};
         border: 1px solid {w["border_soft"]};

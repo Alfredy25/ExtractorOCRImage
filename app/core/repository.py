@@ -7,7 +7,7 @@ from __future__ import annotations
 import contextlib
 import os
 import sqlite3
-from datetime import date, datetime, time
+from datetime import datetime, time
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -420,13 +420,19 @@ def _insert_extraction_local(record: dict) -> int:
         return int(cur.lastrowid)
 
 
-def _date_range_to_api_iso(desde: date, hasta: date) -> tuple[str, str]:
-    """
-    Query params ``fecha_inicio`` / ``fecha_fin`` del backend (inicio 00:00:00, fin 23:59:59).
-    """
-    start = datetime.combine(desde, time.min).isoformat(timespec="seconds")
-    end = datetime.combine(hasta, time(23, 59, 59)).isoformat(timespec="seconds")
-    return start, end
+def _datetimes_to_api_iso_params(inicio: datetime, fin: datetime) -> tuple[str, str]:
+    """Query params ``fecha_inicio`` / ``fecha_fin`` en ISO con ``T`` (segundos sin microsegundos)."""
+    a = inicio.replace(microsecond=0)
+    b = fin.replace(microsecond=0)
+    return (
+        a.isoformat(sep="T", timespec="seconds"),
+        b.isoformat(sep="T", timespec="seconds"),
+    )
+
+
+def _local_datetime_sql_value(dt: datetime) -> str:
+    """Literal comparable con ``created_at`` en SQLite/MySQL."""
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _sede_filter_for_api_query(sede: str | None) -> str | None:
@@ -472,12 +478,12 @@ def _parse_registros_list_json(data: Any) -> list[dict]:
     )
 
 
-def _list_by_date_range_api(desde: date, hasta: date, sede: str | None) -> list[dict]:
+def _list_by_date_range_api(desde: datetime, hasta: datetime, sede: str | None) -> list[dict]:
     token = get_access_token()
     if not token:
         raise RepositoryApiError("No hay sesión activa. Inicie sesión de nuevo.")
 
-    fecha_inicio, fecha_fin = _date_range_to_api_iso(desde, hasta)
+    fecha_inicio, fecha_fin = _datetimes_to_api_iso_params(desde, hasta)
     params: dict[str, Any] = {
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
@@ -517,9 +523,11 @@ def _list_by_date_range_api(desde: date, hasta: date, sede: str | None) -> list[
     return rows
 
 
-def _list_by_date_range_local(desde: date, hasta: date, sede: str | None) -> list[dict]:
-    """SELECT local; ``sede`` opcional filtra por columna (valor con tilde en Coyoacán)."""
+def _list_by_date_range_local(desde: datetime, hasta: datetime, sede: str | None) -> list[dict]:
+    """SELECT local por rango de fecha-hora; ``sede`` opcional filtra por columna."""
     sede_val = _sede_filter_for_local_column(sede)
+    d1 = _local_datetime_sql_value(desde)
+    d2 = _local_datetime_sql_value(hasta)
     with get_connection() as (conn, engine):
         ph = _placeholder(engine)
         extra_sql = ""
@@ -531,19 +539,19 @@ def _list_by_date_range_local(desde: date, hasta: date, sede: str | None) -> lis
         if engine == "mysql":
             sql = f"""
             SELECT * FROM extractions
-            WHERE DATE(created_at) >= DATE({ph}) AND DATE(created_at) <= DATE({ph})
+            WHERE created_at >= {ph} AND created_at <= {ph}
             {extra_sql}
             ORDER BY created_at
             """
-            params = (desde.isoformat(), hasta.isoformat(), *extra_params)
+            params = (d1, d2, *extra_params)
         else:
             sql = f"""
             SELECT * FROM extractions
-            WHERE date(created_at) >= date({ph}) AND date(created_at) <= date({ph})
+            WHERE created_at >= {ph} AND created_at <= {ph}
             {extra_sql}
             ORDER BY created_at
             """
-            params = (desde.isoformat(), hasta.isoformat(), *extra_params)
+            params = (d1, d2, *extra_params)
 
         if engine == "mysql":
             cur = conn.cursor()
@@ -556,11 +564,15 @@ def _list_by_date_range_local(desde: date, hasta: date, sede: str | None) -> lis
         return [dict(row) for row in rows]
 
 
-def list_by_date_range(desde: date, hasta: date, sede: str | None = None) -> list[dict]:
+def list_by_date_range(
+    desde: datetime,
+    hasta: datetime,
+    sede: str | None = None,
+) -> list[dict]:
     """
-    Lista registros por rango de fechas (incluyente), opcionalmente filtrados por sede.
+    Lista registros entre ``desde`` y ``hasta`` (incluyente en tiempo), opcionalmente por sede.
 
-    En ejecución normal: ``GET /registros`` con ``fecha_inicio``, ``fecha_fin`` (ISO) y
+    En ejecución normal: ``GET /registros`` con ``fecha_inicio`` / ``fecha_fin`` en ISO y
     ``sede`` solo si aplica. El usuario lo determina el JWT en el servidor.
 
     ``sede`` en la UI puede ser ``AJUSCO`` o ``COYOACÁN``; hacia la API se normaliza a
