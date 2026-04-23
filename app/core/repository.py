@@ -1,14 +1,26 @@
-"""Repositorio de extracciones: SQLite (desarrollo) o MySQL InnoDB (producción)."""
+# [MODIFICADO] insert_extraction usa POST /registros + JWT en runtime; SQLite solo con
+# OCR_USE_SQLITE_REPOSITORY=1 (pytest). list_by_date_range sigue local hasta integrar GET.
+
+"""Repositorio de extracciones: API FastAPI (JWT) en ejecución normal; SQLite/MySQL solo en tests."""
 from __future__ import annotations
 
 import contextlib
+import os
 import sqlite3
 from datetime import date
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
+
+import httpx
 
 import app.config as app_config
-from app.config import DB_PATH, DATA_DIR
+from app.config import API_TIMEOUT_SECONDS, DB_PATH, DATA_DIR, REGISTROS_ENDPOINT, api_abs_url
+
+from app.core.auth_client import get_access_token
+
+
+class RepositoryApiError(Exception):
+    """Fallo al crear registro por HTTP (red, 4xx/5xx, cuerpo sin id). Mensaje para la UI."""
 
 # Raíz del proyecto (…/ExtractorOcrImagenes)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -51,6 +63,180 @@ def _field_to_db(value: str | None, is_destinatario_raw: bool = False) -> str | 
 
 def _placeholder(engine: str) -> str:
     return "%s" if engine == "mysql" else "?"
+
+
+def _repository_use_local_sqlite() -> bool:
+    """
+    Si es verdadero, ``insert_extraction`` / list usan BD local (solo tests automatizados).
+
+    En ejecución normal no definir ``OCR_USE_SQLITE_REPOSITORY`` para usar la API.
+    """
+    return os.getenv("OCR_USE_SQLITE_REPOSITORY", "").lower() in ("1", "true", "yes")
+
+
+def _sede_for_api(record: dict) -> str:
+    """
+    ``RegistroBase.sede`` en FastAPI: ``Literal['AJUSCO', 'COYOACAN']`` (COYOACAN sin tilde).
+
+    La UI y SQLite local usan ``COYOACÁN``; aquí se normaliza al valor que valida Pydantic.
+    """
+    raw = (
+        _field_to_db(record.get("sede"), False)
+        or str(record.get("sede", "")).strip().upper()
+    )
+    if not raw:
+        return ""
+    if raw == "AJUSCO":
+        return "AJUSCO"
+    # Cualquier variante con tilde o ya sin ella → COYOACAN
+    if raw.replace("Á", "A") == "COYOACAN":
+        return "COYOACAN"
+    return raw
+
+
+def _opt_str_api(value: str | None) -> str | None:
+    """Optional[str] del backend: vacío → null (None), no cadena vacía."""
+    v = _field_to_db(value, False)
+    return v if v else None
+
+
+def _opt_int_api(value: Any) -> int | None:
+    """Optional[int] del backend; convierte tipos numéricos (p. ej. numpy) a int nativo."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _aspect_mode_for_api(record: dict) -> str:
+    """``Literal['FREE', 'SQUARE']`` del backend."""
+    am = str(record.get("aspect_mode", "FREE")).strip().upper()
+    return am if am in ("FREE", "SQUARE") else "FREE"
+
+
+def _record_to_insert_payload(record: dict) -> dict[str, Any]:
+    """
+    Cuerpo JSON para ``POST /registros`` alineado con ``RegistroBase`` (Pydantic en FastAPI).
+
+    No incluye campos de auditoría; el backend toma el usuario del JWT.
+    """
+    sede = _sede_for_api(record)
+    nombre_imagen = (
+        _field_to_db(record.get("nombre_imagen"), False)
+        or str(record.get("nombre_imagen", "")).strip().upper()
+    )
+    destinatario_raw = _field_to_db(record.get("destinatario_raw"), True) or ""
+
+    return {
+        "sede": sede,
+        "nombre_imagen": nombre_imagen,
+        "destinatario_raw": destinatario_raw,
+        "nombre_o_titulo": _opt_str_api(record.get("nombre_o_titulo")),
+        "cargo_dependencia": _opt_str_api(record.get("cargo_dependencia")),
+        "direccion": _opt_str_api(record.get("direccion")),
+        "colonia": _opt_str_api(record.get("colonia")),
+        "municipio_o_alcaldia": _opt_str_api(record.get("municipio_o_alcaldia")),
+        "estado": _opt_str_api(record.get("estado")),
+        "codigo_postal": _opt_str_api(record.get("codigo_postal")),
+        "extras": _opt_str_api(record.get("extras")),
+        "contacto": _opt_str_api(record.get("contacto")),
+        "indicaciones": _opt_str_api(record.get("indicaciones")),
+        "observaciones_ia": _opt_str_api(record.get("observaciones_ia")),
+        "crop_x": _opt_int_api(record.get("crop_x")),
+        "crop_y": _opt_int_api(record.get("crop_y")),
+        "crop_w": _opt_int_api(record.get("crop_w")),
+        "crop_h": _opt_int_api(record.get("crop_h")),
+        "rotation_deg": _opt_int_api(record.get("rotation_deg")),
+        "aspect_mode": _aspect_mode_for_api(record),
+    }
+
+
+def _http_error_detail(response: httpx.Response) -> str:
+    try:
+        data = response.json()
+        if isinstance(data, dict):
+            d = data.get("detail")
+            if isinstance(d, str):
+                return d
+            if isinstance(d, list):
+                return "; ".join(
+                    str(x.get("msg", x)) if isinstance(x, dict) else str(x) for x in d
+                )
+    except ValueError:
+        pass
+    text = (response.text or "").strip()
+    return text[:500] if text else "(sin detalle)"
+
+
+def _coerce_positive_id(value: Any) -> int | None:
+    if isinstance(value, int) and value > 0:
+        return value
+    if isinstance(value, str) and value.isdigit():
+        i = int(value)
+        return i if i > 0 else None
+    return None
+
+
+def _parse_new_id(body: object) -> int | None:
+    """Interpreta respuesta típica FastAPI / Pydantic: id en raíz o bajo registro/data."""
+    if not isinstance(body, dict):
+        return None
+    for key in ("id", "registro_id"):
+        rid = _coerce_positive_id(body.get(key))
+        if rid is not None:
+            return rid
+    nested = body.get("registro")
+    if not isinstance(nested, dict):
+        nested = body.get("data")
+    if isinstance(nested, dict):
+        for key in ("id", "registro_id"):
+            rid = _coerce_positive_id(nested.get(key))
+            if rid is not None:
+                return rid
+    return None
+
+
+def _insert_extraction_api(record: dict) -> int:
+    token = get_access_token()
+    if not token:
+        raise RepositoryApiError("No hay sesión activa. Inicie sesión de nuevo.")
+
+    url = api_abs_url(REGISTROS_ENDPOINT)
+    payload = _record_to_insert_payload(record)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        with httpx.Client(timeout=API_TIMEOUT_SECONDS) as client:
+            response = client.post(url, json=payload, headers=headers)
+    except httpx.TimeoutException as e:
+        raise RepositoryApiError("Tiempo de espera al guardar el registro.") from e
+    except httpx.RequestError as e:
+        raise RepositoryApiError(f"No se pudo conectar con el servidor: {e}") from e
+
+    if response.status_code == 401:
+        raise RepositoryApiError(
+            "Sesión caducada o no autorizado. Vuelva a iniciar sesión."
+        )
+
+    if response.status_code >= 400:
+        raise RepositoryApiError(
+            f"No se pudo guardar (código {response.status_code}): "
+            f"{_http_error_detail(response)}"
+        )
+
+    try:
+        body = response.json() if response.content else {}
+    except ValueError as e:
+        raise RepositoryApiError("La respuesta del servidor no es JSON válido.") from e
+
+    rid = _parse_new_id(body)
+    if rid is None:
+        raise RepositoryApiError(
+            "El servidor no devolvió el identificador del registro (campo id)."
+        )
+    return rid
 
 
 def create_tables_sqlite(conn: sqlite3.Connection) -> None:
@@ -174,7 +360,19 @@ def get_connection() -> Iterator[tuple[object, str]]:
 
 
 def insert_extraction(record: dict) -> int:
-    """Inserta un registro y devuelve el id."""
+    """
+    Inserta un registro y devuelve el id.
+
+    En ejecución normal: ``POST`` al backend con JWT (sin ``created_by`` en el cuerpo).
+    Con ``OCR_USE_SQLITE_REPOSITORY=1`` (tests): INSERT en SQLite/MySQL local.
+    """
+    if _repository_use_local_sqlite():
+        return _insert_extraction_local(record)
+    return _insert_extraction_api(record)
+
+
+def _insert_extraction_local(record: dict) -> int:
+    """INSERT en SQLite o MySQL (solo tests o entorno explícito)."""
     params = (
         _field_to_db(record.get("sede"), False) or record.get("sede", "").upper(),
         _field_to_db(record.get("nombre_imagen"), False)
