@@ -1,12 +1,14 @@
+# [MODIFICADO] Arranque: login obligatorio contra FastAPI antes de abrir la ventana principal.
+
 """Punto de entrada de la aplicación."""
 import logging
 import sys
-from pathlib import Path
 
-from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QDialog
 
-from app.config import APP_ROOT, get_db_summary_for_logs
+from app.config import API_BASE_URL, APP_ROOT
+from app.ui.login_window import LoginWindow
 from app.ui.main_window import MainWindow
 from app.ui.themes import apply_theme, get_saved_theme
 
@@ -39,9 +41,9 @@ def setup_logging():
 
 def main():
     setup_logging()
-    logging.getLogger("app.main").info(
-        "Base de datos: %s", get_db_summary_for_logs()
-    )
+    log = logging.getLogger("app.main")
+    log.info("Backend API: %s", API_BASE_URL)
+
     # Alta DPI: debe llamarse antes de crear QApplication
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -51,6 +53,11 @@ def main():
     app.setApplicationDisplayName("Extractor OCR - Destinatarios")
 
     apply_theme(get_saved_theme())
+
+    # Sin sesión válida no se abre la app de extracción (JWT queda en auth_client).
+    login_dlg = LoginWindow()
+    if login_dlg.exec() != QDialog.DialogCode.Accepted:
+        return 0
 
     window = MainWindow()
     window.show()
