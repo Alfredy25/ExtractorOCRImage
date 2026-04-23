@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 
 from app.core.repository import insert_extraction, list_by_date_range
+
+
 @pytest.fixture
 def temp_db(monkeypatch):
     with tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False) as f:

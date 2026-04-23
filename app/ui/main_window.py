@@ -19,7 +19,7 @@ from app.config import DATA_DIR, EXPORT_DIR
 from app.core.image_io import load_image
 from app.core.crop_tools import apply_crop
 from app.core.ai_client import extract_fields
-from app.core.repository import insert_extraction, get_connection
+from app.core.repository import insert_extraction
 from app.ui.image_viewer import ImageViewer
 from app.ui.panels.left_panel import LeftPanel
 from app.ui.panels.right_panel import RightPanel, FIELD_KEYS

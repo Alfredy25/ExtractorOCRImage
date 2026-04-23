@@ -6,6 +6,7 @@ Aplicación de escritorio en Python para extraer el texto del **DESTINATARIO** e
 
 - Python 3.11+
 - Clave API de OpenAI (`OPENAI_API_KEY` en `.env`)
+- Base de datos: **SQLite** por defecto, o **MySQL InnoDB** (p. ej. base `tools_OCR` en CyberPanel). Ver [docs/MYSQL_MIGRATION.md](docs/MYSQL_MIGRATION.md).
 
 ## Instalación
 
@@ -20,7 +21,8 @@ pip install -r requirements.txt
 
 # Copiar y configurar .env
 copy .env.example .env
-# Editar .env y añadir OPENAI_API_KEY=sk-...
+# Editar .env: OPENAI_API_KEY=sk-...
+# Opcional MySQL: DB_ENGINE=mysql y DB_HOST, DB_USER, DB_PASSWORD, DB_NAME=tools_OCR
 ```
 
 ## Ejecución
@@ -84,6 +86,18 @@ pip install pytest
 pytest tests/ -v
 ```
 
+Los tests usan SQLite en temporal (`DB_ENGINE=sqlite` forzado en `tests/conftest.py`).
+
+## Base de datos MySQL
+
+1. Crear la base `tools_OCR` en el servidor.  
+2. `python scripts/create_mysql_schema.py` (o importar `sql/schema_mysql.sql`).  
+3. Migrar datos desde SQLite: `python scripts/migrate_sqlite_to_mysql.py` (ver `--dry-run`).  
+4. En `.env`: `DB_ENGINE=mysql` y variables `DB_*`.  
+5. Comprobar: `python scripts/check_db.py`.
+
+Guía completa, post-migración y troubleshooting: **[docs/MYSQL_MIGRATION.md](docs/MYSQL_MIGRATION.md)**.
+
 ## Estructura
 
 ```
@@ -92,7 +106,10 @@ app/
   config.py         # Configuración
   ui/               # Interfaz PySide6
   core/             # Lógica: IA, BD, recorte, exportación
-  data/             # SQLite, exports
+  data/             # SQLite (dev), exports
+  sql/              # Esquema MySQL
+  scripts/          # create_mysql_schema, migrate_sqlite_to_mysql, check_db
+  docs/             # MYSQL_MIGRATION.md
 tests/
   unit/             # Tests unitarios
 ```

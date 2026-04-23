@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt
 
-from app.config import APP_ROOT
+from app.config import APP_ROOT, get_db_summary_for_logs
 from app.ui.main_window import MainWindow
 from app.ui.themes import apply_theme, get_saved_theme
 
@@ -39,6 +39,9 @@ def setup_logging():
 
 def main():
     setup_logging()
+    logging.getLogger("app.main").info(
+        "Base de datos: %s", get_db_summary_for_logs()
+    )
     # Alta DPI: debe llamarse antes de crear QApplication
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough

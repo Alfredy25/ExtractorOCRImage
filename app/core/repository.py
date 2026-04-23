@@ -1,11 +1,19 @@
-"""Repositorio SQLite para extracciones."""
+"""Repositorio de extracciones: SQLite (desarrollo) o MySQL InnoDB (producción)."""
+from __future__ import annotations
+
+import contextlib
 import sqlite3
 from datetime import date
 from pathlib import Path
+from typing import Iterator
 
+import app.config as app_config
 from app.config import DB_PATH, DATA_DIR
 
-# Migración: renombrar columnas antiguas campos_* en SQLite.
+# Raíz del proyecto (…/ExtractorOcrImagenes)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# Migración SQLite: renombrar columnas antiguas campos_*.
 _LEGACY_CAMPOS_TO_COLUMN = [
     ("campos_nombre_o_titulo", "nombre_o_titulo"),
     ("campos_cargo_dependencia", "cargo_dependencia"),
@@ -41,8 +49,12 @@ def _field_to_db(value: str | None, is_destinatario_raw: bool = False) -> str | 
     return s.upper()
 
 
-def create_tables(conn: sqlite3.Connection):
-    """Crea las tablas de la BD."""
+def _placeholder(engine: str) -> str:
+    return "%s" if engine == "mysql" else "?"
+
+
+def create_tables_sqlite(conn: sqlite3.Connection) -> None:
+    """Crea las tablas en SQLite."""
     conn.execute("""
         CREATE TABLE IF NOT EXISTS extractions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,10 +88,8 @@ def create_tables(conn: sqlite3.Connection):
     conn.commit()
 
 
-def migrate_extractions_legacy_columns(conn: sqlite3.Connection) -> None:
-    """
-    Renombra columnas campos_* a nombres sin prefijo en BD existentes (SQLite 3.25+).
-    """
+def migrate_extractions_legacy_columns_sqlite(conn: sqlite3.Connection) -> None:
+    """Renombra columnas campos_* en SQLite existente (SQLite 3.25+)."""
     cur = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='extractions'"
     )
@@ -95,73 +105,145 @@ def migrate_extractions_legacy_columns(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def get_connection() -> sqlite3.Connection:
-    """Obtiene una conexión a la BD y crea tablas si no existen."""
+def _mysql_schema_statements() -> list[str]:
+    path = _PROJECT_ROOT / "sql" / "schema_mysql.sql"
+    raw = path.read_text(encoding="utf-8")
+    stmts: list[str] = []
+    for chunk in raw.split(";"):
+        lines = []
+        for line in chunk.splitlines():
+            line = line.strip()
+            if not line or line.startswith("--"):
+                continue
+            lines.append(line)
+        s = " ".join(lines).strip()
+        if s:
+            stmts.append(s + ";")
+    return stmts
+
+
+def ensure_mysql_tables(conn) -> None:
+    """Ejecuta sql/schema_mysql.sql (CREATE IF NOT EXISTS)."""
+    cur = conn.cursor()
+    for stmt in _mysql_schema_statements():
+        cur.execute(stmt)
+    conn.commit()
+    cur.close()
+
+
+@contextlib.contextmanager
+def get_connection() -> Iterator[tuple[object, str]]:
+    """
+    Context manager: (connection, engine) donde engine es ``sqlite`` o ``mysql``.
+    Cierra la conexión al salir.
+    """
+    if app_config.is_mysql():
+        import pymysql
+
+        cfg = app_config.get_mysql_config()
+        if not cfg.get("user"):
+            raise RuntimeError(
+                "DB_ENGINE=mysql requiere DB_USER (y demás variables). Ver .env.example."
+            )
+        conn = pymysql.connect(
+            host=cfg["host"],
+            port=cfg["port"],
+            user=cfg["user"],
+            password=cfg["password"],
+            database=cfg["database"],
+            charset=cfg["charset"],
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=False,
+        )
+        try:
+            ensure_mysql_tables(conn)
+            yield conn, "mysql"
+        finally:
+            conn.close()
+        return
+
     _ensure_data_dir()
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    create_tables(conn)
-    migrate_extractions_legacy_columns(conn)
-    return conn
+    create_tables_sqlite(conn)
+    migrate_extractions_legacy_columns_sqlite(conn)
+    try:
+        yield conn, "sqlite"
+    finally:
+        conn.close()
 
 
 def insert_extraction(record: dict) -> int:
     """Inserta un registro y devuelve el id."""
-    conn = get_connection()
-    try:
-        cur = conn.execute(
-            """
+    params = (
+        _field_to_db(record.get("sede"), False) or record.get("sede", "").upper(),
+        _field_to_db(record.get("nombre_imagen"), False)
+        or record.get("nombre_imagen", "").upper(),
+        _field_to_db(record.get("destinatario_raw"), True) or "",
+        _field_to_db(record.get("nombre_o_titulo")),
+        _field_to_db(record.get("cargo_dependencia")),
+        _field_to_db(record.get("direccion")),
+        _field_to_db(record.get("colonia")),
+        _field_to_db(record.get("municipio_o_alcaldia")),
+        _field_to_db(record.get("estado")),
+        _field_to_db(record.get("codigo_postal")),
+        _field_to_db(record.get("extras")),
+        _field_to_db(record.get("contacto")),
+        _field_to_db(record.get("indicaciones")),
+        _field_to_db(record.get("observaciones_ia")),
+        record.get("crop_x"),
+        record.get("crop_y"),
+        record.get("crop_w"),
+        record.get("crop_h"),
+        record.get("rotation_deg"),
+        record.get("aspect_mode", "FREE"),
+    )
+
+    with get_connection() as (conn, engine):
+        ph = _placeholder(engine)
+        sql = f"""
             INSERT INTO extractions (
                 sede, nombre_imagen, destinatario_raw,
                 nombre_o_titulo, cargo_dependencia, direccion,
                 colonia, municipio_o_alcaldia, estado,
                 codigo_postal, extras, contacto, indicaciones,
                 observaciones_ia, crop_x, crop_y, crop_w, crop_h, rotation_deg, aspect_mode
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                _field_to_db(record.get("sede"), False) or record.get("sede", "").upper(),
-                _field_to_db(record.get("nombre_imagen"), False)
-                or record.get("nombre_imagen", "").upper(),
-                _field_to_db(record.get("destinatario_raw"), True) or "",
-                _field_to_db(record.get("nombre_o_titulo")),
-                _field_to_db(record.get("cargo_dependencia")),
-                _field_to_db(record.get("direccion")),
-                _field_to_db(record.get("colonia")),
-                _field_to_db(record.get("municipio_o_alcaldia")),
-                _field_to_db(record.get("estado")),
-                _field_to_db(record.get("codigo_postal")),
-                _field_to_db(record.get("extras")),
-                _field_to_db(record.get("contacto")),
-                _field_to_db(record.get("indicaciones")),
-                _field_to_db(record.get("observaciones_ia")),
-                record.get("crop_x"),
-                record.get("crop_y"),
-                record.get("crop_w"),
-                record.get("crop_h"),
-                record.get("rotation_deg"),
-                record.get("aspect_mode", "FREE"),
-            ),
-        )
+            ) VALUES ({",".join([ph] * 20)})
+            """
+        if engine == "mysql":
+            cur = conn.cursor()
+            cur.execute(sql, params)
+            conn.commit()
+            last = cur.lastrowid
+            cur.close()
+            return int(last)
+        cur = conn.execute(sql, params)
         conn.commit()
-        return cur.lastrowid
-    finally:
-        conn.close()
+        return int(cur.lastrowid)
 
 
 def list_by_date_range(desde: date, hasta: date) -> list[dict]:
     """Lista registros por rango de fechas (incluyente)."""
-    conn = get_connection()
-    try:
-        cur = conn.execute(
-            """
+    with get_connection() as (conn, engine):
+        ph = _placeholder(engine)
+        if engine == "mysql":
+            sql = f"""
             SELECT * FROM extractions
-            WHERE date(created_at) >= date(?) AND date(created_at) <= date(?)
+            WHERE DATE(created_at) >= DATE({ph}) AND DATE(created_at) <= DATE({ph})
             ORDER BY created_at
-            """,
-            (desde.isoformat(), hasta.isoformat()),
-        )
+            """
+        else:
+            sql = f"""
+            SELECT * FROM extractions
+            WHERE date(created_at) >= date({ph}) AND date(created_at) <= date({ph})
+            ORDER BY created_at
+            """
+        if engine == "mysql":
+            cur = conn.cursor()
+            cur.execute(sql, (desde.isoformat(), hasta.isoformat()))
+            rows = cur.fetchall()
+            cur.close()
+            return [dict(r) for r in rows]
+        cur = conn.execute(sql, (desde.isoformat(), hasta.isoformat()))
         rows = cur.fetchall()
         return [dict(row) for row in rows]
-    finally:
-        conn.close()
