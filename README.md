@@ -31,6 +31,18 @@ pip install -r requirements.txt
 copy .env.example .env          # Windows; en Unix: cp .env.example .env
 ```
 
+**Un solo entorno virtual:** usa solo la carpeta **`.venv`** en la raíz del repo (es la que ignora Git en `.gitignore`). Si además tienes una carpeta `venv/`, es redundante y suele confundir (dos activaciones distintas, dos `pip install`, etc.).
+
+**Si PyInstaller u otras herramientas fallan con `C:\Python314\python.exe` no encontrado:** tus archivos `.venv\pyvenv.cfg` y `venv\pyvenv.cfg` guardan el intérprete **base** con el que se creó el entorno. Si Python se instaló o actualizó en otra ruta (p. ej. `...\AppData\Local\Programs\Python\Python314\`), esos venv quedan **rotos**. Solución: borra las carpetas `.venv` y `venv` (solo locales, no van al Git), y crea de nuevo **solo** `.venv` con el Python que sí exista, por ejemplo en PowerShell desde la raíz del proyecto:
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+Comprueba con `py -0p` qué versiones tienes y ajusta `-3.14` si usas otra.
+
 Edita `.env` con al menos:
 
 - URL del API y credenciales de uso habitual (ver tabla siguiente).
