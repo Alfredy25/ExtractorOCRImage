@@ -49,6 +49,8 @@ def test_insert_and_list(temp_db):
     rows = list_by_date_range(date.today(), date.today())
     assert len(rows) >= 1
     r = next(x for x in rows if x["nombre_imagen"] == "TEST.JPG")
+    rows_ajusco = list_by_date_range(date.today(), date.today(), "AJUSCO")
+    assert any(x["nombre_imagen"] == "TEST.JPG" for x in rows_ajusco)
     assert r["sede"] == "AJUSCO"
     assert r["colonia"] == "ILEGIBLE"
     assert r["nombre_o_titulo"] == "JUAN"

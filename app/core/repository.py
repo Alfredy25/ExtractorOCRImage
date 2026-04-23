@@ -1,5 +1,5 @@
-# [MODIFICADO] insert_extraction usa POST /registros + JWT en runtime; SQLite solo con
-# OCR_USE_SQLITE_REPOSITORY=1 (pytest). list_by_date_range sigue local hasta integrar GET.
+# [MODIFICADO] Persistencia vía FastAPI (POST/GET /registros + JWT); SQLite solo con
+# OCR_USE_SQLITE_REPOSITORY=1 (pytest).
 
 """Repositorio de extracciones: API FastAPI (JWT) en ejecución normal; SQLite/MySQL solo en tests."""
 from __future__ import annotations
@@ -7,7 +7,7 @@ from __future__ import annotations
 import contextlib
 import os
 import sqlite3
-from datetime import date
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -420,28 +420,152 @@ def _insert_extraction_local(record: dict) -> int:
         return int(cur.lastrowid)
 
 
-def list_by_date_range(desde: date, hasta: date) -> list[dict]:
-    """Lista registros por rango de fechas (incluyente)."""
+def _date_range_to_api_iso(desde: date, hasta: date) -> tuple[str, str]:
+    """
+    Query params ``fecha_inicio`` / ``fecha_fin`` del backend (inicio 00:00:00, fin 23:59:59).
+    """
+    start = datetime.combine(desde, time.min).isoformat(timespec="seconds")
+    end = datetime.combine(hasta, time(23, 59, 59)).isoformat(timespec="seconds")
+    return start, end
+
+
+def _sede_filter_for_api_query(sede: str | None) -> str | None:
+    """
+    Valor de query ``sede`` para GET /registros: ``AJUSCO`` | ``COYOACAN`` o None (no filtrar).
+
+    Vacío o desconocido → None (no se envía el parámetro).
+    """
+    if sede is None:
+        return None
+    t = str(sede).strip()
+    if not t:
+        return None
+    u = t.upper()
+    if u == "AJUSCO":
+        return "AJUSCO"
+    if u.replace("Á", "A") == "COYOACAN":
+        return "COYOACAN"
+    return None
+
+
+def _sede_filter_for_local_column(sede: str | None) -> str | None:
+    """Valor exacto en ``extractions.sede`` (SQLite usa COYOACÁN con tilde)."""
+    q = _sede_filter_for_api_query(sede)
+    if q is None:
+        return None
+    if q == "COYOACAN":
+        return "COYOACÁN"
+    return q
+
+
+def _parse_registros_list_json(data: Any) -> list[dict]:
+    """Lista en raíz o bajo items/registros/data/results."""
+    if isinstance(data, list):
+        return [x for x in data if isinstance(x, dict)]
+    if isinstance(data, dict):
+        for key in ("items", "registros", "data", "results"):
+            inner = data.get(key)
+            if isinstance(inner, list):
+                return [x for x in inner if isinstance(x, dict)]
+    raise RepositoryApiError(
+        "La respuesta del servidor no es una lista de registros reconocible."
+    )
+
+
+def _list_by_date_range_api(desde: date, hasta: date, sede: str | None) -> list[dict]:
+    token = get_access_token()
+    if not token:
+        raise RepositoryApiError("No hay sesión activa. Inicie sesión de nuevo.")
+
+    fecha_inicio, fecha_fin = _date_range_to_api_iso(desde, hasta)
+    params: dict[str, Any] = {
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
+    }
+    sede_q = _sede_filter_for_api_query(sede)
+    if sede_q is not None:
+        params["sede"] = sede_q
+
+    url = api_abs_url(REGISTROS_ENDPOINT)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        with httpx.Client(timeout=API_TIMEOUT_SECONDS) as client:
+            response = client.get(url, headers=headers, params=params)
+    except httpx.TimeoutException as e:
+        raise RepositoryApiError("Tiempo de espera al consultar registros.") from e
+    except httpx.RequestError as e:
+        raise RepositoryApiError(f"No se pudo conectar con el servidor: {e}") from e
+
+    if response.status_code == 401:
+        raise RepositoryApiError(
+            "Sesión caducada o no autorizado. Vuelva a iniciar sesión."
+        )
+
+    if response.status_code >= 400:
+        raise RepositoryApiError(
+            f"No se pudieron obtener registros (código {response.status_code}): "
+            f"{_http_error_detail(response)}"
+        )
+
+    try:
+        payload = response.json()
+    except ValueError as e:
+        raise RepositoryApiError("La respuesta del servidor no es JSON válido.") from e
+
+    rows = _parse_registros_list_json(payload)
+    return rows
+
+
+def _list_by_date_range_local(desde: date, hasta: date, sede: str | None) -> list[dict]:
+    """SELECT local; ``sede`` opcional filtra por columna (valor con tilde en Coyoacán)."""
+    sede_val = _sede_filter_for_local_column(sede)
     with get_connection() as (conn, engine):
         ph = _placeholder(engine)
+        extra_sql = ""
+        extra_params: list[Any] = []
+        if sede_val is not None:
+            extra_sql = f" AND sede = {ph}"
+            extra_params = [sede_val]
+
         if engine == "mysql":
             sql = f"""
             SELECT * FROM extractions
             WHERE DATE(created_at) >= DATE({ph}) AND DATE(created_at) <= DATE({ph})
+            {extra_sql}
             ORDER BY created_at
             """
+            params = (desde.isoformat(), hasta.isoformat(), *extra_params)
         else:
             sql = f"""
             SELECT * FROM extractions
             WHERE date(created_at) >= date({ph}) AND date(created_at) <= date({ph})
+            {extra_sql}
             ORDER BY created_at
             """
+            params = (desde.isoformat(), hasta.isoformat(), *extra_params)
+
         if engine == "mysql":
             cur = conn.cursor()
-            cur.execute(sql, (desde.isoformat(), hasta.isoformat()))
+            cur.execute(sql, params)
             rows = cur.fetchall()
             cur.close()
             return [dict(r) for r in rows]
-        cur = conn.execute(sql, (desde.isoformat(), hasta.isoformat()))
+        cur = conn.execute(sql, params)
         rows = cur.fetchall()
         return [dict(row) for row in rows]
+
+
+def list_by_date_range(desde: date, hasta: date, sede: str | None = None) -> list[dict]:
+    """
+    Lista registros por rango de fechas (incluyente), opcionalmente filtrados por sede.
+
+    En ejecución normal: ``GET /registros`` con ``fecha_inicio``, ``fecha_fin`` (ISO) y
+    ``sede`` solo si aplica. El usuario lo determina el JWT en el servidor.
+
+    ``sede`` en la UI puede ser ``AJUSCO`` o ``COYOACÁN``; hacia la API se normaliza a
+    ``COYOACAN`` sin tilde.
+    """
+    if _repository_use_local_sqlite():
+        return _list_by_date_range_local(desde, hasta, sede)
+    return _list_by_date_range_api(desde, hasta, sede)

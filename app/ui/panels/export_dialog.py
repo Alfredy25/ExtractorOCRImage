@@ -1,8 +1,6 @@
 """Diálogo de exportación por rango de fechas."""
-from datetime import date
 from pathlib import Path
 
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -16,7 +14,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QDate
 
-from app.config import EXPORT_DIR
+from app.config import EXPORT_DIR, SEDES
 from app.core.repository import list_by_date_range
 from app.core.exporters import export_csv, export_excel, suggested_filename
 
@@ -45,6 +43,13 @@ class ExportDialog(QDialog):
         self._date_to.setDate(QDate.currentDate())
         range_layout.addWidget(self._date_to)
         layout.addLayout(range_layout)
+
+        layout.addWidget(QLabel("Sede (opcional):"))
+        self._sede = QComboBox()
+        self._sede.addItem("Todas las sedes", None)
+        for sede in SEDES:
+            self._sede.addItem(sede, sede)
+        layout.addWidget(self._sede)
 
         layout.addWidget(QLabel("Formato:"))
         self._format = QComboBox()
@@ -86,12 +91,15 @@ class ExportDialog(QDialog):
             return
 
         path = Path(path_str)
-        records = list_by_date_range(desde, hasta)
+        sede = self._sede.currentData()
+        records = list_by_date_range(desde, hasta, sede)
         if not records:
+            sede_txt = self._sede.currentText()
+            extra = f"\nSede: {sede_txt}." if sede else ""
             QMessageBox.information(
                 self,
                 "Sin datos",
-                f"No hay registros entre {desde} y {hasta}.",
+                f"No hay registros entre {desde} y {hasta}.{extra}",
             )
             return
 
