@@ -99,6 +99,7 @@ class MainWindow(QMainWindow):
         self._left = LeftPanel()
         dock_left = QDockWidget("Imágenes y controles")
         dock_left.setWidget(self._left)
+        dock_left.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
 
         # Centro: visor
         self._viewer = ImageViewer()
@@ -107,6 +108,7 @@ class MainWindow(QMainWindow):
         self._right = RightPanel()
         dock_right = QDockWidget("Extracción y edición")
         dock_right.setWidget(self._right)
+        dock_right.setFeatures(QDockWidget.DockWidgetFeature.NoDockWidgetFeatures)
 
         self.setCentralWidget(self._viewer)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock_left)
