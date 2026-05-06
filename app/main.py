@@ -2,21 +2,28 @@
 
 """Punto de entrada de la aplicación."""
 import logging
+import os
 import sys
+from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QDialog
 
-from app.config import API_BASE_URL, APP_ROOT
+from app.config import API_BASE_URL
 from app.ui.login_window import LoginWindow
 from app.ui.main_window import MainWindow
 from app.ui.themes import apply_theme, get_saved_theme
 
 
-def setup_logging():
+def setup_logging() -> Path:
     """Configura logging con RotatingFileHandler."""
-    log_dir = APP_ROOT.parent / "logs"
-    log_dir.mkdir(exist_ok=True)
+    local_appdata = os.getenv("LOCALAPPDATA")
+    if local_appdata:
+        log_dir = Path(local_appdata) / "ExtractorOCR" / "logs"
+    else:
+        # Fallback para entornos sin LOCALAPPDATA definido.
+        log_dir = Path.home() / "AppData" / "Local" / "ExtractorOCR" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "extractor_ocr.log"
 
     from logging.handlers import RotatingFileHandler
@@ -37,11 +44,13 @@ def setup_logging():
     console.setLevel(logging.INFO)
     console.setFormatter(formatter)
     root.addHandler(console)
+    return log_file
 
 
 def main():
-    setup_logging()
+    log_file = setup_logging()
     log = logging.getLogger("app.main")
+    log.info("Log file: %s", log_file)
     log.info("Backend API: %s", API_BASE_URL)
 
     # Alta DPI: debe llamarse antes de crear QApplication

@@ -8,7 +8,7 @@ Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **dest
 - Rotación, recorte libre o cuadrado 1:1, envío del recorte a la IA y formulario de campos estructurados.
 - Registro por **sede** obligatoria: `AJUSCO` o `COYOACÁN`.
 - **Exportación** por rango de fechas (CSV / Excel) según los datos disponibles desde el backend o el modo local de tests.
-- **Temas** desde el menú Ver; registro de actividad en `logs/extractor_ocr.log` (carpeta `logs/` en la raíz del repositorio).
+- **Temas** desde el menú Ver; registro de actividad en `%LOCALAPPDATA%\ExtractorOCR\logs\extractor_ocr.log` (la app crea la carpeta automáticamente al iniciar).
 
 ## Requisitos
 
@@ -81,6 +81,26 @@ python -m app.main
 ```
 
 Asegúrate de que el backend responde en `API_BASE_URL` antes de iniciar sesión.
+
+### Logs en Windows (desarrollo y producción)
+
+La app escribe logs siempre en una ruta por usuario:
+
+- `%LOCALAPPDATA%\ExtractorOCR\logs\extractor_ocr.log`
+
+No necesitas crear la carpeta manualmente: la aplicación crea `ExtractorOCR\logs` al arrancar.
+
+Para abrir la carpeta de logs en PowerShell:
+
+```powershell
+explorer "$env:LOCALAPPDATA\ExtractorOCR\logs"
+```
+
+Para seguir el log en tiempo real:
+
+```powershell
+Get-Content "$env:LOCALAPPDATA\ExtractorOCR\logs\extractor_ocr.log" -Wait
+```
 
 ## Uso (flujo típico)
 
@@ -169,7 +189,7 @@ extraccion_ocr.py      # Script legacy por lotes (sin UI)
 `pyinstaller` está referenciado en `requirements.txt`. Ejemplo mínimo (desde la raíz del proyecto):
 
 ```bash
-pyinstaller --name ExtractorOCR --windowed --onefile app/main.py
+pyinstaller --noconfirm --clean --windowed --onefile --name ExtractorOCR --icon ".\extractor_ocr.ico" app/main.py
 ```
 
 Si al ejecutar el binario faltan módulos del paquete `app`, amplía el comando con [`--hidden-import`](https://pyinstaller.org/en/stable/usage.html) o un archivo `.spec` que recoja submódulos y datos estáticos que uses.
