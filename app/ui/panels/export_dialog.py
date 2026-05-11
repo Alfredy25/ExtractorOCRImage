@@ -18,7 +18,12 @@ from PySide6.QtWidgets import (
 
 from app.config import SEDES
 from app.core.exporters import export_csv, export_excel, suggested_filename
-from app.core.repository import list_by_date_range
+from app.core.repository import (
+    RepositoryApiError,
+    RepositorySessionExpiredError,
+    list_by_date_range,
+)
+from app.ui.session_relogin import prompt_relogin_after_session_expired
 
 
 def _downloads_folder() -> Path:
@@ -133,7 +138,21 @@ class ExportDialog(QDialog):
 
         path = Path(path_str)
         sede = self._sede.currentData()
-        records = list_by_date_range(dt_desde, dt_hasta, sede)
+        try:
+            records = list_by_date_range(dt_desde, dt_hasta, sede)
+        except RepositorySessionExpiredError as e:
+            prompt_relogin_after_session_expired(
+                self, f"No se pudieron obtener registros: {e}"
+            )
+            return
+        except RepositoryApiError as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"No se pudieron obtener registros: {e}",
+            )
+            return
+
         if not records:
             sede_txt = self._sede.currentText()
             extra = f"\nSede: {sede_txt}." if sede else ""

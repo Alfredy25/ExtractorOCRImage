@@ -19,11 +19,15 @@ from app.config import DATA_DIR, EXPORT_DIR
 from app.core.image_io import load_image
 from app.core.crop_tools import apply_crop
 from app.core.ai_client import extract_fields
-from app.core.repository import insert_extraction
+from app.core.repository import (
+    RepositorySessionExpiredError,
+    insert_extraction,
+)
 from app.ui.image_viewer import ImageViewer
 from app.ui.panels.left_panel import LeftPanel
 from app.ui.panels.right_panel import RightPanel, FIELD_KEYS
 from app.ui.panels.export_dialog import ExportDialog
+from app.ui.session_relogin import prompt_relogin_after_session_expired
 from app.ui.themes import apply_theme, save_theme, get_saved_theme, THEME_NAMES
 
 logger = logging.getLogger(__name__)
@@ -356,6 +360,10 @@ class MainWindow(QMainWindow):
         try:
             insert_extraction(record)
             QMessageBox.information(self, "Guardado", "Registro guardado correctamente.")
+        except RepositorySessionExpiredError as e:
+            logger.warning("Sesión caducada o no autorizado al guardar")
+            prompt_relogin_after_session_expired(self, f"No se pudo guardar: {e}")
+            return
         except Exception as e:
             logger.exception("Error al guardar")
             QMessageBox.critical(self, "Error", f"No se pudo guardar: {e}")

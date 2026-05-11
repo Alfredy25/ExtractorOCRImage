@@ -22,6 +22,10 @@ from app.core.auth_client import get_access_token
 class RepositoryApiError(Exception):
     """Fallo al crear registro por HTTP (red, 4xx/5xx, cuerpo sin id). Mensaje para la UI."""
 
+
+class RepositorySessionExpiredError(RepositoryApiError):
+    """401 en API: JWT caducado o no autorizado; la UI puede ofrecer re-login sin perder estado."""
+
 # Raíz del proyecto (…/ExtractorOcrImagenes)
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -216,7 +220,7 @@ def _insert_extraction_api(record: dict) -> int:
         raise RepositoryApiError(f"No se pudo conectar con el servidor: {e}") from e
 
     if response.status_code == 401:
-        raise RepositoryApiError(
+        raise RepositorySessionExpiredError(
             "Sesión caducada o no autorizado. Vuelva a iniciar sesión."
         )
 
@@ -504,7 +508,7 @@ def _list_by_date_range_api(desde: datetime, hasta: datetime, sede: str | None) 
         raise RepositoryApiError(f"No se pudo conectar con el servidor: {e}") from e
 
     if response.status_code == 401:
-        raise RepositoryApiError(
+        raise RepositorySessionExpiredError(
             "Sesión caducada o no autorizado. Vuelva a iniciar sesión."
         )
 
