@@ -153,15 +153,19 @@ class LeftPanel(QWidget):
 
     def remove_image(self, path: Path) -> Path | None:
         """
-        Elimina la imagen de la lista. Retorna la siguiente imagen a mostrar
-        (la que estaba después, o la primera si era la última, o None si queda vacía).
+        Elimina la imagen de la lista. Retorna la imagen que debe mostrarse a
+        continuación (la que estaba justo después; si se quitó la última, la
+        que quedó al final; ``None`` si la cola queda vacía).
+
+        Solo quita la fila en el widget y en ``_images``; no repuebla la lista
+        (evita releer todas las miniaturas al guardar).
         """
         try:
             idx = self._images.index(path)
         except ValueError:
             return None
+        self._list.takeItem(idx)
         self._images.pop(idx)
-        self._populate_list()
         if not self._images:
             return None
         next_idx = min(idx, len(self._images) - 1)
