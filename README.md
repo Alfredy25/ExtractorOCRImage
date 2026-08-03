@@ -184,15 +184,79 @@ skills/
 extraccion_ocr.py      # Script legacy por lotes (sin UI)
 ```
 
-## Empaquetado (PyInstaller)
+## Empaquetado e instalador
 
-`pyinstaller` está referenciado en `requirements.txt`. Ejemplo mínimo (desde la raíz del proyecto):
+Para distribuir la app en Windows se recomienda generar primero una carpeta `--onedir` con PyInstaller y después crear un instalador con Inno Setup. Este flujo es más estable para PySide6 que `--onefile` y permite instalar todas las dependencias juntas.
 
-```bash
-pyinstaller --noconfirm --clean --windowed --onefile --name ExtractorOCR --icon ".\extractor_ocr.ico" app/main.py
+### 1. Generar carpeta con PyInstaller
+
+Desde la raíz del proyecto:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+
+python -m PyInstaller `
+  --noconfirm `
+  --clean `
+  --windowed `
+  --onedir `
+  --name "ExtractorOCR" `
+  --icon ".\extractor_ocr.ico" `
+  --paths "." `
+  "app\main.py"
 ```
 
-Si al ejecutar el binario faltan módulos del paquete `app`, amplía el comando con [`--hidden-import`](https://pyinstaller.org/en/stable/usage.html) o un archivo `.spec` que recoja submódulos y datos estáticos que uses.
+El ejecutable queda en:
+
+```text
+dist\ExtractorOCR\ExtractorOCR.exe
+```
+
+Antes de crear el instalador, abre ese `.exe` y valida que la ventana de login aparezca correctamente.
+
+### 2. Crear instalador con Inno Setup
+
+El script del instalador está en:
+
+```text
+installer\ExtractorOCR.iss
+```
+
+Abre **Inno Setup Compiler**, carga ese archivo y ejecuta **Build > Compile**. El instalador resultante se genera en:
+
+```text
+installer_output\Instalador_ExtractorOCR.exe
+```
+
+Con la configuración actual, la app se instala para el usuario actual en:
+
+```text
+C:\Users\Alfredo\AppData\Local\Programs\ExtractorOCR
+```
+
+Los logs no se guardan dentro de la carpeta instalada; la app los crea automáticamente en:
+
+```text
+%LOCALAPPDATA%\ExtractorOCR\logs\extractor_ocr.log
+```
+
+### 3. Variables de entorno
+
+El instalador configura variables de usuario como `API_BASE_URL`, `LOGIN_ENDPOINT`, `REGISTROS_ENDPOINT`, `API_TIMEOUT_SECONDS`, `OPENAI_MODEL`, `TIMEOUT_SECONDS` y `EXPORT_DIR`.
+
+La clave `OPENAI_API_KEY` no debe incluirse en el instalador ni en el repositorio. Agrégala como variable de entorno de usuario en cada máquina:
+
+```powershell
+setx OPENAI_API_KEY "tu_clave_openai"
+```
+
+Después de agregarla, cierra y vuelve a abrir la app. Si la app ya estaba abierta, no verá la variable nueva hasta reiniciarse. Para verificarla en una nueva PowerShell:
+
+```powershell
+echo $env:OPENAI_API_KEY
+```
+
+No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya están configuradas en Windows. Si cambias valores del instalador, recompila `installer\ExtractorOCR.iss` y vuelve a instalar.
 
 ## Script legacy
 

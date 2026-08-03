@@ -25,3 +25,7 @@ build/
 *.sqlite3
 db.sqlite3
 data/db.sqlite3
+
+/installer_output
+
+Documentacion_ExtractorOCR.pdf
