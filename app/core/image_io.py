@@ -8,7 +8,8 @@ from PySide6.QtGui import QImage, QPixmap
 
 def load_image(path: Path) -> np.ndarray | None:
     """Carga una imagen desde disco como BGR (OpenCV)."""
-    img = cv2.imread(str(path))
+    data = np.fromfile(path, dtype=np.uint8)
+    img = cv2.imdecode(data, cv2.IMREAD_COLOR)
     if img is None:
         return None
     return img

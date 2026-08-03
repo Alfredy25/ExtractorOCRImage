@@ -76,7 +76,7 @@ def _fecha_from_created_at(created: Any) -> str:
     if created is None:
         return ""
     if isinstance(created, datetime):
-        return created.date().strftime("%d-%m-%Y")
+        return created.date().strftime("%d-%m-%Y %H:%M")
     if type(created) is date:
         return created.strftime("%d-%m-%Y")
     if isinstance(created, str):
