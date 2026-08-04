@@ -22,7 +22,7 @@ load_dotenv(ROOT / ".env")
 
 
 def main() -> int:
-    from app.core.db_health import check_database
+    from app.services.db_health import check_database
 
     ok, msg = check_database()
     print(msg)

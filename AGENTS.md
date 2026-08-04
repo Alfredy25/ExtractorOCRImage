@@ -75,9 +75,10 @@ flowchart LR
 ### Alcance de cambios
 
 - Tocar solo archivos necesarios; no refactor masivo no solicitado.
-- **UI**: `app/ui/` (p. ej. `main_window.py`, `themes.py`, `panels/`, `image_viewer.py`).
-- **Core**: `app/core/` (`ai_client.py`, `parsing.py`, `crop_tools.py`, `exporters.py`, `repository.py`, `models.py`, …).
-- **Config**: `app/config.py` — cambios coordinados con quien use esas constantes.
+- **UI**: `app/components/` (widgets) y `app/views/` (ventanas y diálogos).
+- **Negocio**: `app/services/`; clientes HTTP en `app/api/`, modelos en `app/models/`.
+- **Estado y utilidades**: `app/states/` y `app/utils/`.
+- **Config**: `app/config/` — cambios coordinados con quien use esos settings o constantes.
 - **Legacy**: `extraccion_ocr.py` — solo si el alcance lo pide; no divergir del contrato de la app sin motivo.
 
 ### Definition of Done
@@ -102,8 +103,8 @@ flowchart LR
 
 ### SQLite (actual)
 
-- Base de datos de aplicación según `app/config.py` (`DB_PATH` → `app/data/db.sqlite3`).
-- **Datos** y **Core** usan el repositorio/capa de acceso existente (`app/core/repository.py` y relacionados).
+- Base de datos de aplicación según `app/config/settings.py` (`DB_PATH` → `app/data/db.sqlite3`).
+- **Datos** y **Core** usan la capa de acceso existente (`app/services/registros_service.py` y relacionados).
 - Migraciones o esquema: solo con cambios explícitos y tests.
 
 ### Rol de los subagentes frente a la DB

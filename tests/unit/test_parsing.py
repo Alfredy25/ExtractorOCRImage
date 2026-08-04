@@ -1,7 +1,7 @@
 """Tests de parsing."""
 import pytest
 
-from app.core.parsing import parse_extraccion, _fallback_extraccion
+from app.services.parsing_service import _fallback_extraccion, parse_extraccion
 
 
 def test_parse_valid_json():

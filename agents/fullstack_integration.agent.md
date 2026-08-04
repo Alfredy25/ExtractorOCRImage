@@ -6,7 +6,7 @@
 
 ## Cuándo usarlo
 
-- Cambios que cruzan `app/ui/main_window.py` (o paneles) **y** `app/core/` en el mismo flujo.
+- Cambios que cruzan `app/views/main_window.py` (o componentes) y `app/services/`.
 - Introducir o modificar llamadas async/hilo para OpenAI o I/O pesado.
 - Definir DTOs o métodos “fachada” entre capas.
 
@@ -37,9 +37,9 @@
 
 ## Archivos que suele tocar
 
-- `app/ui/main_window.py`, `app/ui/panels/*.py` (wiring)
+- `app/views/main_window.py`, `app/components/panels/*.py` (wiring)
 - Posiblemente `app/main.py` (política DPI / arranque)
-- Punto de contacto con `app/core/` sin meter lógica de negocio en la vista
+- Punto de contacto con `app/services/` sin meter lógica de negocio en la vista
 
 ## Skills (links)
 

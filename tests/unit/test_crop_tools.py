@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-from app.core.crop_tools import apply_crop, apply_rotation
+from app.utils.crop_tools import apply_crop, apply_rotation
 
 
 def test_apply_crop():

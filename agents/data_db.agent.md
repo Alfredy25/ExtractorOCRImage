@@ -6,7 +6,7 @@
 
 ## Cuándo usarlo
 
-- Cambios en `app/core/repository.py`, rutas en `app/config.py` relacionadas con `DB_PATH` / `DATA_DIR`.
+- Cambios en `app/services/registros_service.py` o rutas de `app/config/settings.py`.
 - Nuevas tablas, índices, migraciones locales SQLite **cuando el alcance lo exija**.
 - Tests en `tests/unit/test_repository.py`.
 
@@ -37,8 +37,8 @@
 
 ## Archivos que suele tocar
 
-- `app/core/repository.py`, `app/core/models.py` (si afecta persistencia)
-- `app/config.py` (`DB_PATH`, `DATA_DIR`)
+- `app/services/registros_service.py`, `app/models/` (si afecta persistencia)
+- `app/config/settings.py` (`DB_PATH`, `DATA_DIR`)
 - `app/data/` (ubicación de sqlite; no commitear datos sensibles)
 - `tests/unit/test_repository.py`
 

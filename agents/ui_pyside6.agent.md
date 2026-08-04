@@ -6,7 +6,7 @@ Interfaz de escritorio con **PySide6**: ventanas, layouts, estilos/temas, visor 
 
 ## Cuándo usarlo
 
-- Cambios en `app/ui/` (widgets, `themes.py`, `main_window.py`, `image_viewer.py`, `panels/`).
+- Cambios en `app/components/` o `app/views/`.
 - Nuevos controles, atajos de teclado, flujos puramente de presentación.
 
 ## Cuándo NO
@@ -17,7 +17,7 @@ Interfaz de escritorio con **PySide6**: ventanas, layouts, estilos/temas, visor 
 
 ## Decisiones que SÍ puede tomar
 
-- Estructura de layouts, nombres de widgets internos, estilo visual acorde a `themes.py`.
+- Estructura de layouts, nombres de widgets internos y estilo acorde a `theme_manager.py`.
 - Señales/slots entre componentes de UI.
 - Textos de UI y accesibilidad básica (tooltips, mnemonics razonables).
 
@@ -29,15 +29,15 @@ Interfaz de escritorio con **PySide6**: ventanas, layouts, estilos/temas, visor 
 
 ## Checklist de trabajo
 
-- [ ] ¿El trabajo queda en `app/ui/` (o recursos asociados)?
-- [ ] ¿Lógica pesada delegada a `app/core/` vía métodos claros?
+- [ ] ¿El trabajo queda en `app/components/` o `app/views/`?
+- [ ] ¿Lógica pesada delegada a `app/services/` vía métodos claros?
 - [ ] Skills: [`skills/ui_pyside6.md`](../skills/ui_pyside6.md), [`skills/code_style_python.md`](../skills/code_style_python.md), [`skills/token_efficiency.md`](../skills/token_efficiency.md)
 - [ ] Prueba manual del flujo afectado.
 
 ## Archivos que suele tocar
 
-- `app/ui/main_window.py`, `app/ui/themes.py`, `app/ui/image_viewer.py`
-- `app/ui/panels/*.py`
+- `app/views/main_window.py`, `app/components/theme_manager.py`
+- `app/components/image_viewer.py`, `app/components/panels/*.py`
 - `app/main.py` solo si afecta arranque de `QApplication` (coordinar).
 
 ## Skills (links)

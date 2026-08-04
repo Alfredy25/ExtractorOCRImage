@@ -5,15 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from app.core.repository import insert_extraction, list_by_date_range
+from app.services.registros_service import insert_extraction, list_by_date_range
 
 
 @pytest.fixture
 def temp_db(monkeypatch):
     with tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False) as f:
         path = f.name
-    monkeypatch.setattr("app.core.repository.DB_PATH", Path(path))
-    monkeypatch.setattr("app.core.repository.DATA_DIR", Path(path).parent)
+    monkeypatch.setattr("app.services.registros_service.DB_PATH", Path(path))
+    monkeypatch.setattr("app.services.registros_service.DATA_DIR", Path(path).parent)
     try:
         yield path
     finally:

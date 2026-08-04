@@ -52,7 +52,7 @@ No subas `.env` al repositorio; usa secretos solo en local o en tu gestor de des
 
 ## Variables de entorno
 
-Resumen (valores por defecto en código: `app/config.py`). La plantilla está en [`.env.example`](.env.example).
+Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en [`.env.example`](.env.example).
 
 | Variable | Descripción |
 |----------|-------------|
@@ -170,9 +170,15 @@ Procedimiento orientado al **entorno de datos** (servidor, migraciones, comproba
 ```
 app/
   main.py              # Entrada: logging, login, ventana principal
-  config.py            # Variables de entorno y rutas
-  ui/                  # PySide6: ventanas, paneles, visor, temas
-  core/                # IA, cliente HTTP, repositorio, exportación, recorte, modelos
+  api/                 # Clientes HTTP de autenticación y registros
+  services/            # Casos de uso: OCR, auth, registros y exportación
+  components/          # Widgets y paneles reutilizables de PySide6
+  views/               # Ventanas principales y diálogos
+  states/              # Sesión, caché de imágenes y workers
+  models/              # Modelos de dominio y esquemas compartidos
+  utils/               # Imagen, recorte y mapeos reutilizables
+  config/              # Settings, variables de entorno y constantes
+  assets/              # Iconos, imágenes y recursos de temas
   data/                # SQLite local de desarrollo (ruta por defecto), exports por defecto
 sql/                   # Esquema MySQL
 scripts/               # create_mysql_schema, migrate_sqlite_to_mysql, check_db

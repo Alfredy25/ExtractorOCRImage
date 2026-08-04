@@ -2,7 +2,7 @@
 
 ## Principios
 
-- **API keys** solo vía variables de entorno (ver `python-dotenv` en `app/config.py`); archivo `.env` local y no versionado.
+- **API keys** solo vía variables de entorno (ver `app/config/settings.py`); archivo `.env` local y no versionado.
 - No registrar en logs: claves, tokens, contenido completo de respuestas IA con datos personales.
 - Rutas de usuario y exports: validar permisos y evitar path traversal donde haya entrada externa.
 
@@ -31,6 +31,6 @@ Security pass: [archivo] — revisar logs y excepciones; sin secretos; lista hal
 
 ## Referencias en el repo
 
-- `app/config.py` — `OPENAI_API_KEY`, rutas
-- `app/core/ai_client.py` — llamadas API
-- `app/core/exporters.py` — escritura de archivos
+- `app/config/settings.py` — `OPENAI_API_KEY`, rutas
+- `app/services/ocr_service.py` — llamadas OpenAI
+- `app/services/export_service.py` — escritura de archivos

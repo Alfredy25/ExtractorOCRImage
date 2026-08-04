@@ -9,10 +9,10 @@ from pathlib import Path
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QDialog
 
+from app.components.theme_manager import apply_theme, get_saved_theme
 from app.config import API_BASE_URL
-from app.ui.login_window import LoginWindow
-from app.ui.main_window import MainWindow
-from app.ui.themes import apply_theme, get_saved_theme
+from app.views.login_window import LoginWindow
+from app.views.main_window import MainWindow
 
 
 def setup_logging() -> Path:

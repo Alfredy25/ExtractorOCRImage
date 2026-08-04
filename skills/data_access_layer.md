@@ -2,7 +2,7 @@
 
 ## Principios
 
-- **Un solo lugar** para SQL y transacciones: preferentemente `app/core/repository.py` (ajustar si el repo evoluciona).
+- **Un solo lugar** para SQL y transacciones: `app/services/registros_service.py`.
 - La UI y el cliente OpenAI **no** ejecutan SQL.
 - Tipos y filas mapeados a modelos/domain claros antes de subir a la UI.
 
@@ -17,7 +17,7 @@
 | Do | Don’t |
 |----|--------|
 | Funciones con nombres de dominio (`save_*`, `list_*`) | Queries sueltas en `main_window.py` |
-| Rutas de DB desde `app/config.py` (`DB_PATH`) | Paths absolutos máquina-local en código |
+| Rutas de DB desde `app/config/` (`DB_PATH`) | Paths absolutos máquina-local en código |
 | Comentario breve si un campo prepara InnoDB futuro | Migración MySQL sin tarea aprobada |
 
 ## Plantillas de prompts cortos
@@ -32,7 +32,7 @@ Nueva columna: migración local sqlite + test; nota InnoDB en comentario (ver db
 
 ## Referencias en el repo
 
-- `app/core/repository.py`
-- `app/config.py` — `DB_PATH`, `DATA_DIR`
+- `app/services/registros_service.py`
+- `app/config/settings.py` — `DB_PATH`, `DATA_DIR`
 - `app/data/` — ubicación típica de `db.sqlite3`
 - `tests/unit/test_repository.py`

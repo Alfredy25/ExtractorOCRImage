@@ -9,7 +9,7 @@ import tempfile
 import pandas as pd
 import pytest
 
-from app.core.exporters import (
+from app.services.export_service import (
     EXPORT_COLUMNS,
     _records_to_rows,
     export_excel,
@@ -62,7 +62,7 @@ def test_records_to_rows_api_contract_shape():
     rows = _records_to_rows(normalize_registros_for_export(raw))
     assert len(rows) == 1
     r = rows[0]
-    assert r["fecha"] == "22-04-2026"
+    assert r["fecha"] == "22-04-2026 17:35"
     assert r["imagen"] == "IMG_20260204_140120.jpg"
     assert r["extras"] == ""
     assert r["indicaciones"] == ""
@@ -72,21 +72,21 @@ def test_records_to_rows_api_contract_shape():
 
 
 @pytest.mark.parametrize(
-    "created,expected_day",
+    "created,expected_datetime",
     [
-        ("2026-04-22T17:35:47", "22-04-2026"),
-        ("2026-04-22 17:35:47", "22-04-2026"),
-        (datetime(2026, 4, 22, 17, 35, 47), "22-04-2026"),
-        (date(2026, 4, 22), "22-04-2026"),
+        ("2026-04-22T17:35:47", "22-04-2026 17:35"),
+        ("2026-04-22 17:35:47", "22-04-2026 17:35"),
+        (datetime(2026, 4, 22, 17, 35, 47), "22-04-2026 17:35"),
+        (date(2026, 4, 22), "22-04-2026 00:00"),
     ],
 )
-def test_fecha_from_created_at_variants(created, expected_day):
+def test_fecha_from_created_at_variants(created, expected_datetime):
     rows = _records_to_rows(
         normalize_registros_for_export(
             [{"created_at": created, "nombre_imagen": "x.jpg", "destinatario_raw": "d"}]
         )
     )
-    assert rows[0]["fecha"] == expected_day
+    assert rows[0]["fecha"] == expected_datetime
 
 
 def test_export_excel_from_api_shape_roundtrip():
@@ -97,6 +97,6 @@ def test_export_excel_from_api_shape_roundtrip():
         df = pd.read_excel(path, engine="openpyxl")
         assert list(df.columns) == EXPORT_COLUMNS
         assert df.iloc[0]["imagen"] == "IMG_20260204_140120.jpg"
-        assert df.iloc[0]["fecha"] == "22-04-2026"
+        assert df.iloc[0]["fecha"] == "22-04-2026 17:35"
     finally:
         path.unlink(missing_ok=True)

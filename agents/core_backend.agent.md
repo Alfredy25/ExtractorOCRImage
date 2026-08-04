@@ -2,11 +2,11 @@
 
 ## Propósito
 
-Lógica **sin dependencia de Qt** donde sea posible: cliente OpenAI, parsing, recorte, I/O imagen, exportación, modelos Pydantic, funciones puras. Coordina con la capa de datos vía `app/core/repository.py` y similares.
+Lógica **sin dependencia de Qt** donde sea posible: servicios OCR, parsing, recorte, I/O imagen, exportación, modelos Pydantic y funciones puras. Coordina con datos vía `app/services/registros_service.py`.
 
 ## Cuándo usarlo
 
-- Cambios en `app/core/` (`ai_client.py`, `parsing.py`, `crop_tools.py`, `exporters.py`, `image_io.py`, `models.py`, `repository.py`).
+- Cambios en `app/services/`, `app/api/`, `app/models/` o `app/utils/`.
 - Ajustes de prompts o validación de respuestas IA.
 - Script legacy `extraccion_ocr.py` solo si el alcance es explícito.
 
@@ -19,7 +19,7 @@ Lógica **sin dependencia de Qt** donde sea posible: cliente OpenAI, parsing, re
 ## Decisiones que SÍ puede tomar
 
 - Refactor interno de funciones core si mantiene contratos públicos hacia UI/repository.
-- Manejo de errores y reintentos de API dentro de lo definido en `app/config.py`.
+- Manejo de errores y reintentos de API dentro de lo definido en `app/config/`.
 - Tests unitarios nuevos o actualizados en `tests/unit/`.
 
 ## Decisiones que NO puede tomar
@@ -37,9 +37,9 @@ Lógica **sin dependencia de Qt** donde sea posible: cliente OpenAI, parsing, re
 
 ## Archivos que suele tocar
 
-- `app/core/*.py`
+- `app/services/*.py`, `app/api/*.py`, `app/models/*.py`, `app/utils/*.py`
 - `tests/unit/test_parsing.py`, `test_exporters.py`, `test_crop_tools.py`, `test_repository.py`, etc.
-- `app/config.py` si cambian timeouts, modelo, rutas de export (coordinar).
+- `app/config/` si cambian timeouts, modelo o rutas de export (coordinar).
 
 ## Skills (links)
 

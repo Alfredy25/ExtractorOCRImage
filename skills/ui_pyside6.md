@@ -3,8 +3,8 @@
 ## Principios
 
 - Un hilo GUI: **no** bloquear con red, disco pesado o CPU larga.
-- Preferir señales/slots y métodos pequeños; lógica pesada en `app/core/`.
-- Temas y colores centralizados en `app/ui/themes.py` cuando el patrón ya exista.
+- Preferir señales/slots y métodos pequeños; lógica pesada en `app/services/`.
+- Temas y colores centralizados en `app/components/theme_manager.py`.
 
 ## Checklist
 
@@ -16,7 +16,7 @@
 
 | Do | Don’t |
 |----|--------|
-| Conectar UI a funciones de `app/core/` | SQL o `openai` directo en widgets |
+| Conectar UI a funciones de `app/services/` | SQL o `openai` directo en widgets |
 | Reutilizar estilos de `themes.py` | Copiar bloques enormes de CSS/Qt StyleSheet sin necesidad |
 | Probar flujo manualmente tras cambios visibles | Cambiar contratos de datos sin coordinar |
 
@@ -32,7 +32,7 @@ MainWindow: nueva acción [menú] → llama [método core]; no bloquear GUI.
 
 ## Referencias en el repo
 
-- `app/ui/main_window.py` — shell principal
-- `app/ui/themes.py` — tema claro/oscuro
-- `app/ui/image_viewer.py` — visor/zoom
-- `app/ui/panels/` — paneles laterales y diálogos
+- `app/views/main_window.py` — shell principal
+- `app/components/theme_manager.py` — tema claro/oscuro
+- `app/components/image_viewer.py` — visor/zoom
+- `app/components/panels/` — paneles laterales

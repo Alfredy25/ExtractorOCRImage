@@ -2,9 +2,9 @@
 
 ## Principios
 
-- **OpenAI** para visión/OCR según `app/core/ai_client.py` y configuración en `app/config.py` (`OPENAI_MODEL`, `TIMEOUT_SECONDS`, `AI_RETRY_COUNT`).
-- Respuestas validadas con Pydantic donde exista (`app/core/models.py`, `parsing.py`).
-- Recorte e imagen: `crop_tools.py`, `image_io.py` — sin mezclar Qt salvo frontera acordada.
+- **OpenAI** para visión/OCR según `app/services/ocr_service.py` y `app/config/`.
+- Respuestas validadas con Pydantic en `app/models/extraction.py` y `app/services/parsing_service.py`.
+- Recorte e imagen: `app/utils/crop_tools.py`, `app/utils/image_io.py`.
 
 ## Checklist
 
@@ -31,9 +31,8 @@ ai_client: timeout/retry — solo config + ai_client; revisar security_privacy.
 
 ## Referencias en el repo
 
-- `app/core/ai_client.py`
-- `app/core/parsing.py`
-- `app/core/models.py`
-- `app/core/crop_tools.py`, `app/core/image_io.py`
-- `app/config.py` — `OPENAI_*`, `AI_RETRY_COUNT`
+- `app/services/ocr_service.py`, `app/services/parsing_service.py`
+- `app/models/extraction.py`
+- `app/utils/crop_tools.py`, `app/utils/image_io.py`
+- `app/config/` — `OPENAI_*`, `AI_RETRY_COUNT`
 - `extraccion_ocr.py` — referencia legacy por lotes

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.core.exporters import export_csv, export_excel, suggested_filename
+from app.services.export_service import export_csv, export_excel, suggested_filename
 
 
 def test_export_csv():

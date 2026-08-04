@@ -32,5 +32,5 @@ Refactor local en [función] — sin cambiar API pública.
 ## Referencias en el repo
 
 - `app/main.py` — entrada
-- `app/core/*.py` — estilo dominio
-- `app/ui/*.py` — estilo Qt
+- `app/services/*.py`, `app/api/*.py`, `app/models/*.py` — estilo dominio
+- `app/components/*.py`, `app/views/*.py` — estilo Qt
