@@ -2,7 +2,7 @@
 
 ## Propósito
 
-**Capa de acceso a datos** y coherencia del esquema en **SQLite** (actual). Preparar **compatibilidad conceptual** con **MySQL InnoDB** (`tools_OCR` en CyberPanel) **sin ejecutar migración** hasta decisión explícita.
+**Capa de acceso a datos** y coherencia del esquema en **SQLite** (actual) para pruebas.
 
 ## Cuándo usarlo
 
@@ -32,7 +32,7 @@
 
 - [ ] ¿Todo SQL vive en la capa de datos (p. ej. `repository.py`), no en UI?
 - [ ] ¿Tests de repositorio actualizados?
-- [ ] Skills: [`skills/data_access_layer.md`](../skills/data_access_layer.md), [`skills/db_strategy_innodb.md`](../skills/db_strategy_innodb.md), [`skills/security_privacy.md`](../skills/security_privacy.md), [`skills/testing_python.md`](../skills/testing_python.md)
+- [ ] Skills: [`skills/data_access_layer.md`](../skills/data_access_layer.md), [`skills/security_privacy.md`](../skills/security_privacy.md), [`skills/testing_python.md`](../skills/testing_python.md)
 - [ ] `pytest tests/unit/test_repository.py -v`
 
 ## Archivos que suele tocar

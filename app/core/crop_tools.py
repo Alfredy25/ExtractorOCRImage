@@ -1,6 +1,6 @@
 """Herramientas de recorte y rotación de imágenes."""
 import numpy as np
-
+import cv2
 
 def apply_rotation(image: np.ndarray, deg: int) -> np.ndarray:
     """Aplica rotación a la imagen. deg debe ser uno de -90, 90, 180."""
@@ -13,7 +13,7 @@ def apply_rotation(image: np.ndarray, deg: int) -> np.ndarray:
     if deg == 180:
         return np.rot90(image, k=2).copy()
     # Deg no estándar: usar cv2
-    import cv2
+    
     h, w = image.shape[:2]
     center = (w // 2, h // 2)
     M = cv2.getRotationMatrix2D(center, deg, 1.0)

@@ -5,7 +5,7 @@
 Este repositorio usa **agentes especializados** (definidos en `agents/`) y **skills reutilizables** (`skills/`) para que Cursor y otros asistentes trabajen con **responsabilidad única**, **menos tokens** y **menos ambigüedad**.
 
 - **Entrada de la app**: `python -m app.main`
-- **Stack**: Python 3.11+, PySide6, SQLite hoy; MySQL/InnoDB planificado (sin migración ejecutada aún).
+- **Stack**: Python 3.11+, PySide6, SQLite para pruebas; integración con api.
 
 Los subagentes **no duplican reglas**: delegan en skills. Antes de tareas grandes, elige el subagente adecuado y abre los skills enlazados.
 
@@ -18,8 +18,6 @@ Los subagentes **no duplican reglas**: delegan en skills. Antes de tareas grande
 | **Single responsibility** | Un cambio = un subagente principal; cruces mínimos UI ↔ core. |
 | **Token efficiency** | Skills con checklists; prompts cortos; evitar pegar el repo entero. |
 | **Explícito sobre implícito** | Límites de decisión en cada `.agent.md`; DB presente vs futuro en `skills/db_strategy_innodb.md`. |
-| **Sin migración prematura** | SQLite sigue siendo la fuente de verdad hasta decisión explícita de migrar. |
-
 ---
 
 ## Subagentes (cuándo usar cuál)
@@ -29,7 +27,7 @@ Los subagentes **no duplican reglas**: delegan en skills. Antes de tareas grande
 | **UI PySide6** | Ventanas, widgets, temas, señales/slots, accesibilidad básica. | [`agents/ui_pyside6.agent.md`](agents/ui_pyside6.agent.md) |
 | **Core / backend** | IA (OpenAI), parsing, recorte, exporters, lógica sin Qt. | [`agents/core_backend.agent.md`](agents/core_backend.agent.md) |
 | **Integración full‑stack** | Contratos UI↔core, hilos/async, wiring en `main_window`, flujos end‑to‑end. | [`agents/fullstack_integration.agent.md`](agents/fullstack_integration.agent.md) |
-| **Datos / DB** | Acceso a datos, SQLite hoy; diseño y compatibilidad hacia MySQL/InnoDB **sin ejecutar migración**. | [`agents/data_db.agent.md`](agents/data_db.agent.md) |
+| **Datos / DB** | Acceso a datos, SQLite hoy para pruebas locales en desarrollo;| [`agents/data_db.agent.md`](agents/data_db.agent.md) |
 
 **Cuándo NO forzar subagentes**: cambios triviales de una línea o solo documentación pueden hacerse sin invocar un rol; igual conviene alinear el skill de estilo.
 
@@ -63,7 +61,6 @@ flowchart LR
 | [`skills/ui_pyside6.md`](skills/ui_pyside6.md) | ● | | ○ | |
 | [`skills/core_ocr_pipeline.md`](skills/core_ocr_pipeline.md) | | ● | ○ | ○ |
 | [`skills/data_access_layer.md`](skills/data_access_layer.md) | | ○ | ○ | ● |
-| [`skills/db_strategy_innodb.md`](skills/db_strategy_innodb.md) | | | ○ | ● |
 | [`skills/testing_python.md`](skills/testing_python.md) | ○ | ○ | ● | ○ |
 | [`skills/security_privacy.md`](skills/security_privacy.md) | ○ | ● | ● | ● |
 | [`skills/token_efficiency.md`](skills/token_efficiency.md) | ● | ● | ● | ● |
@@ -108,12 +105,6 @@ flowchart LR
 - Base de datos de aplicación según `app/config.py` (`DB_PATH` → `app/data/db.sqlite3`).
 - **Datos** y **Core** usan el repositorio/capa de acceso existente (`app/core/repository.py` y relacionados).
 - Migraciones o esquema: solo con cambios explícitos y tests.
-
-### MySQL / InnoDB (planeado)
-
-- Entorno de referencia: CyberPanel; base de datos objetivo: **`tools_OCR`** (InnoDB).
-- **No ejecutar** migración ni cambiar el driver por defecto hasta decisión de producto y tarea dedicada.
-- Hasta entonces: diseñar **DAL** y tipos de forma que un futuro backend MySQL pueda sustituir implementación sin reescribir UI ni prompts.
 
 ### Rol de los subagentes frente a la DB
 
