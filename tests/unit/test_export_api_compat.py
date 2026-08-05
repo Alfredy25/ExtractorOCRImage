@@ -24,13 +24,14 @@ def _sample_api_registro() -> dict:
         "sede": "AJUSCO",
         "nombre_imagen": "IMG_20260204_140120.jpg",
         "destinatario_raw": "C.P. BLANCA GUADALUPE ORTA IZAGUIRRE SUBSECRETARIA",
-        "nombre_o_titulo": "C.P. BLANCA GUADALUPE ORTA IZAGUIRRE",
+        "nombre_titulo": "C.P. BLANCA GUADALUPE ORTA IZAGUIRRE",
         "cargo_dependencia": "SUBSECRETARIA DE AUDITORÍA GUBERNAMENTAL",
         "direccion": "Av. Insurgentes Sur 123",
         "colonia": "Del Valle",
-        "municipio_o_alcaldia": "SALTILLO",
+        "municipio_alcaldia": "SALTILLO",
         "estado": "COAHUILA DE ZARAGOZA",
         "codigo_postal": "03100",
+        "numero_volante": "VCS-12-100000-00001",
         "extras": None,
         "contacto": "TEL. 844-986-9826",
         "indicaciones": "",
@@ -54,6 +55,7 @@ def test_normalize_registro_fills_missing_keys():
     out = normalize_registro_for_export(minimal)
     assert out["destinatario_raw"] is None
     assert out["indicaciones"] is None
+    assert out["numero_volante"] is None
     assert out["nombre_imagen"] == "a.jpg"
 
 
@@ -66,7 +68,9 @@ def test_records_to_rows_api_contract_shape():
     assert r["imagen"] == "IMG_20260204_140120.jpg"
     assert r["extras"] == ""
     assert r["indicaciones"] == ""
-    assert r["nombre_o_titulo"] == "C.P. BLANCA GUADALUPE ORTA IZAGUIRRE"
+    assert r["nombre_titulo"] == "C.P. BLANCA GUADALUPE ORTA IZAGUIRRE"
+    assert r["municipio_alcaldia"] == "SALTILLO"
+    assert r["numero_volante"] == "VCS-12-100000-00001"
     for col in EXPORT_COLUMNS:
         assert col in r
 
@@ -98,5 +102,6 @@ def test_export_excel_from_api_shape_roundtrip():
         assert list(df.columns) == EXPORT_COLUMNS
         assert df.iloc[0]["imagen"] == "IMG_20260204_140120.jpg"
         assert df.iloc[0]["fecha"] == "22-04-2026 17:35"
+        assert df.iloc[0]["numero_volante"] == "VCS-12-100000-00001"
     finally:
         path.unlink(missing_ok=True)

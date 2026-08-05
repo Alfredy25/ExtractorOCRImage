@@ -10,6 +10,7 @@ from app.api.registros_api import (
     create_registro,
     list_registros,
 )
+from app.models.registro import RegistroFieldError, validate_registro
 from app.services.auth_service import get_access_token
 
 
@@ -32,9 +33,9 @@ def _field_to_db(value: str | None, is_destinatario_raw: bool = False) -> str | 
 
 def _sede_for_api(record: dict) -> str:
     """
-    ``RegistroBase.sede`` en FastAPI: ``Literal['AJUSCO', 'COYOACAN']`` (COYOACAN sin tilde).
+    ``RegistroRequest.sede``: ``Literal['AJUSCO', 'COYOACAN']`` (COYOACAN sin tilde).
 
-    La UI y SQLite local usan ``COYOACÁN``; aquí se normaliza al valor que valida Pydantic.
+    La UI usa ``COYOACÁN``; aquí se normaliza al valor que valida Pydantic.
     """
     raw = (
         _field_to_db(record.get("sede"), False)
@@ -56,25 +57,25 @@ def _opt_str_api(value: str | None) -> str | None:
     return v if v else None
 
 
-def _opt_int_api(value: Any) -> int | None:
-    """Optional[int] del backend; convierte tipos numéricos (p. ej. numpy) a int nativo."""
-    if value is None:
-        return None
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
-
-
-def _aspect_mode_for_api(record: dict) -> str:
+def _aspect_mode_for_api(record: dict) -> str | None:
     """``Literal['FREE', 'SQUARE']`` del backend."""
-    am = str(record.get("aspect_mode", "FREE")).strip().upper()
-    return am if am in ("FREE", "SQUARE") else "FREE"
+    raw = record.get("aspect_mode")
+    if raw is None:
+        return None
+    return str(raw).strip().upper() or None
+
+
+class RegistroContractValidationError(ValueError):
+    """Errores acumulados al validar el contrato de creación."""
+
+    def __init__(self, errors: list[RegistroFieldError]):
+        self.errors = errors
+        super().__init__("El registro contiene campos inválidos.")
 
 
 def _record_to_insert_payload(record: dict) -> dict[str, Any]:
     """
-    Cuerpo JSON para ``POST /registros`` alineado con ``RegistroBase`` (Pydantic en FastAPI).
+    Cuerpo JSON para ``POST /registros`` alineado con ``RegistroRequest``.
 
     No incluye campos de auditoría; el backend toma el usuario del JWT.
     """
@@ -85,28 +86,53 @@ def _record_to_insert_payload(record: dict) -> dict[str, Any]:
     )
     destinatario_raw = _field_to_db(record.get("destinatario_raw"), True) or ""
 
-    return {
+    candidate: dict[str, Any] = {
         "sede": sede,
         "nombre_imagen": nombre_imagen,
         "destinatario_raw": destinatario_raw,
-        "nombre_o_titulo": _opt_str_api(record.get("nombre_o_titulo")),
-        "cargo_dependencia": _opt_str_api(record.get("cargo_dependencia")),
-        "direccion": _opt_str_api(record.get("direccion")),
-        "colonia": _opt_str_api(record.get("colonia")),
-        "municipio_o_alcaldia": _opt_str_api(record.get("municipio_o_alcaldia")),
-        "estado": _opt_str_api(record.get("estado")),
-        "codigo_postal": _opt_str_api(record.get("codigo_postal")),
-        "extras": _opt_str_api(record.get("extras")),
-        "contacto": _opt_str_api(record.get("contacto")),
-        "indicaciones": _opt_str_api(record.get("indicaciones")),
-        "observaciones_ia": _opt_str_api(record.get("observaciones_ia")),
-        "crop_x": _opt_int_api(record.get("crop_x")),
-        "crop_y": _opt_int_api(record.get("crop_y")),
-        "crop_w": _opt_int_api(record.get("crop_w")),
-        "crop_h": _opt_int_api(record.get("crop_h")),
-        "rotation_deg": _opt_int_api(record.get("rotation_deg")),
-        "aspect_mode": _aspect_mode_for_api(record),
     }
+    aspect_mode = _aspect_mode_for_api(record)
+    if aspect_mode is not None:
+        candidate["aspect_mode"] = aspect_mode
+
+    optional_strings = (
+        "nombre_titulo",
+        "cargo_dependencia",
+        "direccion",
+        "colonia",
+        "municipio_alcaldia",
+        "estado",
+        "codigo_postal",
+        "numero_volante",
+        "extras",
+        "contacto",
+        "indicaciones",
+        "observaciones_ia",
+    )
+    for key in optional_strings:
+        value = _opt_str_api(record.get(key))
+        if value is not None:
+            candidate[key] = value
+
+    for key in ("crop_x", "crop_y", "crop_w", "crop_h", "rotation_deg"):
+        value = record.get(key)
+        if value is not None and str(value).strip():
+            candidate[key] = value
+
+    validated, errors = validate_registro(candidate)
+    if errors:
+        raise RegistroContractValidationError(errors)
+    assert validated is not None
+    return validated.model_dump(exclude_none=True, exclude_unset=True)
+
+
+def validate_extraction(record: dict) -> list[RegistroFieldError]:
+    """Devuelve todos los errores del registro sin enviar datos a la API."""
+    try:
+        _record_to_insert_payload(record)
+    except RegistroContractValidationError as exc:
+        return exc.errors
+    return []
 
 
 def _insert_extraction_api(record: dict) -> int:

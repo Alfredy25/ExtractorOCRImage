@@ -4,7 +4,7 @@ from app.models.field_schema import FIELD_KEYS
 
 
 def to_db_record(form_data: dict, meta: dict) -> dict:
-    """Construye un registro alineado con la API y la base local."""
+    """Construye un registro alineado con la API."""
     campos = form_data.get("campos", {})
     record = {
         "sede": meta.get("sede", ""),

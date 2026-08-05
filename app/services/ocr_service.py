@@ -39,13 +39,14 @@ Instrucciones de extracción:
 {{
   "destinatario_raw": "",
   "campos": {{
-    "nombre_o_titulo": "",
+    "nombre_titulo": "",
     "cargo_dependencia": "",
     "direccion": "",
     "colonia": "",
-    "municipio_o_alcaldia": "",
+    "municipio_alcaldia": "",
     "estado": "",
     "codigo_postal": "",
+    "numero_volante": "",
     "extras": "",
     "contacto": "",
     "indicaciones": ""
@@ -57,9 +58,10 @@ Definiciones y criterios:
 - "destinatario_raw": TODO el texto del destinatario tal cual aparece en la etiqueta, respetando saltos de línea. Incluye: nombre/título, cargo/dependencia, calle y número, colonia, municipio o alcaldía, estado, código postal, teléfonos, horarios, referencias, "con copia al", "asunto", etc. (si están visibles en la etiqueta del destinatario).
 - "direccion": SOLO calle y número (y piso/interior/torre si se menciona). No incluyas colonia aquí.
 - "colonia": nombre de la colonia o barrio, si aparece.
-- "municipio_o_alcaldia": el municipio o la alcaldía.
+- "municipio_alcaldia": el municipio o la alcaldía.
 - "estado": tal como aparezca (puede ser abreviado).
 - "codigo_postal": tal como aparezca (no inventar).
+- "numero_volante": el número de volante, únicamente si está visible.
 - "extras": usa para "ASUNTO", "CON COPIA AL", "OFICIO", "CONTENIDO" u otros campos que no encajan en categorías anteriores, siempre que estén en la etiqueta del destinatario.
 - "contacto": teléfonos, extensiones u otros medios de contacto visibles.
 - "indicaciones": referencias, entre calles, horarios, instrucciones de acceso, puntos de referencia, etc., si aparecen en la etiqueta.
@@ -136,13 +138,14 @@ def extract_fields(image_np: np.ndarray, sede: str) -> dict:
     fallback = {
         "destinatario_raw": "",
         "campos": {
-            "nombre_o_titulo": "",
+            "nombre_titulo": "",
             "cargo_dependencia": "",
             "direccion": "",
             "colonia": "",
-            "municipio_o_alcaldia": "",
+            "municipio_alcaldia": "",
             "estado": "",
             "codigo_postal": "",
+            "numero_volante": "",
             "extras": "",
             "contacto": "",
             "indicaciones": "",

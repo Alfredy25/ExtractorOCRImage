@@ -40,7 +40,12 @@ class RightPanel(QWidget):
             le = QLineEdit()
             le.setPlaceholderText(key.replace("_", " "))
             self._fields[key] = le
-            form.addRow(key.replace("_", " ").title() + ":", le)
+            label = (
+                "Numero de volante"
+                if key == "numero_volante"
+                else key.replace("_", " ").title()
+            )
+            form.addRow(label + ":", le)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)

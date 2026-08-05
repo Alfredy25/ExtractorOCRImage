@@ -11,15 +11,16 @@ from app.services import registros_service as repo
 def _sample_record() -> dict:
     return {
         "sede": "COYOACÁN",
-        "nombre_imagen": "test.jpg",
-        "destinatario_raw": "TEXTO",
-        "nombre_o_titulo": "Juan",
+        "nombre_imagen": "IMG_20260204_140120.jpg",
+        "destinatario_raw": "C. JUAN PÉREZ PRESIDENCIA MUNICIPAL CALLE PRINCIPAL 100",
+        "nombre_titulo": "Juan",
         "cargo_dependencia": None,
         "direccion": "",
         "colonia": "ILEGIBLE",
-        "municipio_o_alcaldia": None,
+        "municipio_alcaldia": None,
         "estado": "CDMX",
-        "codigo_postal": None,
+        "codigo_postal": "06000",
+        "numero_volante": "VCS-12-100000-00001",
         "extras": None,
         "contacto": None,
         "indicaciones": None,
@@ -50,9 +51,11 @@ def test_insert_extraction_calls_api_with_normalized_payload(monkeypatch):
     assert row_id == 123
     assert captured["token"] == "token-ok"
     assert captured["payload"]["sede"] == "COYOACAN"
-    assert captured["payload"]["nombre_imagen"] == "TEST.JPG"
-    assert captured["payload"]["nombre_o_titulo"] == "JUAN"
-    assert captured["payload"]["direccion"] is None
+    assert captured["payload"]["nombre_imagen"] == "IMG_20260204_140120.JPG"
+    assert captured["payload"]["nombre_titulo"] == "JUAN"
+    assert captured["payload"]["numero_volante"] == "VCS-12-100000-00001"
+    assert "direccion" not in captured["payload"]
+    assert "municipio_alcaldia" not in captured["payload"]
 
 
 def test_list_by_date_range_calls_api_with_expected_query(monkeypatch):
@@ -78,6 +81,18 @@ def test_list_by_date_range_calls_api_with_expected_query(monkeypatch):
     assert captured["params"]["fecha_inicio"] == "2026-04-22T08:30:15"
     assert captured["params"]["fecha_fin"] == "2026-04-22T18:05:50"
     assert captured["params"]["sede"] == "COYOACAN"
+
+
+def test_list_by_date_range_returns_empty_list(monkeypatch):
+    monkeypatch.setattr(repo, "get_access_token", lambda: "token-ok")
+    monkeypatch.setattr(repo, "list_registros", lambda _params, _token: [])
+
+    rows = repo.list_by_date_range(
+        datetime(2026, 1, 1),
+        datetime(2026, 1, 2),
+    )
+
+    assert rows == []
 
 
 def test_insert_extraction_raises_session_expired(monkeypatch):

@@ -31,13 +31,14 @@ def parse_extraccion(raw: str) -> ExtraccionDestinatario:
         return ExtraccionDestinatario(
             destinatario_raw=_normalize(data.get("destinatario_raw", "")) or "",
             campos=CamposDestinatario(
-                nombre_o_titulo=_normalize(campos.get("nombre_o_titulo", "")),
+                nombre_titulo=_normalize(campos.get("nombre_titulo", "")),
                 cargo_dependencia=_normalize(campos.get("cargo_dependencia", "")),
                 direccion=_normalize(campos.get("direccion", "")),
                 colonia=_normalize(campos.get("colonia", "")),
-                municipio_o_alcaldia=_normalize(campos.get("municipio_o_alcaldia", "")),
+                municipio_alcaldia=_normalize(campos.get("municipio_alcaldia", "")),
                 estado=_normalize(campos.get("estado", "")),
                 codigo_postal=_normalize(campos.get("codigo_postal", "")),
+                numero_volante=_normalize(campos.get("numero_volante", "")),
                 extras=_normalize(campos.get("extras", "")),
                 contacto=_normalize(campos.get("contacto", "")),
                 indicaciones=_normalize(campos.get("indicaciones", "")),
@@ -53,13 +54,14 @@ def _fallback_extraccion() -> ExtraccionDestinatario:
     return ExtraccionDestinatario(
         destinatario_raw="",
         campos=CamposDestinatario(
-            nombre_o_titulo="",
+            nombre_titulo="",
             cargo_dependencia="",
             direccion="",
             colonia="",
-            municipio_o_alcaldia="",
+            municipio_alcaldia="",
             estado="",
             codigo_postal="",
+            numero_volante="",
             extras="",
             contacto="",
             indicaciones="",

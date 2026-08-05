@@ -29,6 +29,7 @@ from app.services.image_service import load_image
 from app.services.registros_service import (
     RepositorySessionExpiredError,
     insert_extraction,
+    validate_extraction,
 )
 from app.states.image_state import ImageStateStore
 from app.states.workers.ai_worker import AIWorker
@@ -301,18 +302,14 @@ class MainWindow(QMainWindow):
 
     def _on_save(self):
         form_data = self._right.get_form_data()
-        sede = self._left.sede()
-        if not sede:
-            QMessageBox.warning(self, "Sin SEDE", "Seleccione una SEDE.")
-            return
-        if not self._current_image_path:
-            QMessageBox.warning(self, "Sin imagen", "No hay imagen seleccionada.")
-            return
+        sede = self._left.sede() or ""
 
         rect = self._viewer.get_current_crop()
         meta = {
             "sede": sede,
-            "nombre_imagen": self._current_image_path.name,
+            "nombre_imagen": (
+                self._current_image_path.name if self._current_image_path else ""
+            ),
             "crop_x": rect[0] if rect else None,
             "crop_y": rect[1] if rect else None,
             "crop_w": rect[2] if rect else None,
@@ -321,6 +318,20 @@ class MainWindow(QMainWindow):
             "aspect_mode": "SQUARE" if self._left.square_mode() else "FREE",
         }
         record = to_db_record(form_data, meta)
+        validation_errors = validate_extraction(record)
+        if validation_errors:
+            details = "\n".join(
+                f"- {error['campo']}: {error['error']}"
+                for error in validation_errors
+            )
+            QMessageBox.critical(
+                self,
+                "Errores de validación",
+                f"Corrija los siguientes campos:\n\n{details}",
+            )
+            return
+
+        assert self._current_image_path is not None
         saved_path = self._current_image_path
         try:
             insert_extraction(record)

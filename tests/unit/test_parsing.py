@@ -9,13 +9,14 @@ def test_parse_valid_json():
     {
       "destinatario_raw": "TEXTO RAW",
       "campos": {
-        "nombre_o_titulo": "Juan Pérez",
+        "nombre_titulo": "Juan Pérez",
         "cargo_dependencia": "",
         "direccion": "Calle 1",
         "colonia": "Centro",
-        "municipio_o_alcaldia": "",
+        "municipio_alcaldia": "",
         "estado": "CDMX",
         "codigo_postal": "06000",
+        "numero_volante": "VCS-12-100000-00001",
         "extras": "",
         "contacto": "",
         "indicaciones": "ilegible"
@@ -25,7 +26,8 @@ def test_parse_valid_json():
     '''
     result = parse_extraccion(raw)
     assert result.destinatario_raw == "TEXTO RAW"
-    assert result.campos.nombre_o_titulo == "Juan Pérez"
+    assert result.campos.nombre_titulo == "Juan Pérez"
+    assert result.campos.numero_volante == "VCS-12-100000-00001"
     assert result.campos.indicaciones == "ilegible"
     assert result.observaciones_ia == "Sin observaciones."
 

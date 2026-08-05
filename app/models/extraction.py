@@ -5,13 +5,14 @@ from pydantic import BaseModel, Field
 class CamposDestinatario(BaseModel):
     """Campos estructurados del destinatario."""
 
-    nombre_o_titulo: str = ""
+    nombre_titulo: str = ""
     cargo_dependencia: str = ""
     direccion: str = ""
     colonia: str = ""
-    municipio_o_alcaldia: str = ""
+    municipio_alcaldia: str = ""
     estado: str = ""
     codigo_postal: str = ""
+    numero_volante: str = ""
     extras: str = ""
     contacto: str = ""
     indicaciones: str = ""
