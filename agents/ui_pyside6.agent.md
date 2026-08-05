@@ -25,7 +25,7 @@ Interfaz de escritorio con **PySide6**: ventanas, layouts, estilos/temas, visor 
 
 - Cambiar modelo de datos persistido o formato de API sin acuerdo con **core** / **datos**.
 - Introducir llamadas bloqueantes a red/IA en el hilo GUI.
-- Ejecutar migración MySQL o cambiar `DB_PATH` / conexión.
+- Introducir o modificar lógica de persistencia en UI.
 
 ## Checklist de trabajo
 

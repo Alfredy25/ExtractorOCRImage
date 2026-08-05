@@ -1,28 +1,16 @@
-"""Tests del repositorio."""
-import tempfile
+"""Tests del servicio de registros en modo API-only."""
+
 from datetime import date, datetime, time
-from pathlib import Path
 
 import pytest
 
-from app.services.registros_service import insert_extraction, list_by_date_range
+from app.api.registros_api import RegistrosApiError, RegistrosSessionExpiredError
+from app.services import registros_service as repo
 
 
-@pytest.fixture
-def temp_db(monkeypatch):
-    with tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False) as f:
-        path = f.name
-    monkeypatch.setattr("app.services.registros_service.DB_PATH", Path(path))
-    monkeypatch.setattr("app.services.registros_service.DATA_DIR", Path(path).parent)
-    try:
-        yield path
-    finally:
-        Path(path).unlink(missing_ok=True)
-
-
-def test_insert_and_list(temp_db):
-    record = {
-        "sede": "AJUSCO",
+def _sample_record() -> dict:
+    return {
+        "sede": "COYOACÁN",
         "nombre_imagen": "test.jpg",
         "destinatario_raw": "TEXTO",
         "nombre_o_titulo": "Juan",
@@ -43,17 +31,74 @@ def test_insert_and_list(temp_db):
         "rotation_deg": 0,
         "aspect_mode": "FREE",
     }
-    rowid = insert_extraction(record)
-    assert rowid > 0
 
-    day = date.today()
-    start = datetime.combine(day, time.min)
-    end = datetime.combine(day, time(23, 59, 59))
-    rows = list_by_date_range(start, end)
-    assert len(rows) >= 1
-    r = next(x for x in rows if x["nombre_imagen"] == "TEST.JPG")
-    rows_ajusco = list_by_date_range(start, end, "AJUSCO")
-    assert any(x["nombre_imagen"] == "TEST.JPG" for x in rows_ajusco)
-    assert r["sede"] == "AJUSCO"
-    assert r["colonia"] == "ILEGIBLE"
-    assert r["nombre_o_titulo"] == "JUAN"
+
+def test_insert_extraction_calls_api_with_normalized_payload(monkeypatch):
+    captured: dict = {}
+
+    monkeypatch.setattr(repo, "get_access_token", lambda: "token-ok")
+
+    def _fake_create_registro(payload, token):
+        captured["payload"] = payload
+        captured["token"] = token
+        return 123
+
+    monkeypatch.setattr(repo, "create_registro", _fake_create_registro)
+
+    row_id = repo.insert_extraction(_sample_record())
+
+    assert row_id == 123
+    assert captured["token"] == "token-ok"
+    assert captured["payload"]["sede"] == "COYOACAN"
+    assert captured["payload"]["nombre_imagen"] == "TEST.JPG"
+    assert captured["payload"]["nombre_o_titulo"] == "JUAN"
+    assert captured["payload"]["direccion"] is None
+
+
+def test_list_by_date_range_calls_api_with_expected_query(monkeypatch):
+    day = date(2026, 4, 22)
+    start = datetime.combine(day, time(8, 30, 15))
+    end = datetime.combine(day, time(18, 5, 50))
+    expected = [{"id": 1, "sede": "AJUSCO"}]
+    captured: dict = {}
+
+    monkeypatch.setattr(repo, "get_access_token", lambda: "token-ok")
+
+    def _fake_list_registros(params, token):
+        captured["params"] = params
+        captured["token"] = token
+        return expected
+
+    monkeypatch.setattr(repo, "list_registros", _fake_list_registros)
+
+    rows = repo.list_by_date_range(start, end, "COYOACÁN")
+
+    assert rows == expected
+    assert captured["token"] == "token-ok"
+    assert captured["params"]["fecha_inicio"] == "2026-04-22T08:30:15"
+    assert captured["params"]["fecha_fin"] == "2026-04-22T18:05:50"
+    assert captured["params"]["sede"] == "COYOACAN"
+
+
+def test_insert_extraction_raises_session_expired(monkeypatch):
+    monkeypatch.setattr(repo, "get_access_token", lambda: "token-ok")
+
+    def _raise_session_expired(_payload, _token):
+        raise RegistrosSessionExpiredError("sesion expirada")
+
+    monkeypatch.setattr(repo, "create_registro", _raise_session_expired)
+
+    with pytest.raises(repo.RepositorySessionExpiredError):
+        repo.insert_extraction(_sample_record())
+
+
+def test_list_by_date_range_raises_api_error_on_network_failure(monkeypatch):
+    monkeypatch.setattr(repo, "get_access_token", lambda: "token-ok")
+
+    def _raise_api_error(_params, _token):
+        raise RegistrosApiError("fallo de red")
+
+    monkeypatch.setattr(repo, "list_registros", _raise_api_error)
+
+    with pytest.raises(repo.RepositoryApiError):
+        repo.list_by_date_range(datetime(2026, 1, 1), datetime(2026, 1, 2), "AJUSCO")

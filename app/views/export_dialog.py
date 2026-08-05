@@ -37,7 +37,7 @@ def _downloads_folder() -> Path:
 
 
 class ExportDialog(QDialog):
-    """Exportar registros del API (o SQLite en tests) a Excel/CSV."""
+    """Exportar registros obtenidos de la API a Excel/CSV."""
 
     def __init__(self, parent=None):
         super().__init__(parent)

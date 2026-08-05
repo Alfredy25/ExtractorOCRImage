@@ -5,7 +5,7 @@
 Este repositorio usa **agentes especializados** (definidos en `agents/`) y **skills reutilizables** (`skills/`) para que Cursor y otros asistentes trabajen con **responsabilidad única**, **menos tokens** y **menos ambigüedad**.
 
 - **Entrada de la app**: `python -m app.main`
-- **Stack**: Python 3.11+, PySide6, SQLite para pruebas; integración con api.
+- **Stack**: Python 3.11+, PySide6, cliente HTTP hacia API REST (FastAPI/JWT).
 
 Los subagentes **no duplican reglas**: delegan en skills. Antes de tareas grandes, elige el subagente adecuado y abre los skills enlazados.
 
@@ -17,7 +17,7 @@ Los subagentes **no duplican reglas**: delegan en skills. Antes de tareas grande
 |-----------|------------------|
 | **Single responsibility** | Un cambio = un subagente principal; cruces mínimos UI ↔ core. |
 | **Token efficiency** | Skills con checklists; prompts cortos; evitar pegar el repo entero. |
-| **Explícito sobre implícito** | Límites de decisión en cada `.agent.md`; DB presente vs futuro en `skills/db_strategy_innodb.md`. |
+| **Explícito sobre implícito** | Límites de decisión en cada `.agent.md`; persistencia del cliente se resuelve por contrato API REST. |
 ---
 
 ## Subagentes (cuándo usar cuál)
@@ -27,7 +27,7 @@ Los subagentes **no duplican reglas**: delegan en skills. Antes de tareas grande
 | **UI PySide6** | Ventanas, widgets, temas, señales/slots, accesibilidad básica. | [`agents/ui_pyside6.agent.md`](agents/ui_pyside6.agent.md) |
 | **Core / backend** | IA (OpenAI), parsing, recorte, exporters, lógica sin Qt. | [`agents/core_backend.agent.md`](agents/core_backend.agent.md) |
 | **Integración full‑stack** | Contratos UI↔core, hilos/async, wiring en `main_window`, flujos end‑to‑end. | [`agents/fullstack_integration.agent.md`](agents/fullstack_integration.agent.md) |
-| **Datos / DB** | Acceso a datos, SQLite hoy para pruebas locales en desarrollo;| [`agents/data_db.agent.md`](agents/data_db.agent.md) |
+| **Datos / API** | Contratos de persistencia por API REST, payloads y errores de sesión/HTTP. | [`agents/data_db.agent.md`](agents/data_db.agent.md) |
 
 **Cuándo NO forzar subagentes**: cambios triviales de una línea o solo documentación pueden hacerse sin invocar un rol; igual conviene alinear el skill de estilo.
 
@@ -49,8 +49,8 @@ flowchart LR
 ```
 
 1. **Feature con pantalla nueva o flujo nuevo** → empieza **Integración** (contrato); luego **UI** o **Core** según dónde caiga el grueso del trabajo.
-2. **Solo lógica / IA / export** → **Core**; tocar **Datos** si el contrato de persistencia cambia.
-3. **Solo widgets/temas** → **UI** sin tocar SQL salvo que la UI exponga campos nuevos acordados con **Datos**.
+2. **Solo lógica / IA / export** → **Core**; tocar **Datos** si cambia el contrato de persistencia API.
+3. **Solo widgets/temas** → **UI** sin tocar SQL; la UI solo consume servicios de API.
 
 ---
 
@@ -86,7 +86,7 @@ flowchart LR
 - [ ] Comportamiento acordado implementado sin romper flujos existentes.
 - [ ] Sin secretos en código o commits; `.env` local.
 - [ ] Tests relevantes actualizados o nuevos (`pytest tests/ -v` donde aplique).
-- [ ] Si afecta DB: capa de acceso clara; **no** asumir MySQL hasta migración explícita.
+- [ ] Si afecta persistencia: contrato API y mapeos cliente-servidor validados.
 
 ### Testing mínimo
 
@@ -99,24 +99,12 @@ flowchart LR
 
 ---
 
-## Database Strategy (Presente y Futuro)
+## Persistencia API-only
 
-### SQLite (actual)
-
-- Base de datos de aplicación según `app/config/settings.py` (`DB_PATH` → `app/data/db.sqlite3`).
-- **Datos** y **Core** usan la capa de acceso existente (`app/services/registros_service.py` y relacionados).
-- Migraciones o esquema: solo con cambios explícitos y tests.
-
-### Rol de los subagentes frente a la DB
-
-| Subagente | SQLite hoy | MySQL futuro |
-|-----------|------------|--------------|
-| **Datos** | Implementa y mantiene acceso y esquema local. | Define interfaces y notas de compatibilidad InnoDB; **no** despliega solo. |
-| **Core** | Consume repositorio/modelos. | Sin SQL directo en lógica de negocio; mismo contrato hacia la capa de datos. |
-| **UI** | Sin SQL; solo modelos/DTOs expuestos por core o señales. | Igual. |
-| **Integración** | Orquesta llamadas; sin strings SQL. | Verifica que hilos y errores sigan siendo seguros al cambiar backend. |
-
-Detalle: [`skills/db_strategy_innodb.md`](skills/db_strategy_innodb.md) y [`skills/data_access_layer.md`](skills/data_access_layer.md).
+- El cliente de escritorio no maneja motor SQL ni esquema de base de datos.
+- Guardado y consulta pasan por `app/api/` y `app/services/registros_service.py`.
+- Cualquier cambio de persistencia debe expresarse como cambio de contrato REST, no como migración local.
+- Referencia operativa: [`skills/data_access_layer.md`](skills/data_access_layer.md).
 
 ---
 

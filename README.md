@@ -7,7 +7,7 @@ Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **dest
 - Carga una o varias imágenes (JPG, JPEG, PNG), lista y vista previa con zoom y recorte.
 - Rotación, recorte libre o cuadrado 1:1, envío del recorte a la IA y formulario de campos estructurados.
 - Registro por **sede** obligatoria: `AJUSCO` o `COYOACÁN`.
-- **Exportación** por rango de fechas (CSV / Excel) según los datos disponibles desde el backend o el modo local de tests.
+- **Exportación** por rango de fechas (CSV / Excel) con los datos obtenidos desde el backend.
 - **Temas** desde el menú Ver; registro de actividad en `%LOCALAPPDATA%\ExtractorOCR\logs\extractor_ocr.log` (la app crea la carpeta automáticamente al iniciar).
 
 ## Requisitos
@@ -18,7 +18,6 @@ Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **dest
 | **Dependencias** | Ver `requirements.txt` (PySide6, OpenAI, httpx, pandas, etc.). |
 | **Backend FastAPI** | Debe estar en marcha y accesible en `API_BASE_URL`. Al arrancar la app aparece **inicio de sesión** (usuario/contraseña); sin sesión válida no se abre la ventana principal. |
 | **OpenAI** | `OPENAI_API_KEY` en `.env` para el botón **Enviar a IA**. |
-| **MySQL / SQLite (servidor)** | El almacenamiento definitivo de registros lo define **tu API** (p. ej. SQLite o MySQL en el servidor). La sección [Base de datos MySQL](#base-de-datos-mysql) y [docs/MYSQL_MIGRATION.md](docs/MYSQL_MIGRATION.md) sirven para operaciones de esquema y migración en el entorno de datos, no sustituyen el backend. |
 
 ## Instalación
 
@@ -64,13 +63,12 @@ Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en
 | `OPENAI_MODEL` | Modelo (por defecto `gpt-4o`). |
 | `TIMEOUT_SECONDS` | Timeout de llamadas a OpenAI. |
 | `EXPORT_DIR` | Carpeta por defecto para exportaciones generadas en el cliente. |
-| `DB_ENGINE`, `DB_*` | Relevantes para **scripts** de MySQL y para código que acceda a BD local; ver [Base de datos MySQL](#base-de-datos-mysql). |
 
 ### Persistencia desde el cliente
 
 En **uso normal**, guardar listados y altas de extracciones va por **HTTP** al backend (`POST`/`GET` bajo `REGISTROS_ENDPOINT`), con el JWT obtenido en el login.
 
-Solo para **tests automatizados** (y escenarios muy concretos de desarrollo) se puede forzar repositorio local SQLite con la variable `OCR_USE_SQLITE_REPOSITORY=1` (no hace falta definirla en producción). Los tests fijan esto en `tests/conftest.py`.
+La app de escritorio no administra base de datos local ni motor SQL; actúa como cliente API-only.
 
 ## Ejecución
 
@@ -153,17 +151,7 @@ pip install pytest
 pytest tests/ -v
 ```
 
-En `tests/conftest.py` se fuerza `DB_ENGINE=sqlite` y `OCR_USE_SQLITE_REPOSITORY=1` para que los tests no dependan de MySQL ni del servidor FastAPI al insertar o listar en local.
-
-## Base de datos MySQL
-
-Procedimiento orientado al **entorno de datos** (servidor, migraciones, comprobaciones). Los pasos concretos y el troubleshooting están en **[docs/MYSQL_MIGRATION.md](docs/MYSQL_MIGRATION.md)**.
-
-1. Crear la base `tools_OCR` (o la que uses) en el servidor.
-2. `python scripts/create_mysql_schema.py` o importar `sql/schema_mysql.sql`.
-3. Opcional: migrar desde SQLite con `python scripts/migrate_sqlite_to_mysql.py` (revisar `--dry-run`).
-4. Configurar `DB_ENGINE=mysql` y variables `DB_*` donde corresponda (p. ej. servidor del backend o scripts).
-5. Comprobar conectividad: `python scripts/check_db.py`.
+Las pruebas de persistencia usan mocks de API para validar el contrato del cliente sin depender de SQLite/MySQL local.
 
 ## Estructura del repositorio
 
@@ -179,10 +167,7 @@ app/
   utils/               # Imagen, recorte y mapeos reutilizables
   config/              # Settings, variables de entorno y constantes
   assets/              # Iconos, imágenes y recursos de temas
-  data/                # SQLite local de desarrollo (ruta por defecto), exports por defecto
-sql/                   # Esquema MySQL
-scripts/               # create_mysql_schema, migrate_sqlite_to_mysql, check_db
-docs/                  # MYSQL_MIGRATION.md, etc.
+  data/                # Directorio local para exports y datos de apoyo de la app
 tests/
   unit/                # Tests unitarios
 agents/                # Guías para agentes de IA en este repo
@@ -271,4 +256,4 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 ## Documentación adicional
 
 - Convenciones y agentes del repositorio: [AGENTS.md](AGENTS.md).
-- Estrategia InnoDB / capa de datos: `skills/db_strategy_innodb.md`, `skills/data_access_layer.md`.
+- Capa de datos del cliente API-only: `skills/data_access_layer.md`.

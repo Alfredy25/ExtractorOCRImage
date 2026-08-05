@@ -1,38 +1,37 @@
-# Skill: Data access layer (DAL)
+# Skill: Data access layer (DAL API-only)
 
 ## Principios
 
-- **Un solo lugar** para SQL y transacciones: `app/services/registros_service.py`.
-- La UI y el cliente OpenAI **no** ejecutan SQL.
-- Tipos y filas mapeados a modelos/domain claros antes de subir a la UI.
+- **Una sola fachada** para persistencia cliente: `app/services/registros_service.py`.
+- La UI y el cliente OpenAI **no** acceden a base de datos local ni ejecutan SQL.
+- El transporte HTTP y parsing de respuestas viven en `app/api/registros_api.py`.
 
 ## Checklist
 
-- [ ] ¿Todas las consultas parametrizadas (sin concatenar inputs de usuario)?
-- [ ] ¿Transacciones explícitas donde haya varias escrituras?
-- [ ] ¿Tests de repositorio actualizados al cambiar esquema?
+- [ ] ¿El servicio de registros delega en API (`create_registro`, `list_registros`)?
+- [ ] ¿Los payloads/query params están normalizados (fechas ISO, sede, opcionales)?
+- [ ] ¿Tests de repositorio actualizados con mocks API?
 
 ## Do / Don’t
 
 | Do | Don’t |
 |----|--------|
-| Funciones con nombres de dominio (`save_*`, `list_*`) | Queries sueltas en `main_window.py` |
-| Rutas de DB desde `app/config/` (`DB_PATH`) | Paths absolutos máquina-local en código |
-| Comentario breve si un campo prepara InnoDB futuro | Migración MySQL sin tarea aprobada |
+| Funciones de dominio (`insert_extraction`, `list_by_date_range`) | Llamadas HTTP directas desde `main_window.py` |
+| Normalizar payloads y errores de sesión en `registros_service` | Acoplar UI a detalles de `httpx` |
+| Validar contrato con tests mockeados | Agregar dependencias SQL o scripts de migración al cliente |
 
 ## Plantillas de prompts cortos
 
 ```
-DAL: [operación] en repository — SQLite; sin UI; pytest test_repository.
+DAL API-only: [operación] en registros_service/registros_api; sin UI; pytest test_repository.
 ```
 
 ```
-Nueva columna: migración local sqlite + test; nota InnoDB en comentario (ver db_strategy_innodb).
+Nuevo campo de contrato API: actualizar payload/parseo y pruebas con mocks.
 ```
 
 ## Referencias en el repo
 
 - `app/services/registros_service.py`
-- `app/config/settings.py` — `DB_PATH`, `DATA_DIR`
-- `app/data/` — ubicación típica de `db.sqlite3`
+- `app/api/registros_api.py`
 - `tests/unit/test_repository.py`

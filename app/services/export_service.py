@@ -12,7 +12,7 @@ import pandas as pd
 
 from app.config import EXPORT_DIR
 
-# Campos que ``_records_to_rows`` lee de cada dict (contrato API / SQLite).
+# Campos que ``_records_to_rows`` lee de cada dict (contrato API).
 _EXPORT_SOURCE_KEYS = (
     "created_at",
     "indicaciones",
@@ -50,7 +50,7 @@ EXPORT_COLUMNS = [
 
 def normalize_registro_for_export(reg: dict) -> dict:
     """
-    Garantiza las claves que usa la exportación (respuesta GET /registros o SQLite).
+    Garantiza las claves que usa la exportación (respuesta GET /registros).
 
     No elimina ``id``, ``created_by``, etc.: columnas extra no molestan a pandas/CSV.
     """

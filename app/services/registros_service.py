@@ -1,39 +1,16 @@
-# [MODIFICADO] Persistencia vía FastAPI (POST/GET /registros + JWT); SQLite solo con
-# OCR_USE_SQLITE_REPOSITORY=1 (pytest).
-
-"""Repositorio de extracciones: API FastAPI (JWT) en ejecución normal; SQLite/MySQL solo en tests."""
+"""Fachada de persistencia de registros vía API REST (sin almacenamiento local)."""
 from __future__ import annotations
 
-import contextlib
-import os
-import sqlite3
 from datetime import datetime
-from typing import Any, Iterator
+from typing import Any
 
-import app.config as app_config
-from app.api.registros_api import (RegistrosApiError as RepositoryApiError,
-                                    RegistrosSessionExpiredError as RepositorySessionExpiredError, 
-                                    create_registro, list_registros)
-from app.config import DB_PATH, DATA_DIR, SQL_DIR
+from app.api.registros_api import (
+    RegistrosApiError as RepositoryApiError,
+    RegistrosSessionExpiredError as RepositorySessionExpiredError,
+    create_registro,
+    list_registros,
+)
 from app.services.auth_service import get_access_token
-
-# Migración SQLite: renombrar columnas antiguas campos_*.
-_LEGACY_CAMPOS_TO_COLUMN = [
-    ("campos_nombre_o_titulo", "nombre_o_titulo"),
-    ("campos_cargo_dependencia", "cargo_dependencia"),
-    ("campos_direccion", "direccion"),
-    ("campos_colonia", "colonia"),
-    ("campos_municipio_o_alcaldia", "municipio_o_alcaldia"),
-    ("campos_estado", "estado"),
-    ("campos_codigo_postal", "codigo_postal"),
-    ("campos_extras", "extras"),
-    ("campos_contacto", "contacto"),
-    ("campos_indicaciones", "indicaciones"),
-]
-
-
-def _ensure_data_dir():
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _field_to_db(value: str | None, is_destinatario_raw: bool = False) -> str | None:
@@ -51,19 +28,6 @@ def _field_to_db(value: str | None, is_destinatario_raw: bool = False) -> str | 
     if "ilegible" in s.lower():
         return "ILEGIBLE"
     return s.upper()
-
-
-def _placeholder(engine: str) -> str:
-    return "%s" if engine == "mysql" else "?"
-
-
-def _repository_use_local_sqlite() -> bool:
-    """
-    Si es verdadero, ``insert_extraction`` / list usan BD local (solo tests automatizados).
-
-    En ejecución normal no definir ``OCR_USE_SQLITE_REPOSITORY`` para usar la API.
-    """
-    return os.getenv("OCR_USE_SQLITE_REPOSITORY", "").lower() in ("1", "true", "yes")
 
 
 def _sede_for_api(record: dict) -> str:
@@ -154,185 +118,11 @@ def _insert_extraction_api(record: dict) -> int:
     return create_registro(payload, token)
 
 
-def create_tables_sqlite(conn: sqlite3.Connection) -> None:
-    """Crea las tablas en SQLite."""
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS extractions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sede TEXT NOT NULL CHECK (sede IN ('AJUSCO', 'COYOACÁN')),
-            nombre_imagen TEXT NOT NULL,
-            destinatario_raw TEXT NOT NULL,
-            nombre_o_titulo TEXT,
-            cargo_dependencia TEXT,
-            direccion TEXT,
-            colonia TEXT,
-            municipio_o_alcaldia TEXT,
-            estado TEXT,
-            codigo_postal TEXT,
-            extras TEXT,
-            contacto TEXT,
-            indicaciones TEXT,
-            observaciones_ia TEXT,
-            crop_x INTEGER,
-            crop_y INTEGER,
-            crop_w INTEGER,
-            crop_h INTEGER,
-            rotation_deg INTEGER,
-            aspect_mode TEXT CHECK (aspect_mode IN ('FREE', 'SQUARE')),
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME
-        )
-    """)
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_extractions_created_at ON extractions(created_at)"
-    )
-    conn.commit()
-
-
-def migrate_extractions_legacy_columns_sqlite(conn: sqlite3.Connection) -> None:
-    """Renombra columnas campos_* en SQLite existente (SQLite 3.25+)."""
-    cur = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='extractions'"
-    )
-    if not cur.fetchone():
-        return
-    cur = conn.execute("PRAGMA table_info(extractions)")
-    cols = {row[1] for row in cur.fetchall()}
-    for old, new in _LEGACY_CAMPOS_TO_COLUMN:
-        if old in cols and new not in cols:
-            conn.execute(f'ALTER TABLE extractions RENAME COLUMN "{old}" TO "{new}"')
-            cols.remove(old)
-            cols.add(new)
-    conn.commit()
-
-
-def _mysql_schema_statements() -> list[str]:
-    path = SQL_DIR / "schema_mysql.sql"
-    raw = path.read_text(encoding="utf-8")
-    stmts: list[str] = []
-    for chunk in raw.split(";"):
-        lines = []
-        for line in chunk.splitlines():
-            line = line.strip()
-            if not line or line.startswith("--"):
-                continue
-            lines.append(line)
-        s = " ".join(lines).strip()
-        if s:
-            stmts.append(s + ";")
-    return stmts
-
-
-def ensure_mysql_tables(conn) -> None:
-    """Ejecuta sql/schema_mysql.sql (CREATE IF NOT EXISTS)."""
-    cur = conn.cursor()
-    for stmt in _mysql_schema_statements():
-        cur.execute(stmt)
-    conn.commit()
-    cur.close()
-
-
-@contextlib.contextmanager
-def get_connection() -> Iterator[tuple[object, str]]:
-    """
-    Context manager: (connection, engine) donde engine es ``sqlite`` o ``mysql``.
-    Cierra la conexión al salir.
-    """
-    if app_config.is_mysql():
-        import pymysql
-
-        cfg = app_config.get_mysql_config()
-        if not cfg.get("user"):
-            raise RuntimeError(
-                "DB_ENGINE=mysql requiere DB_USER (y demás variables). Ver .env.example."
-            )
-        conn = pymysql.connect(
-            host=cfg["host"],
-            port=cfg["port"],
-            user=cfg["user"],
-            password=cfg["password"],
-            database=cfg["database"],
-            charset=cfg["charset"],
-            cursorclass=pymysql.cursors.DictCursor,
-            autocommit=False,
-        )
-        try:
-            ensure_mysql_tables(conn)
-            yield conn, "mysql"
-        finally:
-            conn.close()
-        return
-
-    _ensure_data_dir()
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    create_tables_sqlite(conn)
-    migrate_extractions_legacy_columns_sqlite(conn)
-    try:
-        yield conn, "sqlite"
-    finally:
-        conn.close()
-
-
 def insert_extraction(record: dict) -> int:
     """
-    Inserta un registro y devuelve el id.
-
-    En ejecución normal: ``POST`` al backend con JWT (sin ``created_by`` en el cuerpo).
-    Con ``OCR_USE_SQLITE_REPOSITORY=1`` (tests): INSERT en SQLite/MySQL local.
+    Inserta un registro y devuelve el id generado por la API.
     """
-    if _repository_use_local_sqlite():
-        return _insert_extraction_local(record)
     return _insert_extraction_api(record)
-
-
-def _insert_extraction_local(record: dict) -> int:
-    """INSERT en SQLite o MySQL (solo tests o entorno explícito)."""
-    params = (
-        _field_to_db(record.get("sede"), False) or record.get("sede", "").upper(),
-        _field_to_db(record.get("nombre_imagen"), False)
-        or record.get("nombre_imagen", "").upper(),
-        _field_to_db(record.get("destinatario_raw"), True) or "",
-        _field_to_db(record.get("nombre_o_titulo")),
-        _field_to_db(record.get("cargo_dependencia")),
-        _field_to_db(record.get("direccion")),
-        _field_to_db(record.get("colonia")),
-        _field_to_db(record.get("municipio_o_alcaldia")),
-        _field_to_db(record.get("estado")),
-        _field_to_db(record.get("codigo_postal")),
-        _field_to_db(record.get("extras")),
-        _field_to_db(record.get("contacto")),
-        _field_to_db(record.get("indicaciones")),
-        _field_to_db(record.get("observaciones_ia")),
-        record.get("crop_x"),
-        record.get("crop_y"),
-        record.get("crop_w"),
-        record.get("crop_h"),
-        record.get("rotation_deg"),
-        record.get("aspect_mode", "FREE"),
-    )
-
-    with get_connection() as (conn, engine):
-        ph = _placeholder(engine)
-        sql = f"""
-            INSERT INTO extractions (
-                sede, nombre_imagen, destinatario_raw,
-                nombre_o_titulo, cargo_dependencia, direccion,
-                colonia, municipio_o_alcaldia, estado,
-                codigo_postal, extras, contacto, indicaciones,
-                observaciones_ia, crop_x, crop_y, crop_w, crop_h, rotation_deg, aspect_mode
-            ) VALUES ({",".join([ph] * 20)})
-            """
-        if engine == "mysql":
-            cur = conn.cursor()
-            cur.execute(sql, params)
-            conn.commit()
-            last = cur.lastrowid
-            cur.close()
-            return int(last)
-        cur = conn.execute(sql, params)
-        conn.commit()
-        return int(cur.lastrowid)
 
 
 def _datetimes_to_api_iso_params(inicio: datetime, fin: datetime) -> tuple[str, str]:
@@ -343,11 +133,6 @@ def _datetimes_to_api_iso_params(inicio: datetime, fin: datetime) -> tuple[str, 
         a.isoformat(sep="T", timespec="seconds"),
         b.isoformat(sep="T", timespec="seconds"),
     )
-
-
-def _local_datetime_sql_value(dt: datetime) -> str:
-    """Literal comparable con ``created_at`` en SQLite/MySQL."""
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _sede_filter_for_api_query(sede: str | None) -> str | None:
@@ -368,17 +153,6 @@ def _sede_filter_for_api_query(sede: str | None) -> str | None:
         return "COYOACAN"
     return None
 
-
-def _sede_filter_for_local_column(sede: str | None) -> str | None:
-    """Valor exacto en ``extractions.sede`` (SQLite usa COYOACÁN con tilde)."""
-    q = _sede_filter_for_api_query(sede)
-    if q is None:
-        return None
-    if q == "COYOACAN":
-        return "COYOACÁN"
-    return q
-
-
 def _list_by_date_range_api(desde: datetime, hasta: datetime, sede: str | None) -> list[dict]:
     token = get_access_token()
     if not token:
@@ -395,58 +169,11 @@ def _list_by_date_range_api(desde: datetime, hasta: datetime, sede: str | None) 
 
     return list_registros(params, token)
 
-
-def _list_by_date_range_local(desde: datetime, hasta: datetime, sede: str | None) -> list[dict]:
-    """SELECT local por rango de fecha-hora; ``sede`` opcional filtra por columna."""
-    sede_val = _sede_filter_for_local_column(sede)
-    d1 = _local_datetime_sql_value(desde)
-    d2 = _local_datetime_sql_value(hasta)
-    with get_connection() as (conn, engine):
-        ph = _placeholder(engine)
-        extra_sql = ""
-        extra_params: list[Any] = []
-        if sede_val is not None:
-            extra_sql = f" AND sede = {ph}"
-            extra_params = [sede_val]
-
-        if engine == "mysql":
-            sql = f"""
-            SELECT * FROM extractions
-            WHERE created_at >= {ph} AND created_at <= {ph}
-            {extra_sql}
-            ORDER BY created_at
-            """
-            params = (d1, d2, *extra_params)
-        else:
-            sql = f"""
-            SELECT * FROM extractions
-            WHERE created_at >= {ph} AND created_at <= {ph}
-            {extra_sql}
-            ORDER BY created_at
-            """
-            params = (d1, d2, *extra_params)
-
-        if engine == "mysql":
-            cur = conn.cursor()
-            cur.execute(sql, params)
-            rows = cur.fetchall()
-            cur.close()
-            return [dict(r) for r in rows]
-        cur = conn.execute(sql, params)
-        rows = cur.fetchall()
-        return [dict(row) for row in rows]
-
-
 def list_by_date_range(desde: datetime, hasta: datetime, sede: str | None = None) -> list[dict]:
     """
-    Lista registros entre ``desde`` y ``hasta`` (incluyente en tiempo), opcionalmente por sede.
-
-    En ejecución normal: ``GET /registros`` con ``fecha_inicio`` / ``fecha_fin`` en ISO y
-    ``sede`` solo si aplica. El usuario lo determina el JWT en el servidor.
+    Lista registros desde la API entre ``desde`` y ``hasta`` (incluyente), opcionalmente por sede.
 
     ``sede`` en la UI puede ser ``AJUSCO`` o ``COYOACÁN``; hacia la API se normaliza a
     ``COYOACAN`` sin tilde.
     """
-    if _repository_use_local_sqlite():
-        return _list_by_date_range_local(desde, hasta, sede)
     return _list_by_date_range_api(desde, hasta, sede)

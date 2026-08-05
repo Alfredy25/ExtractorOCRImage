@@ -2,7 +2,7 @@
 
 ## Propósito
 
-Lógica **sin dependencia de Qt** donde sea posible: servicios OCR, parsing, recorte, I/O imagen, exportación, modelos Pydantic y funciones puras. Coordina con datos vía `app/services/registros_service.py`.
+Lógica **sin dependencia de Qt** donde sea posible: servicios OCR, parsing, recorte, I/O imagen, exportación, modelos Pydantic y funciones puras. Coordina persistencia del cliente vía `app/services/registros_service.py` y `app/api/`.
 
 ## Cuándo usarlo
 
@@ -14,7 +14,7 @@ Lógica **sin dependencia de Qt** donde sea posible: servicios OCR, parsing, rec
 
 - Maquetación de ventanas → **ui_pyside6**.
 - Solo cablear señales entre UI y workers sin cambiar lógica → **fullstack_integration**.
-- Diseño de esquema remoto InnoDB o tareas de despliegue DB → **data_db** (sin ejecutar migración).
+- Diseño o despliegue de base de datos del backend → fuera de este repo cliente.
 
 ## Decisiones que SÍ puede tomar
 
@@ -24,14 +24,14 @@ Lógica **sin dependencia de Qt** donde sea posible: servicios OCR, parsing, rec
 
 ## Decisiones que NO puede tomar
 
-- Sustituir SQLite por MySQL en código productivo sin tarea de migración aprobada.
+- Introducir persistencia local SQL en código productivo del cliente.
 - Añadir dependencias no listadas en `requirements.txt` sin revisión.
 - Exponer `OPENAI_API_KEY` en logs o excepciones.
 
 ## Checklist de trabajo
 
 - [ ] ¿Evito Qt en módulos nuevos de lógica pura?
-- [ ] ¿Repository/DAL es el único sitio con SQL si el cambio toca persistencia?
+- [ ] ¿La persistencia se mantiene API-only y fuera de UI?
 - [ ] Skills: [`skills/core_ocr_pipeline.md`](../skills/core_ocr_pipeline.md), [`skills/data_access_layer.md`](../skills/data_access_layer.md), [`skills/testing_python.md`](../skills/testing_python.md), [`skills/security_privacy.md`](../skills/security_privacy.md)
 - [ ] `pytest tests/ -v` para módulos tocados.
 
@@ -53,7 +53,7 @@ Lógica **sin dependencia de Qt** donde sea posible: servicios OCR, parsing, rec
 ## Prompts cortos recomendados
 
 ```
-Core: [módulo] — [objetivo]. Sin Qt. Mantener repository como único SQL. pytest tests/unit/test_[x].py
+Core: [módulo] — [objetivo]. Sin Qt. Mantener persistencia API-only. pytest tests/unit/test_[x].py
 ```
 
 ```

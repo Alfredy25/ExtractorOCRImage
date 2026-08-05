@@ -14,7 +14,7 @@
 
 - Solo estilos o un widget aislado → **ui_pyside6**.
 - Solo algoritmo de parsing o cliente HTTP → **core_backend**.
-- Solo consultas SQL o diseño de tablas → **data_db**.
+- Solo contratos de persistencia HTTP (payload/errores) → **data_db**.
 
 ## Decisiones que SÍ puede tomar
 
@@ -24,9 +24,9 @@
 
 ## Decisiones que NO puede tomar
 
-- Cambiar esquema de base de datos o motor sin **data_db** y sin tarea explícita.
+- Cambiar contrato de persistencia sin coordinar con **data_db**.
 - Incrustar SQL en widgets.
-- Decidir migración a MySQL: solo preparar interfaces si se pide explícitamente.
+- Introducir lógica de persistencia local en capas de UI.
 
 ## Checklist de trabajo
 

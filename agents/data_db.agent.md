@@ -1,13 +1,13 @@
-# Subagente: Datos / DB
+# Subagente: Datos / API
 
 ## Propósito
 
-**Capa de acceso a datos** y coherencia del esquema en **SQLite** (actual) para pruebas.
+**Capa de acceso a datos del cliente** mediante API REST: contratos de payload, normalización de campos y manejo de errores HTTP/sesión.
 
 ## Cuándo usarlo
 
-- Cambios en `app/services/registros_service.py` o rutas de `app/config/settings.py`.
-- Nuevas tablas, índices, migraciones locales SQLite **cuando el alcance lo exija**.
+- Cambios en `app/services/registros_service.py` o `app/api/registros_api.py`.
+- Ajustes de payload/normalización entre UI y backend (`sede`, opcionales, tipos).
 - Tests en `tests/unit/test_repository.py`.
 
 ## Cuándo NO
@@ -19,33 +19,31 @@
 ## Decisiones que SÍ puede tomar
 
 - Consultas y transacciones en SQLite dentro del repositorio/DAL.
-- Refactor para centralizar SQL en un solo módulo/capa.
-- Documentar mapeo futuro columnas tipos SQLite ↔ MySQL en comentarios o skill (no despliegue).
+- Refactor para centralizar integración REST en una sola fachada de servicio.
+- Definir convenciones de mapeo cliente↔backend y errores de sesión en servicios.
 
 ## Decisiones que NO puede tomar
 
-- **No** conectar producción a MySQL ni ejecutar scripts en servidor CyberPanel en esta base de trabajo.
-- **No** cambiar el motor por defecto de la app sin tarea de migración aprobada.
-- **No** exponer credenciales de BD en código o `.env` versionado.
+- **No** introducir persistencia local SQL en el cliente.
+- **No** mover lógica de contrato API a widgets de UI.
+- **No** exponer credenciales o tokens en código o `.env` versionado.
 
 ## Checklist de trabajo
 
-- [ ] ¿Todo SQL vive en la capa de datos (p. ej. `repository.py`), no en UI?
+- [ ] ¿Toda persistencia vive en `app/api` + `app/services`, no en UI?
 - [ ] ¿Tests de repositorio actualizados?
 - [ ] Skills: [`skills/data_access_layer.md`](../skills/data_access_layer.md), [`skills/security_privacy.md`](../skills/security_privacy.md), [`skills/testing_python.md`](../skills/testing_python.md)
 - [ ] `pytest tests/unit/test_repository.py -v`
 
 ## Archivos que suele tocar
 
-- `app/services/registros_service.py`, `app/models/` (si afecta persistencia)
-- `app/config/settings.py` (`DB_PATH`, `DATA_DIR`)
-- `app/data/` (ubicación de sqlite; no commitear datos sensibles)
+- `app/services/registros_service.py`, `app/api/registros_api.py`
+- `app/models/` (si cambia contrato de datos)
 - `tests/unit/test_repository.py`
 
 ## Skills (links)
 
 - [data_access_layer](../skills/data_access_layer.md)
-- [db_strategy_innodb](../skills/db_strategy_innodb.md)
 - [security_privacy](../skills/security_privacy.md)
 - [testing_python](../skills/testing_python.md)
 - [code_style_python](../skills/code_style_python.md)
@@ -54,9 +52,9 @@
 ## Prompts cortos recomendados
 
 ```
-Datos: [operación] en repository — SQLite only; sin migración MySQL; alinear con db_strategy_innodb.
+Datos/API: [operación] en registros_service + registros_api — cliente REST, sin SQL local.
 ```
 
 ```
-Esquema: nueva columna/tab local — tests repository; documentar nota InnoDB futura en DAL comment.
+Contrato: nuevo campo para backend — actualizar payload/parseo y tests de repository con mocks.
 ```

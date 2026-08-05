@@ -9,7 +9,7 @@
 ## Checklist
 
 - [ ] ¿Nuevo comportamiento tiene aserción directa?
-- [ ] ¿Fixtures locales o `tmp_path` para DB de prueba?
+- [ ] ¿Mocks de API y fixtures locales para evitar dependencias externas?
 - [ ] `pytest tests/ -v` pasa antes de dar por cerrado.
 
 ## Do / Don’t
