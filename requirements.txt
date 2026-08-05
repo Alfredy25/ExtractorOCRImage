@@ -10,6 +10,7 @@ numpy>=1.26.0
 
 # Validación
 pydantic>=2.5.0
+email-validator
 
 # API OpenAI
 openai>=1.12.0

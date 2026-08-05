@@ -16,7 +16,7 @@ from app.states.workers.login_worker import LoginWorker
 
 class LoginWindow(QDialog):
     """
-    Formulario usuario / contraseña y botón Entrar.
+    Formulario correo electrónico / contraseña y botón Entrar.
 
     Al autenticación correcta cierra con ``accept()``; el JWT queda en memoria en
     ``auth_client`` (la UI no lee ni guarda el token).
@@ -34,10 +34,10 @@ class LoginWindow(QDialog):
 
         layout = QVBoxLayout(self)
 
-        layout.addWidget(QLabel("Usuario:"))
-        self._user = QLineEdit()
-        self._user.setPlaceholderText("Nombre de usuario")
-        layout.addWidget(self._user)
+        layout.addWidget(QLabel("Correo electrónico:"))
+        self._email = QLineEdit()
+        self._email.setPlaceholderText("user@example.com")
+        layout.addWidget(self._email)
 
         layout.addWidget(QLabel("Contraseña:"))
         self._pass = QLineEdit()
@@ -62,7 +62,7 @@ class LoginWindow(QDialog):
         row.addWidget(self._btn_cancel)
         layout.addLayout(row)
 
-        self._user.returnPressed.connect(self._try_login)
+        self._email.returnPressed.connect(self._try_login)
         self._pass.returnPressed.connect(self._try_login)
 
     def _try_login(self) -> None:
@@ -71,15 +71,15 @@ class LoginWindow(QDialog):
 
         self._error.hide()
         self._error.clear()
-        u = self._user.text()
+        email = self._email.text()
         p = self._pass.text()
 
         self._btn_login.setEnabled(False)
         self._btn_cancel.setEnabled(False)
-        self._user.setEnabled(False)
+        self._email.setEnabled(False)
         self._pass.setEnabled(False)
 
-        self._worker = LoginWorker(u, p, self._login_fn)
+        self._worker = LoginWorker(email, p, self._login_fn)
         self._worker.succeeded.connect(self._on_success)
         self._worker.failed.connect(self._on_failure)
         self._worker.finished.connect(self._on_worker_finished)
@@ -95,6 +95,6 @@ class LoginWindow(QDialog):
     def _on_worker_finished(self) -> None:
         self._btn_login.setEnabled(True)
         self._btn_cancel.setEnabled(True)
-        self._user.setEnabled(True)
+        self._email.setEnabled(True)
         self._pass.setEnabled(True)
         self._worker = None

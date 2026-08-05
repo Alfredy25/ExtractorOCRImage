@@ -3,9 +3,9 @@
 from app.api.auth_api import AuthClientError, AuthError, authenticate
 from app.states.session_state import (clear_access_token, get_access_token, 
                                         set_access_token)
-def login(usuario: str, password: str) -> None:
+def login(email: str, password: str) -> None:
     """Autentica al usuario y conserva el JWT solo en memoria."""
-    token = authenticate(usuario, password)
+    token = authenticate(email, password)
     set_access_token(token)
 
 
