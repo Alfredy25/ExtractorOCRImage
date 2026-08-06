@@ -272,6 +272,43 @@ def _theme_dark() -> str:
         background-color: {p["bg_200"]};
         color: {p["text_100"]};
     }}
+    QDialog#ShipmentWindow QGroupBox {{
+        margin-top: 8px;
+        padding: 8px 8px 6px 8px;
+    }}
+    QDialog#ShipmentWindow QGroupBox::title {{
+        left: 8px;
+        padding: 0 4px;
+    }}
+    QDialog#ShipmentWindow QLabel {{
+        color: {p["text_200"]};
+        min-height: 14px;
+        max-height: 14px;
+    }}
+    QDialog#ShipmentWindow QLabel[shipmentInlineLabel="true"] {{
+        padding: 0;
+    }}
+    QDialog#ShipmentWindow QWidget[shipmentInlineRow="true"] {{
+        min-height: 28px;
+        max-height: 28px;
+    }}
+    QDialog#ShipmentWindow QLineEdit,
+    QDialog#ShipmentWindow QComboBox,
+    QDialog#ShipmentWindow QSpinBox,
+    QDialog#ShipmentWindow QDoubleSpinBox {{
+        min-height: 28px;
+        max-height: 28px;
+        color: {p["text_100"]};
+        padding: 4px 8px;
+    }}
+    QDialog#ShipmentWindow QPushButton {{
+        min-height: 30px;
+        min-width: 130px;
+        padding: 6px 14px;
+    }}
+    QDialog#ShipmentWindow QPushButton#shipmentCreateButton {{
+        min-width: 170px;
+    }}
     QMessageBox {{
         background-color: {p["bg_200"]};
         color: {p["text_100"]};
@@ -509,6 +546,43 @@ def _theme_warm() -> str:
     QDialog {{
         background-color: {w["bg_main"]};
         color: {w["text_100"]};
+    }}
+    QDialog#ShipmentWindow QGroupBox {{
+        margin-top: 8px;
+        padding: 8px 8px 6px 8px;
+    }}
+    QDialog#ShipmentWindow QGroupBox::title {{
+        left: 8px;
+        padding: 0 4px;
+    }}
+    QDialog#ShipmentWindow QLabel {{
+        color: {w["text_100"]};
+        min-height: 14px;
+        max-height: 14px;
+    }}
+    QDialog#ShipmentWindow QLabel[shipmentInlineLabel="true"] {{
+        padding: 0;
+    }}
+    QDialog#ShipmentWindow QWidget[shipmentInlineRow="true"] {{
+        min-height: 28px;
+        max-height: 28px;
+    }}
+    QDialog#ShipmentWindow QLineEdit,
+    QDialog#ShipmentWindow QComboBox,
+    QDialog#ShipmentWindow QSpinBox,
+    QDialog#ShipmentWindow QDoubleSpinBox {{
+        min-height: 28px;
+        max-height: 28px;
+        color: {w["text_100"]};
+        padding: 4px 8px;
+    }}
+    QDialog#ShipmentWindow QPushButton {{
+        min-height: 30px;
+        min-width: 130px;
+        padding: 6px 14px;
+    }}
+    QDialog#ShipmentWindow QPushButton#shipmentCreateButton {{
+        min-width: 170px;
     }}
     QMessageBox {{
         background-color: {w["bg_main"]};

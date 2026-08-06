@@ -11,6 +11,7 @@ class RightPanel(QWidget):
     """Panel con botón Enviar a IA, formulario y guardar."""
 
     send_to_ai_clicked = Signal()
+    check_coverage_clicked = Signal()
     save_clicked = Signal()
 
     def __init__(self, parent=None):
@@ -24,6 +25,10 @@ class RightPanel(QWidget):
         self._btn_send = QPushButton("Enviar a IA")
         self._btn_send.clicked.connect(self.send_to_ai_clicked.emit)
         layout.addWidget(self._btn_send)
+
+        self._btn_coverage = QPushButton("Consultar Cobertura")
+        self._btn_coverage.clicked.connect(self.check_coverage_clicked.emit)
+        layout.addWidget(self._btn_coverage)
 
         self._progress = QProgressBar()
         self._progress.setRange(0, 0)  # Indeterminado

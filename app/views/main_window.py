@@ -31,10 +31,17 @@ from app.services.registros_service import (
     insert_extraction,
     validate_extraction,
 )
+from app.services.paquetexpress_service import (
+    PaquetexpressCoverageNotFoundError,
+    PaquetexpressServiceError,
+    PaquetexpressSessionExpiredError,
+    get_coverages_for_postal_code,
+)
 from app.states.image_state import ImageStateStore
 from app.states.workers.ai_worker import AIWorker
 from app.utils.record_mapper import to_db_record
 from app.views.export_dialog import ExportDialog
+from app.views.shipment_window import ShipmentWindow
 from app.views.session_relogin import prompt_relogin_after_session_expired
 
 logger = logging.getLogger(__name__)
@@ -165,6 +172,7 @@ class MainWindow(QMainWindow):
         self._viewer.crop_changed.connect(self._update_send_enabled)
 
         self._right.send_to_ai_clicked.connect(self._on_send_to_ai)
+        self._right.check_coverage_clicked.connect(self._on_check_coverage)
         self._right.save_clicked.connect(self._on_save)
 
     def _on_open(self):
@@ -285,6 +293,46 @@ class MainWindow(QMainWindow):
         self._ai_worker.finished.connect(self._on_ai_finished)
         self._ai_worker.error.connect(self._on_ai_error)
         self._ai_worker.start()
+
+    def _on_check_coverage(self):
+        form_data = self._right.get_form_data()
+        campos = form_data.get("campos") or {}
+        postal_code = str(campos.get("codigo_postal") or "").strip()
+        if not postal_code:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "No se encontró código postal en los datos OCR para consultar cobertura.",
+            )
+            return
+
+        try:
+            coverages = get_coverages_for_postal_code(postal_code)
+        except PaquetexpressCoverageNotFoundError as exc:
+            QMessageBox.critical(
+                self,
+                "Sin cobertura",
+                (
+                    "No existe cobertura para el código postal consultado.\n\n"
+                    f"{exc}"
+                ),
+            )
+            return
+        except PaquetexpressSessionExpiredError as exc:
+            prompt_relogin_after_session_expired(
+                self, f"No se pudo consultar cobertura: {exc}"
+            )
+            return
+        except PaquetexpressServiceError as exc:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"No se pudo consultar cobertura: {exc}",
+            )
+            return
+
+        dialog = ShipmentWindow(coverages, form_data, parent=self)
+        dialog.exec()
 
     def _on_ai_finished(self, result: dict):
         self._right.set_loading(False)
