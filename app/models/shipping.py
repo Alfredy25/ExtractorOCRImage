@@ -24,7 +24,7 @@ class ShippingRequest(BaseModel):
     name_receiver: str = Field(..., min_length=4, max_length=80)
     rfc: str = Field(..., min_length=12, max_length=15)
     country: str = Field(..., min_length=3, max_length=50)
-    state: str = Field(..., min_length=5, max_length=50)
+    state: str = Field(..., min_length=5, max_length=60)
     city: str = Field(..., min_length=3, max_length=60)
     colony: str = Field(..., min_length=3, max_length=60)
     street: str = Field(..., min_length=3, max_length=80)
@@ -129,9 +129,7 @@ def _validation_message(field: str, error: dict[str, Any]) -> str:
     return str(error.get("msg", "Valor inválido"))
 
 
-def validate_shipping(
-    data: dict[str, Any],
-) -> tuple[ShippingRequest | None, list[ShippingFieldError]]:
+def validate_shipping(data: dict[str, Any]) -> tuple[ShippingRequest | None, list[ShippingFieldError]]:
     """Valida todos los campos del envío y acumula todos los errores."""
     try:
         return ShippingRequest.model_validate(data), []
