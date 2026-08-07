@@ -91,6 +91,7 @@ flowchart LR
 ### Testing mínimo
 
 - Ejecutar `pytest tests/ -v` tras cambios en core o datos.
+- UI: `python scripts/preview_ui.py` renderiza las tres pantallas sin abrir ventanas y comprueba interacciones (clics del HUD, recorte, cobertura); deja capturas para revisar el resultado visual.
 - UI: prueba manual mínima del flujo (abrir imagen, recorte, enviar, guardar) cuando se toque flujo crítico.
 
 ### Secretos y configuración

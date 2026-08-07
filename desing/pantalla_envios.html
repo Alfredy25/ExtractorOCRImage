@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Paquetexpress - Sleek Modern Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#93000a",
+                    "surface-tint": "#a9c7ff",
+                    "inverse-surface": "#e0e2ec",
+                    "on-background": "#e0e2ec",
+                    "tertiary": "#ffb691",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "on-error": "#690005",
+                    "on-primary-fixed": "#001b3d",
+                    "surface-variant": "#31353d",
+                    "inverse-on-surface": "#2d3038",
+                    "tertiary-fixed": "#ffdbcb",
+                    "primary-container": "#3a90ff",
+                    "on-tertiary-container": "#4a1c00",
+                    "on-tertiary": "#552100",
+                    "on-secondary-fixed-variant": "#00419c",
+                    "secondary-fixed-dim": "#b0c6ff",
+                    "on-primary-container": "#002957",
+                    "on-tertiary-fixed-variant": "#783100",
+                    "primary-fixed-dim": "#a9c7ff",
+                    "surface": "#10131b",
+                    "on-secondary-container": "#002662",
+                    "secondary-container": "#578cff",
+                    "surface-dim": "#10131b",
+                    "on-secondary": "#002c6f",
+                    "surface-container-high": "#262a32",
+                    "secondary": "#b0c6ff",
+                    "primary": "#a9c7ff",
+                    "surface-container": "#1c2027",
+                    "surface-container-lowest": "#0a0e15",
+                    "surface-container-low": "#181c23",
+                    "on-surface-variant": "#c0c6d6",
+                    "tertiary-container": "#eb6b13",
+                    "on-surface": "#e0e2ec",
+                    "primary-fixed": "#d6e3ff",
+                    "on-secondary-fixed": "#001945",
+                    "on-primary": "#003063",
+                    "background": "#10131b",
+                    "outline-variant": "#404754",
+                    "error": "#ffb4ab",
+                    "outline": "#8a91a0",
+                    "surface-container-highest": "#31353d",
+                    "on-error-container": "#ffdad6",
+                    "surface-bright": "#363941",
+                    "inverse-primary": "#005db6",
+                    "on-tertiary-fixed": "#341100",
+                    "on-primary-fixed-variant": "#00468b",
+                    "secondary-fixed": "#d9e2ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xs": "4px",
+                    "gutter": "16px",
+                    "unit": "4px",
+                    "margin-desktop": "32px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "headline-sm": [
+                            "Inter"
+                    ],
+                    "headline-lg-mobile": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Inter"
+                    ],
+                    "label-sm": [
+                            "JetBrains Mono"
+                    ],
+                    "label-md": [
+                            "JetBrains Mono"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "headline-sm": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "26px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-sm": [
+                            "10px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "label-md": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.05em",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+        },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md text-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="bg-surface-container dark:bg-surface-container fixed top-0 w-full z-50 border-b border-outline-variant dark:border-outline-variant flat no shadows flex justify-between items-center w-full px-margin-desktop h-16">
+<div class="flex items-center gap-xl">
+<span class="text-headline-md font-headline-md font-bold text-primary dark:text-primary tracking-tight">Paquetexpress OCR Guide</span>
+<div class="hidden md:flex gap-lg h-full">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors cursor-pointer active:opacity-80 transition-opacity flex items-center px-sm h-full font-body-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors cursor-pointer active:opacity-80 transition-opacity flex items-center px-sm h-full font-body-md" href="#">Shipments</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors cursor-pointer active:opacity-80 transition-opacity flex items-center px-sm h-full font-body-md" href="#">Coverage</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-on-surface hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors cursor-pointer active:opacity-80 transition-opacity flex items-center px-sm h-full font-body-md" href="#">Manifests</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<div class="h-6 w-px bg-outline-variant hidden md:block"></div>
+<button class="text-on-surface-variant hover:bg-surface-variant rounded-full p-xs transition-colors hidden md:block">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-variant rounded-full p-xs transition-colors hidden md:block">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors hidden lg:block font-body-md">Help</button>
+<button class="bg-primary-container text-on-primary-container px-md py-sm rounded-full font-body-md hover:opacity-90 transition-opacity font-semibold ml-sm hidden sm:block">Create New</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant ml-sm cursor-pointer">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A stylized minimalist avatar placeholder graphic featuring simple geometric shapes in deep blues and subtle grays, suitable for a dark mode logistics dashboard user interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAA_Ahm-9lJZB0Q0os1e23vp-VmteBVAoIogkWjUnjC7006p7a4w76qgEbqAfaJRe0mLv6Cx-QgnoeTTgCWxSJENCP3a3JmwlqLSss3vs9luwyJGkOQxbgPcYLrskpHxDEp08pH_8awizMwc-Vv4Kp_TnGR5UKDXXpy32Xg91qV5JICmOjk9TXxhvYm5w30-SerYllExQpWkhU1ZxAbqq3Xh27m2VBd0bqLSaa7WWLskRQT7LJ3OlvrWQ"/>
+</div>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="bg-surface-dim dark:bg-surface-dim fixed left-0 top-16 bottom-0 w-[280px] border-r border-outline-variant dark:border-outline-variant flat no shadows flex flex-col h-full p-md gap-sm hidden lg:flex z-40">
+<div class="flex items-center gap-md p-sm mb-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high border border-outline-variant flex items-center justify-center shrink-0">
+<img alt="Station Logo" class="w-6 h-6 object-contain" data-alt="A clean, geometric logo design representing a logistics control center terminal, featuring intersecting lines and solid blocks in minimalist shades of cool blue and deep gray, optimized for dark mode." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB18ifXmXXxlFEttRgzNN_taNHxqUf1lKjprIxlW2cd4A9R32unGfKZTTl8fGkE0aquSmmNxkGwHmQapKL_DmmXcw082TGywCKJ4MR9fVOF94EyD1Dtym4hTUITjn_xS7Xz_4D947O-gxxHiIs3YNKfDEbxbfE__jJ7xTNUNbmKW8BsmVfxmdlrYyfU91pbbQ1jqC7CBqtXtZN_waYY1sBTRWIwJYWx-XzEfdutiSPGLp0kHozfe_XvEw"/>
+</div>
+<div>
+<h2 class="text-headline-sm font-headline-sm font-black text-primary leading-tight">Control Center</h2>
+<p class="text-label-md font-label-md text-on-surface-variant">Terminal MX-04</p>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container rounded-lg py-md px-md flex items-center justify-center gap-sm font-body-md font-semibold hover:opacity-90 transition-opacity mb-lg shrink-0">
+<span class="material-symbols-outlined">qr_code_scanner</span>
+            Scan Manifest
+        </button>
+<nav class="flex-1 flex flex-col gap-xs overflow-y-auto">
+<a class="bg-secondary-container dark:bg-secondary-container text-on-secondary-container dark:text-on-secondary-container rounded-lg hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md" href="#">
+<span class="material-symbols-outlined" data-icon="data_object" data-weight="fill" style="font-variation-settings: 'FILL' 1;">data_object</span>
+                OCR Review
+            </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-highest hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+                Coverage
+            </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-highest hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assignment">assignment</span>
+                Form Entry
+            </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-highest hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                Manifests
+            </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-highest hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md rounded-lg mt-auto" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="mt-auto pt-md border-t border-outline-variant flex flex-col gap-xs shrink-0">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-highest hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+                Support
+            </a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-highest hover:bg-surface-container-high dark:hover:bg-surface-container-high transition-all cursor-pointer active:scale-95 duration-150 flex items-center gap-md px-md py-sm font-body-md rounded-lg text-error hover:text-error" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                Log Out
+            </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="pt-[88px] lg:pl-[296px] p-margin-mobile lg:p-margin-desktop min-h-screen flex flex-col gap-lg">
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md pb-md border-b border-surface-variant">
+<div>
+<h1 class="text-headline-lg font-headline-lg font-bold text-on-surface">Form Entry Review</h1>
+<p class="text-on-surface-variant text-body-md mt-sm">Validate extracted manifest data and verify coverage zones.</p>
+</div>
+<div class="flex gap-sm">
+<button class="px-md py-sm rounded border border-outline-variant text-on-surface-variant hover:bg-surface-variant transition-colors font-body-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                    Reset Fields
+                </button>
+<button class="px-md py-sm rounded bg-primary-container text-on-primary-container hover:opacity-90 transition-opacity font-body-md font-semibold flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">save</span>
+                    Confirm Entry
+                </button>
+</div>
+</header>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-lg items-start">
+<!-- Left: OCR Detection -->
+<div class="xl:col-span-4 bg-surface-container rounded-xl border border-outline-variant overflow-hidden shadow-lg shadow-black/20">
+<div class="p-md border-b border-surface-variant bg-surface-container-low flex justify-between items-center">
+<h3 class="text-headline-sm font-headline-sm text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary-container">document_scanner</span>
+                        Source Manifest
+                    </h3>
+<span class="bg-primary/10 text-primary-container px-sm py-xs rounded text-label-sm font-label-sm border border-primary/20">AI CONFIDENCE: 94%</span>
+</div>
+<div class="p-md bg-[#10131b] relative min-h-[400px] flex items-center justify-center">
+<!-- Simulate OCR Image Area -->
+<div class="absolute inset-md border border-primary-container/30 bg-primary-container/5 rounded">
+<div class="absolute top-1/4 left-[10%] w-[80%] h-8 border border-primary-container bg-primary-container/20 flex items-center px-xs">
+<span class="text-primary-container text-label-sm font-label-md">Extracted: C-90210</span>
+</div>
+<div class="absolute top-1/2 left-[10%] w-[60%] h-8 border border-primary-container bg-primary-container/20 flex items-center px-xs">
+<span class="text-primary-container text-label-sm font-label-md">Extracted: Av. Insurgentes Sur</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Center & Right Column Container -->
+<div class="xl:col-span-8 flex flex-col gap-lg">
+<!-- Center: Coverage Validation -->
+<div class="bg-surface-container rounded-xl border border-outline-variant p-lg shadow-lg shadow-black/20 flex items-center gap-lg">
+<div class="w-16 h-16 rounded-full bg-secondary-container/20 border border-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[32px] text-secondary-container">check_circle</span>
+</div>
+<div class="flex-1">
+<h4 class="text-headline-sm font-headline-sm text-on-surface">Coverage Confirmed</h4>
+<p class="text-on-surface-variant text-body-md mt-xs">Destination <span class="font-label-md text-secondary-container bg-secondary-container/10 px-xs py-[2px] rounded">C-90210</span> is within Terminal MX-04 active routing zone.</p>
+</div>
+<button class="text-primary-container hover:text-primary transition-colors text-body-md font-semibold flex items-center gap-xs">
+                        View Map <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+<!-- Right: Shipping Form -->
+<div class="bg-surface-container rounded-xl border border-outline-variant shadow-lg shadow-black/20 overflow-hidden">
+<div class="p-md border-b border-surface-variant bg-surface-container-low flex items-center gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant">edit_document</span>
+<h3 class="text-headline-sm font-headline-sm text-on-surface">Data Extraction Review</h3>
+</div>
+<div class="p-lg grid grid-cols-1 md:grid-cols-2 gap-lg">
+<!-- Receiver Info -->
+<div class="md:col-span-2">
+<h5 class="text-label-md font-label-md text-on-surface-variant mb-md uppercase tracking-wider">Receiver Information</h5>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Full Name</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" type="text" value="Logistics Solutions S.A."/>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Contact Phone</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-label-md font-label-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" type="text" value="55-1234-5678"/>
+</div>
+</div>
+</div>
+<!-- Address Info -->
+<div class="md:col-span-2 pt-md border-t border-surface-variant">
+<h5 class="text-label-md font-label-md text-on-surface-variant mb-md uppercase tracking-wider flex justify-between">
+                                Destination Address
+                                <span class="text-secondary-container text-xs normal-case flex items-center gap-xs"><span class="material-symbols-outlined text-[14px]">auto_awesome</span> AI Verified</span>
+</h5>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="md:col-span-2">
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Street &amp; Number</label>
+<div class="relative">
+<input class="w-full bg-surface-dim border border-primary-container/50 rounded p-sm pr-10 text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" type="text" value="Av. Insurgentes Sur 105"/>
+<span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-primary-container/70 text-[18px]">verified</span>
+</div>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Zip Code</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-label-md font-label-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" type="text" value="90210"/>
+</div>
+<div class="md:col-span-1">
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">City</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" type="text" value="Mexico City"/>
+</div>
+<div class="md:col-span-1">
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">State</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" type="text" value="CDMX"/>
+</div>
+<div class="md:col-span-1">
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Country</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" disabled="" type="text" value="MX"/>
+</div>
+</div>
+</div>
+<!-- Package Info -->
+<div class="md:col-span-2 pt-md border-t border-surface-variant">
+<h5 class="text-label-md font-label-md text-on-surface-variant mb-md uppercase tracking-wider">Package Details</h5>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-md">
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Weight (kg)</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-label-md font-label-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all text-right" type="text" value="15.5"/>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Volume (m³)</label>
+<input class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-label-md font-label-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all text-right" type="text" value="0.08"/>
+</div>
+<div class="col-span-2">
+<label class="block text-label-sm font-label-sm text-on-surface-variant mb-xs">Service Type</label>
+<select class="w-full bg-surface-dim border border-outline-variant rounded p-sm text-body-md text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all appearance-none">
+<option>Next Day Express</option>
+<option>Standard Ground</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

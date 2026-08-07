@@ -2,27 +2,22 @@
 
 """Punto de entrada de la aplicación."""
 import logging
-import os
 import sys
 from pathlib import Path
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QDialog
 
-from app.components.theme_manager import apply_theme, get_saved_theme
+from app.components.theme_manager import apply_theme
 from app.config import API_BASE_URL
+from app.utils.logs import log_directory
 from app.views.login_window import LoginWindow
 from app.views.main_window import MainWindow
 
 
 def setup_logging() -> Path:
     """Configura logging con RotatingFileHandler."""
-    local_appdata = os.getenv("LOCALAPPDATA")
-    if local_appdata:
-        log_dir = Path(local_appdata) / "ExtractorOCR" / "logs"
-    else:
-        # Fallback para entornos sin LOCALAPPDATA definido.
-        log_dir = Path.home() / "AppData" / "Local" / "ExtractorOCR" / "logs"
+    log_dir = log_directory()
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "extractor_ocr.log"
 
@@ -61,7 +56,7 @@ def main():
     app.setApplicationName("Extractor OCR")
     app.setApplicationDisplayName("Extractor OCR - Destinatarios")
 
-    apply_theme(get_saved_theme())
+    apply_theme()
 
     # Sin sesión válida no se abre la app de extracción (JWT queda en auth_client).
     login_dlg = LoginWindow()

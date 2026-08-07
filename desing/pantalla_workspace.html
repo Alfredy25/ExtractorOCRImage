@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Extractor OCR - Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Hanken+Grotesk:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "surface": "#131313",
+                "on-background": "#e5e2e1",
+                "secondary-container": "#578cff",
+                "surface-container": "#202020",
+                "on-tertiary-container": "#112e2f",
+                "on-primary-fixed": "#001b3d",
+                "background": "#1E1E1E", /* bg_100 */
+                "on-secondary-fixed-variant": "#00419c",
+                "surface-variant": "#2d2d2d", /* bg_200 */
+                "outline": "#8a91a0",
+                "primary-fixed": "#d6e3ff",
+                "on-tertiary-fixed": "#022020",
+                "secondary-fixed-dim": "#b0c6ff",
+                "tertiary-fixed": "#cae8e8",
+                "on-secondary": "#002c6f",
+                "tertiary-fixed-dim": "#aecccc",
+                "on-primary-container": "#002957",
+                "on-tertiary": "#193535",
+                "on-secondary-fixed": "#001945",
+                "error-container": "#93000a",
+                "inverse-on-surface": "#303030",
+                "on-error-container": "#ffdad6",
+                "error": "#ffb4ab",
+                "primary-container": "#3a90ff",
+                "primary": "#0085ff", /* primary_100 */
+                "primary-fixed-dim": "#a9c7ff",
+                "outline-variant": "#404754",
+                "surface-container-lowest": "#0e0e0e",
+                "surface-tint": "#a9c7ff",
+                "inverse-primary": "#005db6",
+                "inverse-surface": "#e5e2e1",
+                "surface-container-highest": "#353535",
+                "secondary": "#b0c6ff",
+                "surface-dim": "#131313",
+                "tertiary": "#aecccc",
+                "on-error": "#690005",
+                "tertiary-container": "#799696",
+                "surface-container-low": "#1b1b1c",
+                "secondary-fixed": "#d9e2ff",
+                "surface-container-high": "#2a2a2a",
+                "on-primary-fixed-variant": "#00468b",
+                "on-surface-variant": "#9e9e9e", /* text_200 */
+                "on-secondary-container": "#002662",
+                "surface-bright": "#393939",
+                "on-primary": "#003063",
+                "on-tertiary-fixed-variant": "#304b4c",
+                "on-surface": "#FFFFFF" /* text_100 */
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "lg": "24px",
+                "xl": "32px",
+                "margin-mobile": "16px",
+                "md": "16px",
+                "margin-desktop": "32px",
+                "base": "4px",
+                "gutter": "16px",
+                "xs": "4px",
+                "sm": "8px",
+                "panel-width": "400px"
+        },
+        "fontFamily": {
+                "headline-lg-mobile": [
+                        "Hanken Grotesk"
+                ],
+                "body-sm": [
+                        "Geist"
+                ],
+                "body-md": [
+                        "Geist"
+                ],
+                "headline-lg": [
+                        "Hanken Grotesk"
+                ],
+                "headline-md": [
+                        "Hanken Grotesk"
+                ],
+                "label-caps": [
+                        "JetBrains Mono"
+                ],
+                "code-md": [
+                        "JetBrains Mono"
+                ],
+                "body-lg": [
+                        "Geist"
+                ],
+                "headline-xl": [
+                        "Hanken Grotesk"
+                ]
+        },
+        "fontSize": {
+                "headline-lg-mobile": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-sm": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-md": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-lg": [
+                        "32px",
+                        {
+                                "lineHeight": "40px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-md": [
+                        "24px",
+                        {
+                                "lineHeight": "32px",
+                                "fontWeight": "600"
+                        }
+                ],
+                "label-caps": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.05em",
+                                "fontWeight": "700"
+                        }
+                ],
+                "code-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "fontWeight": "500"
+                        }
+                ],
+                "body-lg": [
+                        "18px",
+                        {
+                                "lineHeight": "28px",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-xl": [
+                        "40px",
+                        {
+                                "lineHeight": "48px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "700"
+                        }
+                ]
+        }
+},
+    },
+  }
+</script>
+<style>
+    .glow-primary {
+        box-shadow: 0 0 10px rgba(0, 133, 255, 0.5);
+    }
+    .glow-primary:hover {
+        box-shadow: 0 0 15px rgba(0, 133, 255, 0.7);
+    }
+</style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex font-body-md overflow-hidden">
+<!-- SideNavBar -->
+<aside class="bg-surface-variant flex flex-col h-screen w-64 shrink-0 py-md px-sm border-r border-outline-variant transition-all duration-200 ease-in-out">
+<div class="flex items-center gap-sm px-sm mb-lg">
+<span class="material-symbols-outlined text-primary text-2xl">document_scanner</span>
+<div>
+<h2 class="font-label-caps text-label-caps text-primary uppercase">OCR Terminal</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Active Session</p>
+</div>
+</div>
+<button class="bg-primary text-on-surface w-full py-2 rounded-lg font-body-md mb-md glow-primary hover:opacity-90 transition-opacity">
+        New Process
+    </button>
+<nav class="flex-1 flex flex-col gap-sm">
+<a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-2 bg-secondary-container text-on-surface rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">document_scanner</span>
+<span class="font-body-md font-bold">Workspace</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-body-md">Records</span>
+</a>
+</nav>
+<div class="mt-auto flex flex-col gap-sm pt-md border-t border-outline-variant">
+<a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-body-md">Support</span>
+</a>
+<a class="flex items-center gap-sm px-sm py-2 text-on-surface-variant hover:text-primary hover:bg-surface-variant rounded-lg transition-colors cursor-pointer" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-body-md">Logs</span>
+</a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center px-lg w-full h-16 sticky top-0 z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<span class="font-headline-md text-headline-md font-bold text-primary">ScanStream OCR</span>
+</div>
+<div class="flex items-center gap-sm">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-4 pr-10 py-2 bg-surface-variant border border-outline-variant rounded focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface w-64 placeholder:text-on-surface-variant" placeholder="Buscar..." type="text"/>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors flex items-center justify-center cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors flex items-center justify-center cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-outline-variant ml-2 object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiI8LJRiZ9Wrw2BPH5e6K61H-XE5y4hldXlOL7olKvVdujrkppndHrJzDaYehg1izCvrnEM_oXqu0S8hhl4ugI13ADwmtr9Iu4qWKsThJ8SPMNXCoUfWu9hoRd6TmmStM8sl9kvzDpFfeyEb9jTBDBjVRqELWWPXsZ_tqj_fRhEE_OM4XnEpGfcWbJXO5zyfr8xx52ZNnJ5FnLuuygZ51miXWT3R0MRAy8srjgpAPZRNfHodQ7jYCBjg"/>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col xl:flex-row overflow-hidden relative p-sm gap-sm">
+<!-- Document Viewer (Left/Center) -->
+<section class="flex-1 bg-surface-variant p-sm flex flex-col relative overflow-hidden rounded-lg border border-outline-variant h-[512px] xl:h-auto shadow-sm">
+<!-- HUD Toolbar -->
+<div class="absolute top-md left-1/2 -translate-x-1/2 z-10 bg-surface/90 backdrop-blur border border-primary/50 rounded-full flex shadow-lg px-2 py-1 gap-1">
+<button class="p-2 text-primary hover:bg-primary/20 rounded-full transition-colors" title="Alejar">
+<span class="material-symbols-outlined text-sm">zoom_out</span>
+</button>
+<div class="w-px bg-primary/30 mx-1 my-2"></div>
+<button class="p-2 text-primary hover:bg-primary/20 rounded-full transition-colors" title="Acercar">
+<span class="material-symbols-outlined text-sm">zoom_in</span>
+</button>
+<div class="w-px bg-primary/30 mx-1 my-2"></div>
+<button class="p-2 text-primary hover:bg-primary/20 rounded-full transition-colors" title="Rotar Izquierda">
+<span class="material-symbols-outlined text-sm">rotate_left</span>
+</button>
+<button class="p-2 text-primary hover:bg-primary/20 rounded-full transition-colors" title="Rotar Derecha">
+<span class="material-symbols-outlined text-sm">rotate_right</span>
+</button>
+<div class="w-px bg-primary/30 mx-1 my-2"></div>
+<button class="p-2 text-primary hover:bg-primary/20 rounded-full transition-colors" title="Recortar">
+<span class="material-symbols-outlined text-sm">crop</span>
+</button>
+</div>
+<!-- Canvas Area -->
+<div class="flex-1 bg-background border border-outline-variant rounded overflow-auto flex items-center justify-center relative">
+<img class="max-w-full max-h-full object-contain p-lg shadow-sm" data-alt="A highly detailed, realistic scanned shipping label or invoice document viewed straight-on against a dark neutral background. The document contains dense, technical text blocks, barcodes, and routing codes typical of an enterprise logistics operation. Crisp focus, high-utility aesthetic, modern corporate setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBiX4kxUhyOti34iszXHJYg6CbK5cZJNFkPQF08k9Y_VsTRWwiOHkpd6nC6ehlpguSwZMDAVHg6lxfxXff6dydVqLNLf8FHePUrea-hvJX4Cy-m3aehCWz5U17bgVZ9BdD8Lt0OtbesI7TQeU4JMUz7LuGy4IKqSioRnfZJcFOl0J7KcVCf57vlc8xOwGTiKG3Hrbele_eQlrRP0nZ1jL9P8zUepqUb8Bce0l-Pg25m_a_GqtwJb5WWBA"/>
+</div>
+</section>
+<!-- Inspector Panel (Right) -->
+<aside class="w-full xl:w-panel-width bg-surface-variant border border-outline-variant rounded-lg flex flex-col shrink-0 h-[512px] xl:h-auto overflow-y-auto shadow-sm">
+<div class="p-md border-b border-outline-variant flex justify-between items-center sticky top-0 bg-surface-variant z-10 rounded-t-lg">
+<h2 class="font-headline-md text-headline-md font-semibold text-on-surface">Datos Extraídos</h2>
+<span class="font-code-md text-code-md bg-primary/20 text-primary px-3 py-1 rounded-full font-bold border border-primary/50 glow-primary">Confianza: 94%</span>
+</div>
+<form class="p-md flex flex-col gap-lg">
+<!-- Location -->
+<div class="flex flex-col gap-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase">Ubicación</label>
+<select class="w-full bg-surface border border-outline-variant rounded p-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface">
+<option disabled="" selected="" value="">Seleccione Ubicación</option>
+<option value="AJUSCO">AJUSCO</option>
+<option value="COYOACAN">COYOACÁN</option>
+</select>
+</div>
+<!-- Recipient Info Group -->
+<div class="bg-surface p-sm rounded border border-outline-variant/50 flex flex-col gap-sm">
+<h3 class="font-label-caps text-label-caps text-primary uppercase mb-1">Información del Destinatario</h3>
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-end">
+<label class="font-code-md text-code-md text-on-surface-variant">Nombre</label>
+<span class="font-code-md text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">98%</span>
+</div>
+<input class="w-full bg-surface-variant border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface" type="text" value="Juan Pérez García"/>
+</div>
+</div>
+<!-- Address Group -->
+<div class="bg-surface p-sm rounded border border-outline-variant/50 flex flex-col gap-sm">
+<h3 class="font-label-caps text-label-caps text-primary uppercase mb-1">Dirección</h3>
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-end">
+<label class="font-code-md text-code-md text-on-surface-variant">Calle y Número</label>
+<span class="font-code-md text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">95%</span>
+</div>
+<textarea class="w-full bg-surface-variant border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface resize-none" rows="2">Av. Insurgentes Sur 1234, Int. 5B</textarea>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-end">
+<label class="font-code-md text-code-md text-on-surface-variant">Ciudad</label>
+<span class="font-code-md text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">99%</span>
+</div>
+<input class="w-full bg-surface-variant border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface" type="text" value="Ciudad de México"/>
+</div>
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-end">
+<label class="font-code-md text-code-md text-on-surface-variant">CP</label>
+<span class="font-code-md text-[10px] text-[#ffb4ab] opacity-0 group-hover:opacity-100 transition-opacity">55%</span>
+</div>
+<input class="w-full bg-surface-variant border border-error rounded p-2 focus:border-error focus:ring-1 focus:ring-error transition-all font-body-md text-on-surface" type="text" value="03100"/>
+</div>
+</div>
+</div>
+<!-- Contact Group -->
+<div class="bg-surface p-sm rounded border border-outline-variant/50 flex flex-col gap-sm">
+<h3 class="font-label-caps text-label-caps text-primary uppercase mb-1">Contacto y Notas</h3>
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-end">
+<label class="font-code-md text-code-md text-on-surface-variant">Teléfono</label>
+<span class="font-code-md text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">88%</span>
+</div>
+<input class="w-full bg-surface-variant border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface" type="text" value="55 1234 5678"/>
+</div>
+<div class="flex flex-col gap-1 group">
+<div class="flex justify-between items-end">
+<label class="font-code-md text-code-md text-on-surface-variant">Referencia / Notas</label>
+</div>
+<textarea class="w-full bg-surface-variant border border-outline-variant rounded p-2 focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md text-on-surface resize-none" rows="2">Dejar en recepción si no hay nadie.</textarea>
+</div>
+</div>
+<!-- Actions -->
+<div class="mt-auto flex flex-col gap-sm pt-md">
+<button class="w-full bg-primary text-on-surface py-3 px-4 rounded font-label-caps text-label-caps uppercase transition-colors shadow-sm flex items-center justify-center gap-2 glow-primary" type="button">
+<span class="material-symbols-outlined text-sm">save</span>
+                        Guardar Registro
+                    </button>
+<button class="w-full bg-surface text-on-surface-variant border border-outline-variant py-2 px-4 rounded font-label-caps text-label-caps uppercase hover:bg-surface-variant hover:text-on-surface transition-colors flex items-center justify-center gap-2" type="button">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                        Reintentar OCR
+                    </button>
+</div>
+</form>
+</aside>
+</main>
+</div>
+</body></html>

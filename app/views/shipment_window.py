@@ -7,17 +7,14 @@ from typing import Any
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QComboBox,
-    QDoubleSpinBox,
     QDialog,
-    QFormLayout,
+    QDoubleSpinBox,
     QFrame,
     QGridLayout,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
-    QPushButton,
     QScrollArea,
     QSizePolicy,
     QSpinBox,
@@ -25,17 +22,40 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.components.theme import SPACE
+from app.components.widgets import (
+    Banner,
+    Card,
+    divider,
+    icon_label,
+    labeled_field,
+    section_label,
+    subtitle,
+    text_button,
+)
 from app.models.shipping import CoverageItem
 from app.services.paquetexpress_service import (PaquetexpressServiceError, PaquetexpressSessionExpiredError,
                                                     PaquetexpressValidationError, build_shipment_draft, 
                                                     create_shipment)
 from app.views.session_relogin import prompt_relogin_after_session_expired
 
+# Campos con datos técnicos: se muestran en monoespaciada para facilitar el
+# cotejo carácter a carácter contra la etiqueta del sobre.
+_MONO_KEYS = {
+    "rfc",
+    "phone",
+    "num_street",
+    "package_code",
+    "quantity",
+    "weight",
+    "length",
+    "width",
+    "height",
+}
+
 
 class ShipmentWindow(QDialog):
     """Formulario de envío basado en cobertura + datos OCR."""
-
-    _INLINE_LABEL_WIDTH = 108
 
     def __init__(self, coverages: list[CoverageItem], ocr_form_data: dict[str, Any], parent=None):
         super().__init__(parent)
@@ -56,22 +76,32 @@ class ShipmentWindow(QDialog):
         self._load_ocr_reference()
         self.setWindowState(self.windowState() | Qt.WindowState.WindowMaximized)
 
+    # --- Construcción --------------------------------------------------
+
     def _setup_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(10, 10, 10, 10)
-        root.setSpacing(8)
+        root.setContentsMargins(SPACE["lg"], SPACE["md"], SPACE["lg"], SPACE["md"])
+        root.setSpacing(SPACE["md"])
+
+        root.addWidget(self._build_header())
+        root.addWidget(divider())
+
+        columns = QHBoxLayout()
+        columns.setSpacing(SPACE["md"])
+        columns.addWidget(self._build_ocr_reference_card(), 4)
+
+        right_column = QVBoxLayout()
+        right_column.setSpacing(SPACE["md"])
+        right_column.addWidget(self._build_coverage_banner())
+        right_column.addWidget(self._build_coverage_card())
+        right_column.addWidget(self._build_shipping_card(), 1)
+
+        right_container = QWidget()
+        right_container.setLayout(right_column)
+        columns.addWidget(right_container, 8)
 
         columns_container = QWidget()
-        columns_layout = QGridLayout()
-        columns_container.setLayout(columns_layout)
-        columns_layout.setContentsMargins(0, 0, 0, 0)
-        columns_layout.setHorizontalSpacing(12)
-        columns_layout.addWidget(self._build_ocr_reference_group(), 0, 0)
-        columns_layout.addWidget(self._build_coverage_group(), 0, 1)
-        columns_layout.addWidget(self._build_shipping_group(), 0, 2)
-        columns_layout.setColumnStretch(0, 1)
-        columns_layout.setColumnStretch(1, 1)
-        columns_layout.setColumnStretch(2, 2)
+        columns_container.setLayout(columns)
 
         body_scroll = QScrollArea()
         body_scroll.setWidgetResizable(True)
@@ -79,122 +109,137 @@ class ShipmentWindow(QDialog):
         body_scroll.setWidget(columns_container)
         root.addWidget(body_scroll, 1)
 
-        actions = QHBoxLayout()
-        actions.setSpacing(10)
-        actions.addStretch()
-        btn_cancel = QPushButton("Cancelar")
+    def _build_header(self) -> QWidget:
+        header = QWidget()
+        layout = QHBoxLayout(header)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SPACE["md"])
+
+        title_column = QVBoxLayout()
+        title_column.setSpacing(2)
+        title = QLabel("Crear envío Paquetexpress")
+        title.setProperty("role", "headline")
+        title_column.addWidget(title)
+        title_column.addWidget(
+            subtitle("Valida la cobertura y completa los datos del envío.")
+        )
+        layout.addLayout(title_column)
+        layout.addStretch(1)
+
+        btn_cancel = text_button("Cancelar", variant="ghost", icon="close")
         btn_cancel.setObjectName("shipmentCancelButton")
+        btn_cancel.setMinimumHeight(38)
         btn_cancel.clicked.connect(self.reject)
-        btn_submit = QPushButton("Crear envío")
+        layout.addWidget(btn_cancel)
+
+        btn_submit = text_button("Crear envío", variant="primary", icon="send")
         btn_submit.setObjectName("shipmentCreateButton")
+        btn_submit.setMinimumHeight(38)
         btn_submit.clicked.connect(self._on_submit)
-        actions.addWidget(btn_cancel)
-        actions.addWidget(btn_submit)
-        root.addLayout(actions)
-        root.setStretch(0, 1)
+        layout.addWidget(btn_submit)
+        return header
 
-    def _build_coverage_group(self) -> QGroupBox:
-        group = QGroupBox("Cobertura Paquetexpress")
-        group.setMinimumWidth(290)
-        form = QFormLayout(group)
+    def _build_coverage_banner(self) -> Banner:
+        count = len(self._coverages)
+        colonias = "colonia disponible" if count == 1 else "colonias disponibles"
+        postal_code = self._coverages[0].postal_code if self._coverages else ""
+        self._banner = Banner(
+            "check_circle",
+            "Cobertura confirmada",
+            f"El código postal {postal_code} tiene cobertura Paquetexpress · "
+            f"{count} {colonias}.",
+            tone="success",
+        )
+        return self._banner
 
-        self._coverage_fields["postal_code"] = self._readonly_line()
-        form.addRow("Código Postal:", self._coverage_fields["postal_code"])
+    def _build_coverage_card(self) -> Card:
+        card = Card("Cobertura Paquetexpress", "map")
 
         self._colony_combo = QComboBox()
         self._colony_combo.currentIndexChanged.connect(self._on_colony_changed)
-        form.addRow("Colonia:", self._colony_combo)
+        card.body.addWidget(labeled_field("Colonia", self._colony_combo))
 
-        self._coverage_fields["city"] = self._readonly_line()
-        form.addRow("Ciudad:", self._coverage_fields["city"])
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(SPACE["md"])
+        grid.setVerticalSpacing(SPACE["sm"])
+        for column, (key, label) in enumerate(
+            (
+                ("postal_code", "Código Postal"),
+                ("city", "Ciudad"),
+                ("state", "Estado"),
+                ("coverage_type", "Tipo de cobertura"),
+            )
+        ):
+            self._coverage_fields[key] = self._readonly_line()
+            grid.addWidget(
+                labeled_field(label, self._coverage_fields[key], mono=key == "postal_code"),
+                column // 2,
+                column % 2,
+            )
+        card.body.addLayout(grid)
+        return card
 
-        self._coverage_fields["state"] = self._readonly_line()
-        form.addRow("Estado:", self._coverage_fields["state"])
+    def _build_shipping_card(self) -> Card:
+        card = Card("Datos del envío", "edit_document")
 
-        self._coverage_fields["coverage_type"] = self._readonly_line()
-        form.addRow("Tipo Cobertura:", self._coverage_fields["coverage_type"])
-        return group
-
-    def _build_shipping_group(self) -> QGroupBox:
-        group = QGroupBox("Datos del Envío")
-        wrapper = QVBoxLayout(group)
-        wrapper.setSpacing(4)
-
-        form_grid = QGridLayout()
-        form_grid.setHorizontalSpacing(10)
-        form_grid.setVerticalSpacing(4)
-
-        row = 0
-        form_grid.addWidget(
-            self._labeled_field("Destinatario", "name_receiver", True, inline=True),
-            row,
-            0,
-            1,
-            2,
+        card.body.addWidget(
+            self._section(
+                "Destinatario",
+                "person",
+                [
+                    [("Destinatario", "name_receiver", True, "text")],
+                    [("RFC", "rfc", True, "text"), ("País", "country", False, "text")],
+                ],
+            )
         )
-        row += 1
-        form_grid.addWidget(self._labeled_field("RFC", "rfc", True), row, 0)
-        form_grid.addWidget(self._labeled_field("País", "country", False), row, 1)
-        row += 1
-        form_grid.addWidget(self._labeled_field("Calle", "street", True), row, 0)
-        form_grid.addWidget(self._labeled_field("Número Exterior", "num_street", True), row, 1)
-        row += 1
-        form_grid.addWidget(self._labeled_field("Teléfono", "phone", True), row, 0)
-        form_grid.addWidget(self._labeled_field("Email", "email", True), row, 1)
-        row += 1
-        form_grid.addWidget(self._labeled_field("Referencia de Domicilio", "address_reference", True), row, 0, 1, 2)
-        row += 1
-        
-        form_grid.addWidget(
-            self._labeled_field("Código de Paquete", "package_code", True,
-                widget_type="int",
-                inline=True,),row,0)
-        form_grid.addWidget(
-            self._labeled_field("Cantidad", "quantity", True, widget_type="int",
-                inline=True,),row,1)
-        row += 1
-        form_grid.addWidget(
-            self._labeled_field("Contenido", "content", True, inline=True),
-            row,
-            0,
-            1,
-            2,
+        card.body.addWidget(
+            self._section(
+                "Dirección",
+                "place",
+                [
+                    [
+                        ("Calle", "street", True, "text"),
+                        ("Número exterior", "num_street", True, "text"),
+                    ],
+                    [
+                        ("Teléfono", "phone", True, "text"),
+                        ("Email", "email", True, "text"),
+                    ],
+                    [("Referencia de domicilio", "address_reference", True, "text")],
+                ],
+            )
         )
-        row += 1
+        card.body.addWidget(
+            self._section(
+                "Paquete",
+                "inventory_2",
+                [
+                    [
+                        ("Código de paquete", "package_code", True, "int"),
+                        ("Cantidad", "quantity", True, "int"),
+                    ],
+                    [("Contenido", "content", True, "text")],
+                    [
+                        ("Peso (kg)", "weight", True, "double"),
+                        ("Largo (cm)", "length", True, "double"),
+                        ("Ancho (cm)", "width", True, "double"),
+                        ("Alto (cm)", "height", True, "double"),
+                    ],
+                ],
+            )
+        )
+        card.body.addStretch(1)
+        return card
 
-        size_box = QGroupBox("Dimensiones")
-        size_grid = QGridLayout(size_box)
-        size_grid.setHorizontalSpacing(8)
-        size_grid.setVerticalSpacing(6)
-        size_grid.addWidget(
-            self._labeled_field("Peso (kg)", "weight", True, widget_type="double"),
-            0,
-            0,
+    def _build_ocr_reference_card(self) -> Card:
+        card = Card("Datos OCR de referencia", "document_scanner")
+        card.body.addWidget(
+            subtitle(
+                "Solo lectura: sirven para comparar con la cobertura y elegir "
+                "la colonia correcta. No se envían al backend."
+            )
         )
-        size_grid.addWidget(
-            self._labeled_field("Largo (cm)", "length", True, widget_type="double"),
-            0,
-            1,
-        )
-        size_grid.addWidget(
-            self._labeled_field("Ancho (cm)", "width", True, widget_type="double"),
-            0,
-            2,
-        )
-        size_grid.addWidget(
-            self._labeled_field("Alto (cm)", "height", True, widget_type="double"),
-            0,
-            3,
-        )
-        form_grid.addWidget(size_box, row, 0, 1, 2)
-
-        wrapper.addLayout(form_grid)
-        return group
-
-    def _build_ocr_reference_group(self) -> QGroupBox:
-        group = QGroupBox("Datos OCR de Referencia")
-        group.setMinimumWidth(300)
-        form = QFormLayout(group)
+        card.body.addWidget(divider(soft=True))
         for key, label in (
             ("nombre_titulo", "Nombre OCR"),
             ("cargo_dependencia", "Cargo OCR"),
@@ -208,40 +253,49 @@ class ShipmentWindow(QDialog):
         ):
             line = self._readonly_line()
             self._ocr_reference_fields[key] = line
-            form.addRow(f"{label}:", line)
-        return group
+            card.body.addWidget(
+                labeled_field(label, line, mono=key in ("codigo_postal", "contacto"))
+            )
+        card.body.addStretch(1)
+        return card
 
-    @staticmethod
-    def _add_section_title(parent_layout: QVBoxLayout, text: str):
-        title = QLabel(text)
-        title.setStyleSheet("font-weight: 700;")
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        parent_layout.addWidget(title)
-        parent_layout.addWidget(line)
-
-    def _labeled_field(
+    def _section(
         self,
-        label: str,
-        key: str,
-        editable: bool,
-        widget_type: str = "text",
-        inline: bool = False,
-    ) -> QWidget:
-        container = QWidget()
-        layout = QHBoxLayout(container) if inline else QVBoxLayout(container)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(1)
-        lbl = QLabel(label)
-        if inline:
-            container.setProperty("shipmentInlineRow", True)
-            lbl.setProperty("shipmentInlineLabel", True)
-            lbl.setMinimumWidth(self._INLINE_LABEL_WIDTH)
-            lbl.setMaximumWidth(self._INLINE_LABEL_WIDTH)
-            lbl.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
+        title: str,
+        icon: str,
+        rows: list[list[tuple[str, str, bool, str]]],
+    ) -> QFrame:
+        """Bloque de campos agrupados. Cada fila reparte su ancho a partes iguales."""
+        box = QFrame()
+        box.setObjectName("SectionBox")
+        box.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(SPACE["sm"] + 4, SPACE["sm"] + 2, SPACE["sm"] + 4, SPACE["sm"] + 4)
+        layout.setSpacing(SPACE["sm"] + 2)
+
+        header = QHBoxLayout()
+        header.setSpacing(SPACE["xs"] + 2)
+        header.addWidget(icon_label(icon, 15))
+        header.addWidget(section_label(title))
+        header.addStretch(1)
+        layout.addLayout(header)
+
+        for row in rows:
+            if len(row) == 1:
+                label, key, editable, widget_type = row[0]
+                layout.addWidget(self._field(label, key, editable, widget_type))
+                continue
+            row_layout = QHBoxLayout()
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(SPACE["sm"] + 2)
+            for label, key, editable, widget_type in row:
+                row_layout.addWidget(self._field(label, key, editable, widget_type), 1)
+            layout.addLayout(row_layout)
+        return box
+
+    def _field(self, label: str, key: str, editable: bool, widget_type: str) -> QWidget:
         if widget_type == "int":
-            field_widget = QSpinBox()
+            field_widget: QWidget = QSpinBox()
             field_widget.setRange(1, 999999)
             field_widget.setSingleStep(1)
             field_widget.setEnabled(editable)
@@ -256,12 +310,9 @@ class ShipmentWindow(QDialog):
             field_widget.setReadOnly(not editable)
         field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._shipment_fields[key] = field_widget
-        layout.addWidget(lbl)
-        layout.addWidget(field_widget)
-        if inline:
-            layout.setSpacing(4)
-            layout.setStretch(1, 1)
-        return container
+        return labeled_field(label, field_widget, mono=key in _MONO_KEYS)
+
+    # --- Valores de los campos -----------------------------------------
 
     @staticmethod
     def _set_field_value(widget: QWidget, value: Any):
@@ -300,6 +351,8 @@ class ShipmentWindow(QDialog):
         line.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         return line
 
+    # --- Carga de datos ------------------------------------------------
+
     def _load_coverages(self):
         self._colony_combo.blockSignals(True)
         self._colony_combo.clear()
@@ -335,6 +388,8 @@ class ShipmentWindow(QDialog):
             for key, widget in self._shipment_fields.items():
                 self._set_field_value(widget, draft.get(key, ""))
             self._draft_initialized = True
+
+    # --- Envío ---------------------------------------------------------
 
     def _shipment_payload_from_form(self) -> dict[str, Any]:
         selected = self._selected_coverage()

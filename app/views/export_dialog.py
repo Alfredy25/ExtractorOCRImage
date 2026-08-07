@@ -2,20 +2,30 @@
 from datetime import datetime, time
 from pathlib import Path
 
-from PySide6.QtCore import QDate, QTime, QStandardPaths
+from PySide6.QtCore import QDate, QStandardPaths, QTime
 from PySide6.QtWidgets import (
+    QComboBox,
+    QDateEdit,
     QDialog,
-    QVBoxLayout,
+    QFileDialog,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
-    QDateEdit,
-    QTimeEdit,
-    QComboBox,
-    QPushButton,
-    QFileDialog,
     QMessageBox,
+    QTimeEdit,
+    QVBoxLayout,
 )
 
+from app.components.theme import SPACE
+from app.components.widgets import (
+    Card,
+    divider,
+    icon_label,
+    labeled_field,
+    section_label,
+    subtitle,
+    text_button,
+)
 from app.config import SEDES
 from app.services.export_service import export_csv, export_excel, suggested_filename
 from app.services.registros_service import (
@@ -42,6 +52,7 @@ class ExportDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Exportar registros")
+        self.setMinimumWidth(560)
         self._setup_ui()
 
     @staticmethod
@@ -50,61 +61,96 @@ class ExportDialog(QDialog):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(SPACE["lg"], SPACE["lg"], SPACE["lg"], SPACE["lg"])
+        layout.setSpacing(SPACE["md"])
 
-        layout.addWidget(QLabel("Desde — fecha (dd/mm/aaaa):"))
-        row_df = QHBoxLayout()
+        title = QLabel("Exportar registros")
+        title.setProperty("role", "headline")
+        layout.addWidget(title)
+        layout.addWidget(
+            subtitle("Selecciona el rango a consultar en el backend y el formato de salida.")
+        )
+
+        layout.addWidget(self._build_range_card())
+        layout.addWidget(self._build_options_card())
+        layout.addStretch(1)
+        layout.addWidget(divider())
+        layout.addLayout(self._build_actions())
+
+    def _build_range_card(self) -> Card:
+        card = Card("Rango de consulta", "calendar_month")
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(SPACE["md"])
+        grid.setVerticalSpacing(SPACE["sm"])
+
         self._date_from = QDateEdit()
         self._date_from.setCalendarPopup(True)
         self._date_from.setDisplayFormat("dd/MM/yyyy")
         self._date_from.setDate(QDate.currentDate().addMonths(-1))
-        row_df.addWidget(self._date_from)
-        layout.addLayout(row_df)
+        grid.addWidget(labeled_field("Desde — fecha (dd/mm/aaaa)", self._date_from, mono=True), 0, 0)
 
-        layout.addWidget(QLabel("Desde — hora (hh:mm, 24 h):"))
-        row_tf = QHBoxLayout()
         self._time_from = QTimeEdit()
         self._time_from.setDisplayFormat("HH:mm")
         self._time_from.setTime(QTime(0, 0))
-        row_tf.addWidget(self._time_from)
-        layout.addLayout(row_tf)
+        grid.addWidget(labeled_field("Desde — hora (24 h)", self._time_from, mono=True), 0, 1)
 
-        layout.addWidget(QLabel("Hasta — fecha (dd/mm/aaaa):"))
-        row_dt = QHBoxLayout()
         self._date_to = QDateEdit()
         self._date_to.setCalendarPopup(True)
         self._date_to.setDisplayFormat("dd/MM/yyyy")
         self._date_to.setDate(QDate.currentDate())
-        row_dt.addWidget(self._date_to)
-        layout.addLayout(row_dt)
+        grid.addWidget(labeled_field("Hasta — fecha (dd/mm/aaaa)", self._date_to, mono=True), 1, 0)
 
-        layout.addWidget(QLabel("Hasta — hora (hh:mm, 24 h):"))
-        row_tt = QHBoxLayout()
         self._time_to = QTimeEdit()
         self._time_to.setDisplayFormat("HH:mm")
         self._time_to.setTime(QTime(23, 59))
-        row_tt.addWidget(self._time_to)
-        layout.addLayout(row_tt)
+        grid.addWidget(labeled_field("Hasta — hora (24 h)", self._time_to, mono=True), 1, 1)
 
-        layout.addWidget(QLabel("Sede (opcional):"))
+        card.body.addLayout(grid)
+        return card
+
+    def _build_options_card(self) -> Card:
+        card = Card("Filtros y formato", "filter_alt")
+
+        row = QHBoxLayout()
+        row.setSpacing(SPACE["md"])
+
         self._sede = QComboBox()
         self._sede.addItem("Todas las sedes", None)
         for sede in SEDES:
             self._sede.addItem(sede, sede)
-        layout.addWidget(self._sede)
+        row.addWidget(labeled_field("Sede (opcional)", self._sede), 1)
 
-        layout.addWidget(QLabel("Formato:"))
         self._format = QComboBox()
         self._format.addItems(["Excel (.xlsx)", "CSV (.csv)"])
-        layout.addWidget(self._format)
+        row.addWidget(labeled_field("Formato", self._format), 1)
 
-        btn_layout = QHBoxLayout()
-        btn_export = QPushButton("Exportar")
-        btn_export.clicked.connect(self._do_export)
-        btn_cancel = QPushButton("Cancelar")
+        card.body.addLayout(row)
+
+        hint = QHBoxLayout()
+        hint.setSpacing(SPACE["xs"] + 2)
+        hint.addWidget(icon_label("info", 14, role="mutedIcon"))
+        hint.addWidget(section_label("Se guardará en Descargas por defecto"))
+        hint.addStretch(1)
+        card.body.addLayout(hint)
+        return card
+
+    def _build_actions(self) -> QHBoxLayout:
+        actions = QHBoxLayout()
+        actions.setSpacing(SPACE["sm"])
+        actions.addStretch(1)
+
+        btn_cancel = text_button("Cancelar", variant="ghost", icon="close")
+        btn_cancel.setMinimumHeight(38)
         btn_cancel.clicked.connect(self.reject)
-        btn_layout.addWidget(btn_export)
-        btn_layout.addWidget(btn_cancel)
-        layout.addLayout(btn_layout)
+        actions.addWidget(btn_cancel)
+
+        btn_export = text_button("Exportar", variant="primary", icon="download")
+        btn_export.setMinimumHeight(38)
+        btn_export.setMinimumWidth(150)
+        btn_export.clicked.connect(self._do_export)
+        actions.addWidget(btn_export)
+        return actions
 
     def _do_export(self):
         d0 = self._date_from.date().toPython()
