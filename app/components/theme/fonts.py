@@ -78,11 +78,8 @@ def sans_font(size: int, weight: int = QFont.Weight.Normal) -> QFont:
     return font
 
 
-def mono_font(
-    size: int,
-    weight: int = QFont.Weight.Medium,
-    letter_spacing: float = 0.0,
-) -> QFont:
+def mono_font(size: int, weight: int = QFont.Weight.Medium, 
+                letter_spacing: float = 0.0) -> QFont:
     """Fuente monoespaciada, con interletraje opcional.
 
     QSS no soporta ``letter-spacing``, así que las etiquetas técnicas en

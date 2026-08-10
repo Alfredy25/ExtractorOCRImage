@@ -60,11 +60,8 @@ def build_palette() -> QPalette:
     palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(COLOR["surface_container_highest"]))
     palette.setColor(QPalette.ColorRole.ToolTipText, text)
 
-    for role in (
-        QPalette.ColorRole.WindowText,
-        QPalette.ColorRole.Text,
-        QPalette.ColorRole.ButtonText,
-    ):
+    for role in (QPalette.ColorRole.WindowText, QPalette.ColorRole.Text,
+                    QPalette.ColorRole.ButtonText):
         palette.setColor(QPalette.ColorGroup.Disabled, role, disabled)
 
     return palette
@@ -755,6 +752,46 @@ QMessageBox QLabel {{
 QMessageBox QPushButton {{
     min-width: 104px;
 }}
+
+/* ---------- Tablas ---------------------------------------------------- */
+QTableWidget {{
+    background-color: {c["surface_container"]};
+    color: {c["on_surface"]};
+    border: 1px solid {c["outline_variant"]};
+    border-radius: {r["control"]}px;
+    padding: 4px;
+    outline: none;
+}}
+
+QTabWidget QWidget {{
+    background-color: {c["surface_container"]};
+    color: {c["on_surface"]};
+    border: 1px solid {c["outline_variant"]};
+    border-radius: {r["control"]}px;
+    padding: 4px;
+    outline: none;
+}}
+QTabWidget::pane {{
+  border: 1px solid {c["outline_variant"]};
+  border-radius: {r["control"]}px;
+  margin: 0px;
+  padding: 0px;
+}}
+QTabWidget::pane:selected {{
+  background-color: {c["surface_container_high"]};
+  border: 1px solid {c["outline_variant"]};
+}}
+
+QTableWidget#ShipmentsTable QHeaderView::section {{
+    background-color: {c["primary_container"]};
+    color: {c["on_surface"]};
+    border: none;
+    border-right: 1px solid {c["outline_variant"]};
+    padding: 10px 12px;
+    font-weight: 600;
+    font-size: {FONT_SIZE["body_lg"]}px;
+}}
+
 
 /* ---------- Login ---------------------------------------------------- */
 #LoginCard {{

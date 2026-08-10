@@ -153,13 +153,8 @@ def _button_icon(name: str, size: int, color_key: str) -> QIcon:
     return qicon(name, size, COLOR[color_key], gap=_ICON_GAP)
 
 
-def text_button(
-    text: str,
-    variant: str = "ghost",
-    icon: str | None = None,
-    tone: str | None = None,
-    icon_size: int = 18,
-) -> QPushButton:
+def text_button(text: str, variant: str = "ghost", icon: str | None = None,
+    tone: str | None = None, icon_size: int = 18) -> QPushButton:
     """Botón con texto y, opcionalmente, icono a la izquierda.
 
     El icono se pasa como ``QIcon`` (glifo rasterizado) en lugar de mezclarlo en

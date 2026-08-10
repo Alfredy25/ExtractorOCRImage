@@ -42,6 +42,7 @@ from app.states.workers.ai_worker import AIWorker
 from app.utils.logs import log_directory
 from app.utils.record_mapper import to_db_record
 from app.views.export_dialog import ExportDialog
+from app.views.export_shipments import ExportShipments
 from app.views.session_relogin import prompt_relogin_after_session_expired
 from app.views.shipment_window import ShipmentWindow
 
@@ -95,6 +96,7 @@ class MainWindow(QMainWindow):
 
         self._sidebar.add_nav_item("workspace", "Workspace", "document_scanner", is_section=True)
         self._sidebar.add_nav_item("export", "Exportar registros", "download")
+        self._sidebar.add_nav_item("shipments", "Ver envíos", "download", is_section=True)
         self._sidebar.add_nav_item("logs", "Ver logs", "terminal")
         self._sidebar.add_nav_item("about", "Acerca de", "info", footer=True)
         self._sidebar.add_nav_item("quit", "Salir", "logout", tone="danger", footer=True)
@@ -233,6 +235,8 @@ class MainWindow(QMainWindow):
     def _on_nav_activated(self, item_id: str):
         if item_id == "export":
             self._on_export()
+        elif item_id == "shipments":
+            self._on_open_shipments()
         elif item_id == "logs":
             self._on_open_logs()
         elif item_id == "about":
@@ -513,6 +517,10 @@ class MainWindow(QMainWindow):
 
     def _on_export(self):
         dlg = ExportDialog(self)
+        dlg.exec()
+    
+    def _on_open_shipments(self):
+        dlg = ExportShipments(self)
         dlg.exec()
 
     def _on_about(self):

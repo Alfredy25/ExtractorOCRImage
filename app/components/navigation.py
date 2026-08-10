@@ -91,15 +91,8 @@ class Sidebar(QFrame):
         row.addLayout(text_column, 1)
         return brand
 
-    def add_nav_item(
-        self,
-        item_id: str,
-        text: str,
-        icon: str,
-        is_section: bool = False,
-        tone: str | None = None,
-        footer: bool = False,
-    ) -> QPushButton:
+    def add_nav_item(self, item_id: str, text: str, icon: str, is_section: bool = False,
+                        tone: str | None = None, footer: bool = False, link: str | None = None) -> QPushButton:
         """Añade un elemento de navegación.
 
         ``is_section`` marca destinos con estado «aquí estás» (mutuamente

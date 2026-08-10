@@ -259,12 +259,7 @@ class ShipmentWindow(QDialog):
         card.body.addStretch(1)
         return card
 
-    def _section(
-        self,
-        title: str,
-        icon: str,
-        rows: list[list[tuple[str, str, bool, str]]],
-    ) -> QFrame:
+    def _section(self, title: str, icon: str, rows: list[list[tuple[str, str, bool, str]]]) -> QFrame:
         """Bloque de campos agrupados. Cada fila reparte su ancho a partes iguales."""
         box = QFrame()
         box.setObjectName("SectionBox")

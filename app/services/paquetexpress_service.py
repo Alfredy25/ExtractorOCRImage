@@ -16,7 +16,9 @@ from app.api.shipments_api import (
     ShipmentsSessionExpiredError,
     create_shipment as api_create_shipment,
 )
-from app.models.shipping import CoverageItem, ShippingFieldError, validate_shipping
+from datetime import datetime
+from app.api.shipments_api import list_by_date_range
+from app.models.shipping import CoverageItem, ShippingDto, ShippingFieldError, validate_shipping
 from app.services.auth_service import get_access_token
 
 
@@ -185,6 +187,16 @@ def create_shipment(data: dict[str, Any]) -> dict[str, Any]:
 
     try:
         return api_create_shipment(payload, token)
+    except ShipmentsSessionExpiredError as exc:
+        raise PaquetexpressSessionExpiredError(str(exc)) from exc
+    except ShipmentsApiError as exc:
+        raise PaquetexpressServiceError(str(exc)) from exc
+
+def list_shipments_by_date_range(desde: datetime, hasta: datetime) -> list[ShippingDto]:
+    """Lista los envíos de fechas entre desde y hasta."""
+    token = _required_token()
+    try:
+        return list_by_date_range(desde, hasta, token)
     except ShipmentsSessionExpiredError as exc:
         raise PaquetexpressSessionExpiredError(str(exc)) from exc
     except ShipmentsApiError as exc:
