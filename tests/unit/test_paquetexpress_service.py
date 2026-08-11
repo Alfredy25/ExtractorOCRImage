@@ -41,9 +41,21 @@ def test_build_shipment_draft_uses_ocr_and_defaults():
     assert draft["name_receiver"] == "Dr. Juan Perez"
     assert draft["street"] == "Av. Central 123"
     assert draft["phone"] == "5512345678"
+    assert draft["email"] == "notificaciones@feuh.com.mx"
+    assert draft["rfc"] == "XAXX-010101-000"
+    assert draft["width"] == "24"
     assert draft["address_reference"] == "Puerta gris"
     assert draft["quantity"] == "1"
     assert draft["coverage_type"] == "PAQUETEXPRESS"
+    assert draft["comments"].startswith("ENTREGAR EN OFICIALIA DE PARTES")
+
+
+def test_build_shipment_draft_uses_default_phone_when_contacto_empty():
+    ocr = _ocr_form_data()
+    ocr["campos"]["contacto"] = ""
+    draft = px.build_shipment_draft(ocr, _coverage())
+
+    assert draft["phone"] == "55 7586 8462"
 
 
 def test_validate_shipment_form_accumulates_errors():
@@ -84,7 +96,25 @@ def test_create_shipment_serializes_payload(monkeypatch):
     assert captured["payload"]["city"] == "CIUDAD DE MEXICO"
     assert captured["payload"]["colony"] == "FLORIDA"
     assert captured["payload"]["postal_code"] == "01030"
-    assert captured["payload"]["weight"] == "1.00"
+    assert captured["payload"]["weight"] == "0.50"
+    assert captured["payload"]["comments"] == draft["comments"]
+
+
+def test_create_shipment_omits_empty_comments(monkeypatch):
+    captured: dict = {}
+
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+    monkeypatch.setattr(
+        px, "api_create_shipment", lambda payload, token: captured.update(payload) or {}
+    )
+
+    draft = px.build_shipment_draft(_ocr_form_data(), _coverage())
+    draft["num_street"] = "12"
+    draft["comments"] = "   "
+
+    px.create_shipment(draft)
+
+    assert "comments" not in captured
 
 
 def test_get_coverages_for_postal_code_maps_not_found(monkeypatch):

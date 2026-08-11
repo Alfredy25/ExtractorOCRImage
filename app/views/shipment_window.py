@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QSizePolicy,
     QSpinBox,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -209,6 +210,8 @@ class ShipmentWindow(QDialog):
                 ],
             )
         )
+        # Comentarios y contenido van en filas propias (ancho completo), uno
+        # debajo del otro: el texto largo no cabe bien en una sola línea.
         card.body.addWidget(
             self._section(
                 "Paquete",
@@ -218,6 +221,7 @@ class ShipmentWindow(QDialog):
                         ("Código de paquete", "package_code", True, "int"),
                         ("Cantidad", "quantity", True, "int"),
                     ],
+                    [("Comentarios", "comments", True, "textarea")],
                     [("Contenido", "content", True, "text")],
                     [
                         ("Peso (kg)", "weight", True, "double"),
@@ -294,16 +298,31 @@ class ShipmentWindow(QDialog):
             field_widget.setRange(1, 999999)
             field_widget.setSingleStep(1)
             field_widget.setEnabled(editable)
+            field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         elif widget_type == "double":
             field_widget = QDoubleSpinBox()
             field_widget.setRange(0.00, 999999.99)
             field_widget.setDecimals(2)
             field_widget.setSingleStep(0.01)
             field_widget.setEnabled(editable)
+            field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        elif widget_type == "textarea":
+            field_widget = QTextEdit()
+            field_widget.setAcceptRichText(False)
+            field_widget.setTabChangesFocus(True)
+            field_widget.setMinimumHeight(72)
+            field_widget.setMaximumHeight(110)
+            field_widget.setReadOnly(not editable)
+            field_widget.setSizePolicy(
+                QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+            )
+            field_widget.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+            field_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            field_widget.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         else:
             field_widget = QLineEdit()
             field_widget.setReadOnly(not editable)
-        field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._shipment_fields[key] = field_widget
         return labeled_field(label, field_widget, mono=key in _MONO_KEYS)
 
@@ -313,6 +332,9 @@ class ShipmentWindow(QDialog):
     def _set_field_value(widget: QWidget, value: Any):
         if isinstance(widget, QLineEdit):
             widget.setText(str(value or ""))
+            return
+        if isinstance(widget, QTextEdit):
+            widget.setPlainText(str(value or ""))
             return
         if isinstance(widget, QSpinBox):
             try:
@@ -333,6 +355,8 @@ class ShipmentWindow(QDialog):
     def _get_field_value(widget: QWidget) -> Any:
         if isinstance(widget, QLineEdit):
             return widget.text().strip()
+        if isinstance(widget, QTextEdit):
+            return widget.toPlainText().strip()
         if isinstance(widget, QSpinBox):
             return widget.value()
         if isinstance(widget, QDoubleSpinBox):

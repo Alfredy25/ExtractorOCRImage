@@ -67,7 +67,6 @@ class ExportShipments(QDialog):
         btn_consult = text_button("Consultar", variant="primary", icon="edit_document")
         btn_consult.setMinimumHeight(38)
         btn_consult.clicked.connect(self._do_consult)
-        
 
         layout_header.addWidget(label_fecha_inicio)
         layout_header.addWidget(self._date_from)
@@ -83,7 +82,7 @@ class ExportShipments(QDialog):
         # Configuración de la tabla
         self.columns = ["ID envío", "Folio", "Destinatario", "RFC", "País", "Estado", "Ciudad", "Colonia", "Calle",
                         "Número", "Código postal", "Correo electrónico", "Teléfono", "Referencia", "Cantidad", 
-                        "Código de paquete", "Contenido", "Peso", "Largo", "Ancho", "Alto", "Tipo de cobertura", "Fecha de creación"]
+                        "Código de paquete", "Contenido", "Peso", "Largo", "Ancho", "Alto", "Tipo de cobertura", "Comentarios", "Fecha de creación"]
         self.tabla = QTableWidget(self)
         self.tabla.setObjectName("ShipmentsTable")
         self.tabla.setColumnCount(len(self.columns))
@@ -154,7 +153,7 @@ class ExportShipments(QDialog):
                 shipment.country, shipment.state, shipment.city, shipment.colony, shipment.street, shipment.num_street,
                 shipment.postal_code, str(shipment.email), shipment.phone, shipment.address_reference, str(shipment.quantity),
                 str(shipment.package_code), shipment.content, str(shipment.weight), str(shipment.length), str(shipment.width), str(shipment.height),
-                shipment.coverage_type, shipment.created_at.isoformat() if shipment.created_at else None]
+                shipment.coverage_type, shipment.comments, shipment.created_at.isoformat() if shipment.created_at else None]
 
             for column, value in enumerate(values):
                 item = QTableWidgetItem(str(value) if value is not None else "")

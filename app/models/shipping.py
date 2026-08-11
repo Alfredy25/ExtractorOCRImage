@@ -42,6 +42,7 @@ class ShippingRequest(BaseModel):
     width: Decimal = Field(..., gt=0, max_digits=8, decimal_places=2)
     height: Decimal = Field(..., gt=0, max_digits=8, decimal_places=2)
     coverage_type: str = Field(..., min_length=4, max_length=60)
+    comments: Optional[str] = Field(default=None, min_length=5, max_length=80)
 
     @field_validator("email")
     @classmethod
@@ -79,7 +80,7 @@ class ShippingDto(BaseModel):
     width: Decimal = Field(..., examples=["20.00"])
     height: Decimal = Field(..., examples=["10.00"])
     coverage_type: Optional[str] = Field(default=None, examples=["PAQUETEXPRESS"])
-    coments: Optional[str] = Field(default=None, examples=["ENTREGAR EN OFICIALIA DE PARTES O RECEPCION EN UN HORARIO DE 09:00 A 14:00 HRS."])
+    comments: Optional[str] = Field(default=None, examples=["ENTREGAR EN OFICIALIA DE PARTES O RECEPCION EN UN HORARIO DE 09:00 A 14:00 HRS."])
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -106,6 +107,7 @@ _LENGTH_MESSAGES = {
     "address_reference": "Debe tener máximo 50 caracteres",
     "content": "Debe tener entre 10 y 100 caracteres",
     "coverage_type": "Debe tener entre 4 y 60 caracteres",
+    "comments": "Debe tener entre 5 y 80 caracteres",
 }
 
 _FIELD_LABELS = {
@@ -129,6 +131,7 @@ _FIELD_LABELS = {
     "width": "width",
     "height": "height",
     "coverage_type": "coverage_type",
+    "comments": "comments",
 }
 
 

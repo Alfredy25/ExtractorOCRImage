@@ -92,10 +92,7 @@ def get_coverages_for_postal_code(postal_code: str) -> list[CoverageItem]:
     return valid_items
 
 
-def build_shipment_draft(
-    ocr_form_data: dict[str, Any],
-    coverage: CoverageItem,
-) -> dict[str, Any]:
+def build_shipment_draft(ocr_form_data: dict[str, Any], coverage: CoverageItem) -> dict[str, Any]:
     """Arma los valores iniciales del formulario de envío desde OCR + cobertura."""
     campos = ocr_form_data.get("campos") or {}
     return {
@@ -103,7 +100,7 @@ def build_shipment_draft(
             campos.get("nombre_titulo"),
             campos.get("cargo_dependencia"),
         ),
-        "rfc": "XAXX010101000",
+        "rfc": "XAXX-010101-000",
         "country": "MEXICO",
         "state": coverage.state,
         "city": coverage.city,
@@ -111,15 +108,16 @@ def build_shipment_draft(
         "street": str(campos.get("direccion") or "").strip(),
         "num_street": "",
         "postal_code": coverage.postal_code,
-        "email": "",
-        "phone": str(campos.get("contacto") or "").strip(),
+        "email": "notificaciones@feuh.com.mx",
+        "phone": _first_non_empty(campos.get("contacto"), "55 7586 8462"),
         "address_reference": str(campos.get("indicaciones") or "").strip(),
         "quantity": "1",
         "package_code": "1",
         "content": "DOCUMENTOS LEGALES",
-        "weight": "1",
+        "comments": "ENTREGAR EN OFICIALIA DE PARTES O RECEPCION EN UN HORARIO DE 09:00 A 14:00 HRS.",
+        "weight": "0.5",
         "length": "30",
-        "width": "20",
+        "width": "24",
         "height": "1",
         "coverage_type": coverage.coverage_type,
     }
@@ -142,6 +140,7 @@ def _normalize_shipment_form(data: dict[str, Any]) -> dict[str, Any]:
         "quantity": data.get("quantity"),
         "package_code": data.get("package_code"),
         "content": str(data.get("content") or "").strip(),
+        "comments": _to_optional_string(data.get("comments")),
         "weight": data.get("weight"),
         "length": data.get("length"),
         "width": data.get("width"),

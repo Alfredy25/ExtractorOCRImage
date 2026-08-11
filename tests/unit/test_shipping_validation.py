@@ -20,6 +20,7 @@ def _valid_shipment() -> dict:
         "quantity": 1,
         "package_code": 1,
         "content": "DOCUMENTOS LEGALES",
+        "comments": "ENTREGAR EN OFICIALIA DE PARTES O RECEPCION",
         "weight": "1.00",
         "length": "30.00",
         "width": "20.00",
@@ -36,6 +37,7 @@ def test_shipping_request_validates_successfully():
     dumped = model.model_dump(exclude_none=True)
     assert dumped["postal_code"] == "98160"
     assert dumped["quantity"] == 1
+    assert dumped["comments"] == "ENTREGAR EN OFICIALIA DE PARTES O RECEPCION"
 
 
 def test_shipping_validation_accumulates_multiple_errors():

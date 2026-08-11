@@ -819,11 +819,15 @@ QTableWidget#ShipmentsTable QHeaderView::section {{
 /* Muchos campos en pantalla: se recorta el alto de los controles sin perder
    legibilidad (ver DESIGN.md, «Data Density»). */
 QDialog#ShipmentWindow QLineEdit,
+QDialog#ShipmentWindow QTextEdit,
 QDialog#ShipmentWindow QComboBox,
 QDialog#ShipmentWindow QSpinBox,
 QDialog#ShipmentWindow QDoubleSpinBox {{
     padding: 4px 8px;
     min-height: 18px;
+}}
+QDialog#ShipmentWindow QTextEdit {{
+    min-height: 64px;
 }}
 QDialog#ShipmentWindow QPushButton[variant="primary"],
 QDialog#ShipmentWindow QPushButton[variant="ghost"] {{

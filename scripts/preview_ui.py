@@ -273,7 +273,7 @@ ocr_data = window._right.get_form_data()
 shipment = ShipmentWindow(coverages, ocr_data)
 shot(shipment, "06_envios", 1500, 940)
 
-check("envios: 15 campos de envio", len(shipment._shipment_fields) == 15, f"n={len(shipment._shipment_fields)}")
+check("envios: 16 campos de envio", len(shipment._shipment_fields) == 16, f"n={len(shipment._shipment_fields)}")
 check("envios: 4 campos de cobertura", len(shipment._coverage_fields) == 4)
 check("envios: 9 campos OCR", len(shipment._ocr_reference_fields) == 9)
 check("envios: 2 colonias en combo", shipment._colony_combo.count() == 2)
@@ -291,11 +291,16 @@ shipment._colony_combo.setCurrentIndex(1)
 app.processEvents()
 payload = shipment._shipment_payload_from_form()
 check("envios: colonia del payload sigue la seleccion", payload["colony"] == "AXOTLA", payload["colony"])
-check("envios: payload trae 20 claves", len(payload) == 20, f"n={len(payload)}")
+check("envios: payload trae 21 claves", len(payload) == 21, f"n={len(payload)}")
 check(
     "envios: valores iniciales por defecto",
     payload["quantity"] == 1 and payload["package_code"] == 1 and payload["content"],
     f"qty={payload['quantity']} code={payload['package_code']} content={payload['content']!r}",
+)
+check(
+    "envios: comments en payload del formulario",
+    bool(payload.get("comments")),
+    repr(payload.get("comments")),
 )
 shot(shipment, "07_envios_colonia", 1500, 940)
 
