@@ -226,7 +226,7 @@ def _shipments_to_rows(shipments: list[ShippingDto]) -> list[dict: any]:
             "COD": 0,
             "VALOR_DECLARADO": 0,
             "COBERTURA": "N",
-            "COMENTARIOS": shipment.coments,
+            "COMENTARIOS": shipment.comments,
             "REFERENCIA": "ASF",
             "AGENTE_ADUANAL": "",
             "PEDIMENTO": "",

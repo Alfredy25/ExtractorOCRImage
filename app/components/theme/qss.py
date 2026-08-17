@@ -792,6 +792,124 @@ QTableWidget#ShipmentsTable QHeaderView::section {{
     font-size: {FONT_SIZE["body_lg"]}px;
 }}
 
+/* ---------- Historial de envíos -------------------------------------- */
+QDialog#ShipmentsHistoryWindow {{
+    background-color: {c["surface"]};
+}}
+QDialog#ShipmentsHistoryWindow QLabel[role="headline"] {{
+    font-size: {FONT_SIZE["headline_lg"]}px;
+    font-weight: 600;
+    color: {c["on_surface"]};
+}}
+QDialog#ShipmentsHistoryWindow QDateEdit,
+QDialog#ShipmentsHistoryWindow QTimeEdit {{
+    background-color: {c["surface_container_high"]};
+    color: {c["on_surface"]};
+    border: 1px solid {c["outline_variant"]};
+    border-radius: {r["control"]}px;
+    padding: 6px 10px;
+    min-height: 22px;
+    font-family: "{mono}";
+    font-size: {FONT_SIZE["body_sm"]}px;
+}}
+QDialog#ShipmentsHistoryWindow QDateEdit:focus,
+QDialog#ShipmentsHistoryWindow QTimeEdit:focus {{
+    border: 1px solid {c["primary_container"]};
+}}
+QFrame#ShipmentsTableCard {{
+    background-color: {c["surface_container_lowest"]};
+    border: 1px solid {c["outline_variant"]};
+    border-radius: {r["card"]}px;
+}}
+QTableWidget#ShipmentsTable {{
+    background-color: transparent;
+    alternate-background-color: {c["surface_container_low"]};
+    color: {c["on_surface"]};
+    border: none;
+    border-radius: 0px;
+    padding: 0px;
+    gridline-color: transparent;
+    selection-background-color: {rgba("primary_container", 0.22)};
+    selection-color: {c["on_surface"]};
+    font-size: {FONT_SIZE["body_sm"]}px;
+}}
+QTableWidget#ShipmentsTable::item {{
+    padding: 8px 12px;
+    border-bottom: 1px solid {rgba("outline_variant", 0.45)};
+}}
+QTableWidget#ShipmentsTable::item:hover {{
+    background-color: {c["surface_container_low"]};
+}}
+QTableWidget#ShipmentsTable QHeaderView::section {{
+    background-color: {c["surface"]};
+    color: {c["on_surface_variant"]};
+    border: none;
+    border-bottom: 1px solid {c["outline_variant"]};
+    border-right: 1px solid {rgba("outline_variant", 0.35)};
+    padding: 10px 12px;
+    font-family: "{mono}";
+    font-size: {FONT_SIZE["label_sm"]}px;
+    font-weight: 700;
+}}
+QTableWidget#ShipmentsTable QScrollBar:horizontal,
+QTableWidget#ShipmentsTable QScrollBar:vertical {{
+    background: transparent;
+    border: none;
+    margin: 0px;
+}}
+QTableWidget#ShipmentsTable QScrollBar:horizontal {{
+    height: 8px;
+}}
+QTableWidget#ShipmentsTable QScrollBar:vertical {{
+    width: 8px;
+}}
+QTableWidget#ShipmentsTable QScrollBar::handle:horizontal,
+QTableWidget#ShipmentsTable QScrollBar::handle:vertical {{
+    background: {c["surface_container_highest"]};
+    border-radius: 4px;
+    min-width: 24px;
+    min-height: 24px;
+}}
+QTableWidget#ShipmentsTable QScrollBar::handle:horizontal:hover,
+QTableWidget#ShipmentsTable QScrollBar::handle:vertical:hover {{
+    background: {c["outline_variant"]};
+}}
+QTableWidget#ShipmentsTable QScrollBar::add-line,
+QTableWidget#ShipmentsTable QScrollBar::sub-line,
+QTableWidget#ShipmentsTable QScrollBar::add-page,
+QTableWidget#ShipmentsTable QScrollBar::sub-page {{
+    background: transparent;
+    border: none;
+    width: 0px;
+    height: 0px;
+}}
+QFrame#ShipmentsTableFooter {{
+    background-color: {c["surface_container"]};
+    border-top: 1px solid {c["outline_variant"]};
+}}
+QLabel#ShipmentsPageLabel {{
+    color: {c["on_surface_variant"]};
+    font-size: {FONT_SIZE["body_sm"]}px;
+}}
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsPrevButton,
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsNextButton {{
+    min-width: 96px;
+    border: 1px solid {c["outline_variant"]};
+    border-radius: {r["control"]}px;
+    padding: 4px 12px;
+}}
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsPrevButton:disabled,
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsNextButton:disabled {{
+    color: {c["outline"]};
+    border-color: {rgba("outline_variant", 0.5)};
+}}
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsCancelButton,
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsExportFooterButton,
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsExportButton,
+QDialog#ShipmentsHistoryWindow QPushButton#shipmentsConsultButton {{
+    min-height: 38px;
+}}
+
 
 /* ---------- Login ---------------------------------------------------- */
 #LoginCard {{

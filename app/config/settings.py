@@ -20,7 +20,7 @@ TIMEOUT_SECONDS = int(os.getenv("TIMEOUT_SECONDS", "60"))
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 # Rutas relativas a API_BASE_URL (deben empezar por /)
 LOGIN_ENDPOINT = os.getenv("LOGIN_ENDPOINT", "/auth/login")
-REGISTROS_ENDPOINT = os.getenv("REGISTROS_ENDPOINT", "/registros")
+REGISTROS_ENDPOINT = os.getenv("REGISTROS_ENDPOINT", "/registros/")
 COVERTURAS_ENDPOINT = os.getenv("COVERTURAS_ENDPOINT", "/coverages/")
 ENVIOS_PX_ENDPOINT = os.getenv("ENVIOS_PX_ENDPOINT", "/shipments-px/")
 # TIMEOUT del cliente HTTP hacia FastAPI (login, POST/GET /registros), independiente del timeout de OpenAI
@@ -32,7 +32,9 @@ def api_abs_url(path: str) -> str:
     p = path.strip()
     if not p.startswith("/"):
         p = "/" + p
-    return f"{API_BASE_URL}{p}"
+    abs_url = f"{API_BASE_URL}{p}"
+    print(f"abs_url: {abs_url}")
+    return abs_url
 
 
 # Rutas

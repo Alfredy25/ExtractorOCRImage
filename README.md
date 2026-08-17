@@ -57,7 +57,7 @@ Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en
 |----------|-------------|
 | `API_BASE_URL` | URL base del FastAPI **sin** barra final (ej. `http://127.0.0.1:8000`). |
 | `LOGIN_ENDPOINT` | Ruta de login (por defecto `/auth/login`). |
-| `REGISTROS_ENDPOINT` | Ruta de registros OCR (por defecto `/registros`). |
+| `REGISTROS_ENDPOINT` | Ruta de registros OCR (por defecto `/registros/`). |
 | `API_TIMEOUT_SECONDS` | Timeout HTTP hacia el backend (segundos). |
 | `OPENAI_API_KEY` | Clave para llamadas a OpenAI desde el cliente. |
 | `OPENAI_MODEL` | Modelo (por defecto `gpt-4o`). |
@@ -257,3 +257,10 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 
 - Convenciones y agentes del repositorio: [AGENTS.md](AGENTS.md).
 - Capa de datos del cliente API-only: `skills/data_access_layer.md`.
+
+
+# Quitarlas de esta sesión
+Remove-Item Env:API_BASE_URL -ErrorAction SilentlyContinue
+Remove-Item Env:LOGIN_ENDPOINT -ErrorAction SilentlyContinue
+Remove-Item Env:COVERTURAS_ENDPOINT -ErrorAction SilentlyContinue
+Remove-Item Env:REGISTROS_ENDPOINT -ErrorAction SilentlyContinue
