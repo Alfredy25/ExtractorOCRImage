@@ -1,6 +1,7 @@
 """Fachada de negocio para consulta de coberturas y creación de envíos PX."""
 
 from __future__ import annotations
+import re
 
 from decimal import Decimal
 from typing import Any
@@ -200,3 +201,81 @@ def list_shipments_by_date_range(desde: datetime, hasta: datetime) -> list[Shipp
         raise PaquetexpressSessionExpiredError(str(exc)) from exc
     except ShipmentsApiError as exc:
         raise PaquetexpressServiceError(str(exc)) from exc
+
+replacements_vocales = {
+    "Á": "A",
+    "É": "E",
+    "Í": "I",
+    "Ó": "O",
+    "Ú": "U",
+    "/": "",
+    ",": "",
+    ".": ""
+}
+
+replacements_direcciones = {
+    "AVENIDA": "AV",
+    "BOULEVARD":"BLVD",
+    "CARRETERA": "CARR",
+    "CALLE": "C",
+    "EDIFICIO": "EDIF"
+}
+
+replacements_cargos = {
+    "MAESTRO": "MTRO",
+    "MAESTRA": "MTRA",
+    "PROFESORA": "PROFA",
+    "PROFESOR": "PROF",
+    "DIPUTADO": "DIP",
+    "DIPUTADA": "DIP",
+    "SENADOR": "SEN",
+    "SENADORA": "SEN",
+    "DOCTOR": "DR",
+    "DOCTORA": "DRA",
+    "TITULAR": "TIT",
+    "SECRETARIO": "SEC",
+    "PRESIDENTE": "PDTE",
+    "PRESIDENTA": "PDTA",
+    "ADMINISTRADORA": "ADMIN",
+    "ADMINISTRADOR": "ADMIN",
+    "GENERAL": "GRAL",
+    "ORGANO INTERNO DE CONTROL": "OIC",
+    "ORGANO DE CONTROL INTERNO": "OIC",
+    "DIRECTOR": "DIR",
+    "UNIVERSIDAD": "UNI",
+    "AUTONOMA": "AUT",
+    "SECRETARIO": "SEC",
+    "GOBERNADOR": "GOB",
+    }
+
+def _replace_whole_words(text: str, mapping: dict[str, str]) -> str:
+    if not text or not mapping:
+        return text
+    pattern = re.compile(
+        r"\b(?:"
+        + "|".join(re.escape(key) for key in sorted(mapping, key=len, reverse=True))
+        + r")\b"
+    )
+    return pattern.sub(lambda match: mapping[match.group(0)], text)
+
+def normalize_shipment_fields(data: dict[str, Any]) -> dict[str, Any]:
+    """Normaliza una copia con campos limpios. No valida ni llama API"""
+
+    # primero los convertimos a mayúsculas
+    normalized = {
+        "name_receiver": str(data.get("name_receiver") or "").strip().upper(),
+        "street": str(data.get("street") or "").strip().upper(),
+        "address_reference": str(data.get("address_reference") or "").strip().upper(),
+    }
+
+    # luego realizamos los reemplazos de las vocales
+    for key, value in replacements_vocales.items():
+        normalized["name_receiver"] = normalized["name_receiver"].replace(key, value)
+        normalized["street"] = normalized["street"].replace(key, value)
+        normalized["address_reference"] = normalized["address_reference"].replace(key, value)
+    
+    normalized["street"] = _replace_whole_words(normalized["street"], replacements_direcciones)
+    normalized["address_reference"] = _replace_whole_words(normalized["address_reference"], replacements_direcciones)
+    normalized["name_receiver"] = _replace_whole_words(normalized["name_receiver"], replacements_cargos)
+
+    return normalized

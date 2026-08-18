@@ -37,7 +37,7 @@ from app.components.widgets import (
 from app.models.shipping import CoverageItem
 from app.services.paquetexpress_service import (PaquetexpressServiceError, PaquetexpressSessionExpiredError,
                                                     PaquetexpressValidationError, build_shipment_draft, 
-                                                    create_shipment)
+                                                    create_shipment, normalize_shipment_fields)
 from app.views.session_relogin import prompt_relogin_after_session_expired
 
 # Campos con datos técnicos: se muestran en monoespaciada para facilitar el
@@ -126,6 +126,13 @@ class ShipmentWindow(QDialog):
         )
         layout.addLayout(title_column)
         layout.addStretch(1)
+
+        # Botón de normalización de campos
+        btn_normalize = text_button("Normalizar campos", variant="ghost", icon="refresh")
+        btn_normalize.setObjectName("shipmentNormalizeButton")
+        btn_normalize.setMinimumHeight(38)
+        btn_normalize.clicked.connect(self._on_normalize)
+        layout.addWidget(btn_normalize)
 
         btn_cancel = text_button("Cancelar", variant="ghost", icon="close")
         btn_cancel.setObjectName("shipmentCancelButton")
@@ -452,3 +459,11 @@ class ShipmentWindow(QDialog):
 
         QMessageBox.information(self, "Éxito", "Envío creado correctamente.")
         self.accept()
+
+    def _on_normalize(self):
+        payload: dict[str, Any] = {key: self._get_field_value(widget) for key, widget in self._shipment_fields.items()}
+        campos_normalizados = normalize_shipment_fields(payload)
+        for key, widget in self._shipment_fields.items():
+            keys = campos_normalizados.keys()
+            if key in keys:
+                self._set_field_value(widget, campos_normalizados.get(key, ""))

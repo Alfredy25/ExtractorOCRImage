@@ -127,3 +127,107 @@ def test_get_coverages_for_postal_code_maps_not_found(monkeypatch):
 
     with pytest.raises(px.PaquetexpressCoverageNotFoundError, match="no hay cobertura"):
         px.get_coverages_for_postal_code("01030")
+
+
+def test_normalize_shipment_fields_returns_only_normalized_keys():
+    result = px.normalize_shipment_fields({
+        "name_receiver": "Juan",
+        "street": "Central",
+        "address_reference": "Puerta",
+        "city": "no debe aparecer",
+    })
+
+    assert set(result) == {"name_receiver", "street", "address_reference"}
+
+
+def test_normalize_shipment_fields_uppercases_and_strips():
+    result = px.normalize_shipment_fields({
+        "name_receiver": "  juan perez  ",
+        "street": "  central  ",
+        "address_reference": "  puerta gris  ",
+    })
+
+    assert result["name_receiver"] == "JUAN PEREZ"
+    assert result["street"] == "CENTRAL"
+    assert result["address_reference"] == "PUERTA GRIS"
+
+
+def test_normalize_shipment_fields_handles_missing_values():
+    result = px.normalize_shipment_fields({})
+
+    assert result["name_receiver"] == ""
+    assert result["street"] == ""
+    assert result["address_reference"] == ""
+
+
+@pytest.mark.parametrize(
+    ("street", "expected"),
+    [
+        ("CALLE 12", "C 12"),
+        ("calle 12", "C 12"),
+        ("AVENIDA INSURGENTES", "AV INSURGENTES"),
+        ("BOULEVARD REFORMA", "BLVD REFORMA"),
+        ("CARRETERA FEDERAL", "CARR FEDERAL"),
+        ("EDIFICIO A", "EDIF A"),
+        ("CALLEJON 12", "CALLEJON 12"),
+        ("Callejón 12", "CALLEJON 12"),
+        ("CALLEJÓN, 12", "CALLEJON 12"),
+        ("AVENIDAS NORTE", "AVENIDAS NORTE"),
+    ],
+)
+def test_normalize_shipment_fields_abbreviates_whole_address_words(street, expected):
+    result = px.normalize_shipment_fields({"street": street})
+
+    assert result["street"] == expected
+
+
+def test_normalize_shipment_fields_abbreviates_address_reference():
+    result = px.normalize_shipment_fields({
+        "address_reference": "Edificio B, calle 5",
+    })
+
+    assert result["address_reference"] == "EDIF B C 5"
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("Doctor Juan Perez", "DR JUAN PEREZ"),
+        ("Doctora Ana Lopez", "DRA ANA LOPEZ"),
+        ("Maestro Juan", "MTRO JUAN"),
+        ("Maestra Ana", "MTRA ANA"),
+        ("Profesor Luis", "PROF LUIS"),
+        ("Profesora Ana", "PROFA ANA"),
+        ("Diputado Juan", "DIP JUAN"),
+        ("Diputada Ana", "DIP ANA"),
+        ("Senador Juan", "SEN JUAN"),
+        ("Senadora Ana", "SEN ANA"),
+        ("Presidente Juan", "PDTE JUAN"),
+        ("Presidenta Ana", "PDTA ANA"),
+        ("Administrador Juan", "ADMIN JUAN"),
+        ("Administradora Ana", "ADMIN ANA"),
+        ("Director General", "DIR GRAL"),
+        ("Gobernador Juan", "GOB JUAN"),
+        ("Titular Juan", "TIT JUAN"),
+        ("Secretario Juan", "SEC JUAN"),
+        ("Universidad Autonoma", "UNI AUT"),
+        ("Órgano Interno de Control", "OIC"),
+        ("Organo de Control Interno", "OIC"),
+    ],
+)
+def test_normalize_shipment_fields_abbreviates_whole_title_words(name, expected):
+    result = px.normalize_shipment_fields({"name_receiver": name})
+
+    assert result["name_receiver"] == expected
+
+
+def test_normalize_shipment_fields_removes_accents_and_punctuation():
+    result = px.normalize_shipment_fields({
+        "name_receiver": "Dr. José Pérez",
+        "street": "Av. Independencia, 10/2",
+        "address_reference": "Frente al edificio.",
+    })
+
+    assert result["name_receiver"] == "DR JOSE PEREZ"
+    assert result["street"] == "AV INDEPENDENCIA 102"
+    assert result["address_reference"] == "FRENTE AL EDIF"
