@@ -78,9 +78,7 @@ def _validation_message(field: str, error: dict[str, Any]) -> str:
     return str(error.get("msg", "Valor inválido"))
 
 
-def validate_registro(
-    data: dict[str, Any],
-) -> tuple[RegistroRequest | None, list[RegistroFieldError]]:
+def validate_registro(data: dict[str, Any]) -> tuple[RegistroRequest | None, list[RegistroFieldError]]:
     """Valida todos los campos y devuelve todos los errores encontrados."""
     try:
         return RegistroRequest.model_validate(data), []

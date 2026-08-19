@@ -6,62 +6,53 @@ from typing import Any
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QComboBox,
-    QDialog,
-    QDoubleSpinBox,
-    QFrame,
-    QGridLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QMessageBox,
-    QScrollArea,
-    QSizePolicy,
-    QSpinBox,
-    QTextEdit,
-    QVBoxLayout,
-    QWidget,
+    QComboBox, QDialog, QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,QLabel,
+    QLineEdit, QMessageBox, QScrollArea, QSizePolicy, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
 from app.components.theme import SPACE
 from app.components.widgets import (
-    Banner,
-    Card,
-    divider,
-    icon_label,
-    labeled_field,
-    section_label,
-    subtitle,
-    text_button,
+    Banner, Card, divider, icon_label,
+    labeled_field, section_label, subtitle, text_button,
 )
-from app.models.shipping import CoverageItem
-from app.services.paquetexpress_service import (PaquetexpressServiceError, PaquetexpressSessionExpiredError,
-                                                    PaquetexpressValidationError, build_shipment_draft, 
-                                                    create_shipment, normalize_shipment_fields)
+from app.models.shipping import CoverageItem, ShippingDto
+from app.services.paquetexpress_service import (
+    PaquetexpressCoverageNotFoundError,
+    PaquetexpressServiceError,PaquetexpressSessionExpiredError,
+    PaquetexpressValidationError, build_shipment_draft, create_shipment,
+    get_coverages_for_postal_code, normalize_shipment_fields, update_shipment,
+)
 from app.views.session_relogin import prompt_relogin_after_session_expired
 
 # Campos con datos técnicos: se muestran en monoespaciada para facilitar el
 # cotejo carácter a carácter contra la etiqueta del sobre.
-_MONO_KEYS = {
-    "rfc",
-    "phone",
-    "num_street",
-    "package_code",
-    "quantity",
-    "weight",
-    "length",
-    "width",
-    "height",
-}
+_MONO_KEYS = {"rfc", "phone", "num_street", "package_code", "quantity", "weight", "length", "width", "height",}
+
+
+def _coverage_from_shipment(shipment: ShippingDto) -> CoverageItem:
+    """Arma un ítem de cobertura a partir del envío ya persistido."""
+    return CoverageItem(
+        postal_code=shipment.postal_code,
+        colony=shipment.colony,
+        municipality=shipment.city,
+        city=shipment.city,
+        state=shipment.state,
+        coverage_type=shipment.coverage_type or "",
+    )
 
 
 class ShipmentWindow(QDialog):
     """Formulario de envío basado en cobertura + datos OCR."""
 
-    def __init__(self, coverages: list[CoverageItem], ocr_form_data: dict[str, Any], parent=None):
+    def __init__(self, coverages: list[CoverageItem], ocr_form_data: dict[str, Any], 
+                    parent=None, existing: ShippingDto | None = None):
         super().__init__(parent)
         self.setObjectName("ShipmentWindow")
-        self.setWindowTitle("Crear envío Paquetexpress")
+        self._existing = existing
+        self._updated_shipment: ShippingDto | None = None
+        self.setWindowTitle(
+            "Editar envío Paquetexpress" if existing is not None else "Crear envío Paquetexpress"
+        )
         self.resize(1360, 860)
         self.setMinimumSize(1180, 720)
         self.setWindowFlag(Qt.WindowType.WindowMinMaxButtonsHint, True)
@@ -71,15 +62,38 @@ class ShipmentWindow(QDialog):
         self._shipment_fields: dict[str, QWidget] = {}
         self._coverage_fields: dict[str, QLineEdit] = {}
         self._ocr_reference_fields: dict[str, QLineEdit] = {}
-        self._draft_initialized = False
+        self._draft_initialized = existing is not None
+        self._coverage_refreshed = False
         self._setup_ui()
         self._load_coverages()
-        self._load_ocr_reference()
+        if existing is None:
+            self._load_ocr_reference()
+        else:
+            self._fill_from_existing()
         self.setWindowState(self.windowState() | Qt.WindowState.WindowMaximized)
+
+    @classmethod
+    def for_edit(cls, shipment: ShippingDto, parent=None) -> ShipmentWindow:
+        """Diálogo de edición precargado con un envío existente."""
+        return cls(
+            coverages=[_coverage_from_shipment(shipment)],
+            ocr_form_data={},
+            parent=parent,
+            existing=shipment,
+        )
+
+    @property
+    def updated_shipment(self) -> ShippingDto | None:
+        return self._updated_shipment
+
+    @property
+    def _is_edit(self) -> bool:
+        return self._existing is not None
 
     # --- Construcción --------------------------------------------------
 
     def _setup_ui(self):
+        """Arma el layout raíz y decide si hay columna OCR."""
         root = QVBoxLayout(self)
         root.setContentsMargins(SPACE["lg"], SPACE["md"], SPACE["lg"], SPACE["md"])
         root.setSpacing(SPACE["md"])
@@ -89,7 +103,8 @@ class ShipmentWindow(QDialog):
 
         columns = QHBoxLayout()
         columns.setSpacing(SPACE["md"])
-        columns.addWidget(self._build_ocr_reference_card(), 4)
+        if not self._is_edit:
+            columns.addWidget(self._build_ocr_reference_card(), 4)
 
         right_column = QVBoxLayout()
         right_column.setSpacing(SPACE["md"])
@@ -99,7 +114,7 @@ class ShipmentWindow(QDialog):
 
         right_container = QWidget()
         right_container.setLayout(right_column)
-        columns.addWidget(right_container, 8)
+        columns.addWidget(right_container, 8 if not self._is_edit else 1)
 
         columns_container = QWidget()
         columns_container.setLayout(columns)
@@ -111,6 +126,7 @@ class ShipmentWindow(QDialog):
         root.addWidget(body_scroll, 1)
 
     def _build_header(self) -> QWidget:
+        """Título, subtítulo y botones de la cabecera."""
         header = QWidget()
         layout = QHBoxLayout(header)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -118,21 +134,27 @@ class ShipmentWindow(QDialog):
 
         title_column = QVBoxLayout()
         title_column.setSpacing(2)
-        title = QLabel("Crear envío Paquetexpress")
+        title = QLabel(
+            "Editar envío Paquetexpress" if self._is_edit else "Crear envío Paquetexpress"
+        )
         title.setProperty("role", "headline")
         title_column.addWidget(title)
         title_column.addWidget(
-            subtitle("Valida la cobertura y completa los datos del envío.")
+            subtitle(
+                "Actualiza los datos del envío y consulta cobertura si cambia la colonia."
+                if self._is_edit
+                else "Valida la cobertura y completa los datos del envío."
+            )
         )
         layout.addLayout(title_column)
         layout.addStretch(1)
 
-        # Botón de normalización de campos
-        btn_normalize = text_button("Normalizar campos", variant="ghost", icon="refresh")
-        btn_normalize.setObjectName("shipmentNormalizeButton")
-        btn_normalize.setMinimumHeight(38)
-        btn_normalize.clicked.connect(self._on_normalize)
-        layout.addWidget(btn_normalize)
+        if not self._is_edit:
+            btn_normalize = text_button("Normalizar campos", variant="ghost", icon="refresh")
+            btn_normalize.setObjectName("shipmentNormalizeButton")
+            btn_normalize.setMinimumHeight(38)
+            btn_normalize.clicked.connect(self._on_normalize)
+            layout.addWidget(btn_normalize)
 
         btn_cancel = text_button("Cancelar", variant="ghost", icon="close")
         btn_cancel.setObjectName("shipmentCancelButton")
@@ -140,32 +162,58 @@ class ShipmentWindow(QDialog):
         btn_cancel.clicked.connect(self.reject)
         layout.addWidget(btn_cancel)
 
-        btn_submit = text_button("Crear envío", variant="primary", icon="send")
-        btn_submit.setObjectName("shipmentCreateButton")
+        if self._is_edit:
+            btn_submit = text_button("Guardar", variant="primary", icon="save")
+            btn_submit.setObjectName("shipmentSaveButton")
+        else:
+            btn_submit = text_button("Crear envío", variant="primary", icon="send")
+            btn_submit.setObjectName("shipmentCreateButton")
         btn_submit.setMinimumHeight(38)
         btn_submit.clicked.connect(self._on_submit)
         layout.addWidget(btn_submit)
         return header
 
     def _build_coverage_banner(self) -> Banner:
-        count = len(self._coverages)
-        colonias = "colonia disponible" if count == 1 else "colonias disponibles"
-        postal_code = self._coverages[0].postal_code if self._coverages else ""
+        """Banner verde de estado de cobertura."""
         self._banner = Banner(
             "check_circle",
-            "Cobertura confirmada",
-            f"El código postal {postal_code} tiene cobertura Paquetexpress · "
-            f"{count} {colonias}.",
+            "Cobertura del registro" if self._is_edit else "Cobertura confirmada",
+            self._coverage_banner_message(),
             tone="success",
         )
         return self._banner
 
+    def _coverage_banner_message(self) -> str:
+        """Texto del banner (en edición, hasta consultar cobertura, avisa que hay que refrescar)."""
+        count = len(self._coverages)
+        colonias = "colonia disponible" if count == 1 else "colonias disponibles"
+        postal_code = self._coverages[0].postal_code if self._coverages else ""
+        if self._is_edit and not self._coverage_refreshed:
+            return (
+                f"Código postal {postal_code}. Consulte cobertura para actualizar "
+                f"colonia, estado, ciudad y tipo."
+            )
+        return (
+            f"El código postal {postal_code} tiene cobertura Paquetexpress · "
+            f"{count} {colonias}."
+        )
+
     def _build_coverage_card(self) -> Card:
+        """Combo de colonia + campos de solo lectura (+ botón consultar en edición)."""
         card = Card("Cobertura Paquetexpress", "map")
 
         self._colony_combo = QComboBox()
         self._colony_combo.currentIndexChanged.connect(self._on_colony_changed)
         card.body.addWidget(labeled_field("Colonia", self._colony_combo))
+
+        if self._is_edit:
+            btn_consult = text_button(
+                "Consultar cobertura", variant="ghost", icon="search"
+            )
+            btn_consult.setObjectName("shipmentConsultCoverageButton")
+            btn_consult.setMinimumHeight(38)
+            btn_consult.clicked.connect(self._on_consult_coverage)
+            card.body.addWidget(btn_consult)
 
         grid = QGridLayout()
         grid.setHorizontalSpacing(SPACE["md"])
@@ -188,6 +236,7 @@ class ShipmentWindow(QDialog):
         return card
 
     def _build_shipping_card(self) -> Card:
+        """Formulario Destinatario / Dirección / Paquete."""
         card = Card("Datos del envío", "edit_document")
 
         card.body.addWidget(
@@ -243,6 +292,7 @@ class ShipmentWindow(QDialog):
         return card
 
     def _build_ocr_reference_card(self) -> Card:
+        """Columna OCR (solo lectura)."""
         card = Card("Datos OCR de referencia", "document_scanner")
         card.body.addWidget(
             subtitle(
@@ -270,6 +320,7 @@ class ShipmentWindow(QDialog):
         card.body.addStretch(1)
         return card
 
+    """Fábrica de filas y widgets (QLineEdit, QSpinBox, QDoubleSpinBox, QTextEdit)."""
     def _section(self, title: str, icon: str, rows: list[list[tuple[str, str, bool, str]]]) -> QFrame:
         """Bloque de campos agrupados. Cada fila reparte su ancho a partes iguales."""
         box = QFrame()
@@ -337,6 +388,7 @@ class ShipmentWindow(QDialog):
 
     @staticmethod
     def _set_field_value(widget: QWidget, value: Any):
+        """Escribe texto o número en el widget correcto."""
         if isinstance(widget, QLineEdit):
             widget.setText(str(value or ""))
             return
@@ -360,6 +412,7 @@ class ShipmentWindow(QDialog):
 
     @staticmethod
     def _get_field_value(widget: QWidget) -> Any:
+        """Lee el valor (strip en textos, redondeo a 2 decimales en doubles)."""
         if isinstance(widget, QLineEdit):
             return widget.text().strip()
         if isinstance(widget, QTextEdit):
@@ -372,6 +425,7 @@ class ShipmentWindow(QDialog):
 
     @staticmethod
     def _readonly_line() -> QLineEdit:
+        """QLineEdit de solo lectura, sin foco."""
         line = QLineEdit()
         line.setReadOnly(True)
         line.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -380,6 +434,7 @@ class ShipmentWindow(QDialog):
     # --- Carga de datos ------------------------------------------------
 
     def _load_coverages(self):
+        """Llena el combo con CoverageItem y aplica la primera."""
         self._colony_combo.blockSignals(True)
         self._colony_combo.clear()
         for item in self._coverages:
@@ -390,9 +445,70 @@ class ShipmentWindow(QDialog):
             self._apply_selected_coverage()
 
     def _load_ocr_reference(self):
+        """Rellena la columna OCR (crear)."""
         campos = self._ocr_form_data.get("campos") or {}
         for key, widget in self._ocr_reference_fields.items():
             widget.setText(str(campos.get(key) or "").strip())
+
+    def _fill_from_existing(self):
+        """Rellena el formulario desde ShippingDto (editar)."""
+        shipment = self._existing
+        if shipment is None:
+            return
+        values = {
+            "name_receiver": shipment.name_receiver,
+            "rfc": shipment.rfc,
+            "country": shipment.country,
+            "street": shipment.street,
+            "num_street": shipment.num_street,
+            "email": str(shipment.email) if shipment.email else "",
+            "phone": shipment.phone,
+            "address_reference": shipment.address_reference,
+            "quantity": shipment.quantity,
+            "package_code": shipment.package_code,
+            "comments": shipment.comments,
+            "content": shipment.content,
+            "weight": shipment.weight,
+            "length": shipment.length,
+            "width": shipment.width,
+            "height": shipment.height,
+        }
+        for key, value in values.items():
+            widget = self._shipment_fields.get(key)
+            if widget is not None:
+                self._set_field_value(widget, value)
+
+    def _on_consult_coverage(self):
+        if self._existing is None:
+            return
+        postal_code = self._existing.postal_code
+        try:
+            coverages = get_coverages_for_postal_code(postal_code)
+        except PaquetexpressCoverageNotFoundError as exc:
+            QMessageBox.warning(self, "Sin cobertura", str(exc))
+            return
+        except PaquetexpressSessionExpiredError as exc:
+            prompt_relogin_after_session_expired(
+                self, f"No se pudo consultar cobertura: {exc}"
+            )
+            return
+        except PaquetexpressServiceError as exc:
+            QMessageBox.critical(
+                self, "Error", f"No se pudo consultar cobertura: {exc}"
+            )
+            return
+
+        previous_colony = self._existing.colony
+        self._coverages = coverages
+        self._coverage_refreshed = True
+        self._load_coverages()
+        for index in range(self._colony_combo.count()):
+            item = self._colony_combo.itemData(index)
+            if isinstance(item, CoverageItem) and item.colony == previous_colony:
+                self._colony_combo.setCurrentIndex(index)
+                break
+        self._banner.set_title("Cobertura confirmada")
+        self._banner.set_message(self._coverage_banner_message())
 
     def _on_colony_changed(self, _index: int):
         self._apply_selected_coverage()
@@ -402,6 +518,7 @@ class ShipmentWindow(QDialog):
         return data if isinstance(data, CoverageItem) else None
 
     def _apply_selected_coverage(self):
+        """Copia cobertura a los campos de solo lectura; la primera vez en crear, arma el borrador OCR → formulario."""
         selected = self._selected_coverage()
         if selected is None:
             return
@@ -438,8 +555,14 @@ class ShipmentWindow(QDialog):
         if not payload:
             QMessageBox.critical(self, "Error", "No hay cobertura seleccionada.")
             return
+        action = "actualizar" if self._is_edit else "crear"
         try:
-            create_shipment(payload)
+            if self._existing is not None:
+                self._updated_shipment = update_shipment(
+                    self._existing.id_shipping, payload
+                )
+            else:
+                create_shipment(payload)
         except PaquetexpressValidationError as exc:
             details = "\n\n".join(
                 f"• {error['campo']} {error['error']}." for error in exc.errors
@@ -451,13 +574,20 @@ class ShipmentWindow(QDialog):
             )
             return
         except PaquetexpressSessionExpiredError as exc:
-            prompt_relogin_after_session_expired(self, f"No se pudo crear el envío: {exc}")
+            prompt_relogin_after_session_expired(
+                self, f"No se pudo {action} el envío: {exc}"
+            )
             return
         except PaquetexpressServiceError as exc:
-            QMessageBox.critical(self, "Error", f"No se pudo crear el envío: {exc}")
+            QMessageBox.critical(
+                self, "Error", f"No se pudo {action} el envío: {exc}"
+            )
             return
 
-        QMessageBox.information(self, "Éxito", "Envío creado correctamente.")
+        if self._is_edit:
+            QMessageBox.information(self, "Éxito", "Envío actualizado correctamente.")
+        else:
+            QMessageBox.information(self, "Éxito", "Envío creado correctamente.")
         self.accept()
 
     def _on_normalize(self):

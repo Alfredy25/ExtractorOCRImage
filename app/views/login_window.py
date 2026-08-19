@@ -10,6 +10,7 @@ from typing import Callable, Optional
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QFrame,
     QHBoxLayout,
@@ -29,8 +30,13 @@ from app.components.widgets import (
 )
 from app.services.auth_service import login as do_login
 from app.states.workers.login_worker import LoginWorker
+from app.utils.remembered_email import (
+    clear_remembered_email,
+    load_remembered_email,
+    save_remembered_email,
+)
 
-_CARD_WIDTH = 420
+_CARD_WIDTH = 430
 
 
 class LoginWindow(QDialog):
@@ -38,7 +44,8 @@ class LoginWindow(QDialog):
     Formulario correo electrónico / contraseña y botón Entrar.
 
     Al autenticación correcta cierra con ``accept()``; el JWT queda en memoria en
-    ``auth_client`` (la UI no lee ni guarda el token).
+    ``auth_client`` (la UI no lee ni guarda el token). El correo puede recordarse
+    en ``%LOCALAPPDATA%\\ExtractorOCR\\last_email.txt`` si el usuario lo marca.
     """
 
     def __init__(self, parent=None, login_fn: Optional[Callable[[str, str], None]] = None):
@@ -52,6 +59,7 @@ class LoginWindow(QDialog):
         self._worker: Optional[LoginWorker] = None
 
         self._setup_ui()
+        self._prefill_remembered_user()
 
     # --- Construcción --------------------------------------------------
 
@@ -118,6 +126,13 @@ class LoginWindow(QDialog):
             QLineEdit.ActionPosition.LeadingPosition,
         )
         layout.addWidget(self._pass)
+
+        self._remember_user = QCheckBox("Recordar usuario")
+        self._remember_user.setObjectName("loginRememberUserCheck")
+        self._remember_user.setToolTip(
+            "Guarda el correo en este equipo. La contraseña no se almacena."
+        )
+        layout.addWidget(self._remember_user)
 
         self._error = self._build_error_banner()
         layout.addWidget(self._error)
@@ -187,6 +202,7 @@ class LoginWindow(QDialog):
         self._btn_cancel.setEnabled(False)
         self._email.setEnabled(False)
         self._pass.setEnabled(False)
+        self._remember_user.setEnabled(False)
 
         self._worker = LoginWorker(email, p, self._login_fn)
         self._worker.succeeded.connect(self._on_success)
@@ -195,6 +211,7 @@ class LoginWindow(QDialog):
         self._worker.start()
 
     def _on_success(self) -> None:
+        self._persist_remembered_user()
         self.accept()
 
     def _on_failure(self, message: str) -> None:
@@ -206,4 +223,19 @@ class LoginWindow(QDialog):
         self._btn_cancel.setEnabled(True)
         self._email.setEnabled(True)
         self._pass.setEnabled(True)
+        self._remember_user.setEnabled(True)
         self._worker = None
+
+    def _prefill_remembered_user(self) -> None:
+        email = load_remembered_email()
+        if not email:
+            return
+        self._email.setText(email)
+        self._remember_user.setChecked(True)
+        self._pass.setFocus()
+
+    def _persist_remembered_user(self) -> None:
+        if self._remember_user.isChecked():
+            save_remembered_email(self._email.text())
+            return
+        clear_remembered_email()

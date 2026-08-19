@@ -16,10 +16,17 @@ from app.api.shipments_api import (
     ShipmentsApiError,
     ShipmentsSessionExpiredError,
     create_shipment as api_create_shipment,
+    list_by_date_range,
+    update_shipment as api_update_shipment,
 )
 from datetime import datetime
-from app.api.shipments_api import list_by_date_range
-from app.models.shipping import CoverageItem, ShippingDto, ShippingFieldError, validate_shipping
+from app.models.shipping import (
+    CoverageItem,
+    ShippingDto,
+    ShippingFieldError,
+    ShippingRequest,
+    validate_shipping,
+)
 from app.services.auth_service import get_access_token
 
 
@@ -164,15 +171,7 @@ def _parse_decimal_for_payload(value: Any) -> Decimal:
     return Decimal(str(value).strip())
 
 
-def create_shipment(data: dict[str, Any]) -> dict[str, Any]:
-    """Valida y crea un envío Paquetexpress."""
-    normalized = _normalize_shipment_form(data)
-    model, errors = validate_shipping(normalized)
-    if errors:
-        raise PaquetexpressValidationError(errors)
-    assert model is not None
-
-    token = _required_token()
+def _payload_from_shipping_request(model: ShippingRequest) -> dict[str, Any]:
     payload = model.model_dump(exclude_none=True)
     payload["quantity"] = int(payload["quantity"])
     payload["package_code"] = int(payload["package_code"])
@@ -184,9 +183,41 @@ def create_shipment(data: dict[str, Any]) -> dict[str, Any]:
     payload["length"] = f"{payload['length']:.2f}"
     payload["width"] = f"{payload['width']:.2f}"
     payload["height"] = f"{payload['height']:.2f}"
+    return payload
+
+
+def create_shipment(data: dict[str, Any]) -> dict[str, Any]:
+    """Valida y crea un envío Paquetexpress."""
+    normalized = _normalize_shipment_form(data)
+    model, errors = validate_shipping(normalized)
+    if errors:
+        raise PaquetexpressValidationError(errors)
+    assert model is not None
+
+    token = _required_token()
+    payload = _payload_from_shipping_request(model)
 
     try:
         return api_create_shipment(payload, token)
+    except ShipmentsSessionExpiredError as exc:
+        raise PaquetexpressSessionExpiredError(str(exc)) from exc
+    except ShipmentsApiError as exc:
+        raise PaquetexpressServiceError(str(exc)) from exc
+
+
+def update_shipment(id_shipping: int, data: dict[str, Any]) -> ShippingDto:
+    """Valida y actualiza un envío Paquetexpress."""
+    normalized = _normalize_shipment_form(data)
+    model, errors = validate_shipping(normalized)
+    if errors:
+        raise PaquetexpressValidationError(errors)
+    assert model is not None
+
+    token = _required_token()
+    payload = _payload_from_shipping_request(model)
+
+    try:
+        return api_update_shipment(id_shipping, payload, token)
     except ShipmentsSessionExpiredError as exc:
         raise PaquetexpressSessionExpiredError(str(exc)) from exc
     except ShipmentsApiError as exc:

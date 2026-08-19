@@ -1,8 +1,10 @@
 """Tests del servicio de negocio Paquetexpress."""
 
+from datetime import datetime
+
 import pytest
 
-from app.models.shipping import CoverageItem
+from app.models.shipping import CoverageItem, ShippingDto
 from app.services import paquetexpress_service as px
 
 
@@ -231,3 +233,107 @@ def test_normalize_shipment_fields_removes_accents_and_punctuation():
     assert result["name_receiver"] == "DR JOSE PEREZ"
     assert result["street"] == "AV INDEPENDENCIA 102"
     assert result["address_reference"] == "FRENTE AL EDIF"
+
+
+def _valid_update_form() -> dict:
+    draft = px.build_shipment_draft(_ocr_form_data(), _coverage())
+    draft["num_street"] = "12"
+    draft["email"] = "destinatario@example.com"
+    return draft
+
+
+def _shipping_dto() -> ShippingDto:
+    return ShippingDto.model_validate({
+        "id_shipping": 10,
+        "id_folio": 19,
+        "name_receiver": "DR. JUAN PEREZ",
+        "rfc": "XAXX010101000",
+        "country": "MEXICO",
+        "state": "CIUDAD DE MEXICO",
+        "city": "CIUDAD DE MEXICO",
+        "colony": "FLORIDA",
+        "street": "AV CENTRAL 123",
+        "num_street": "12",
+        "postal_code": "01030",
+        "email": "destinatario@example.com",
+        "phone": "5512345678",
+        "address_reference": "Puerta gris",
+        "quantity": 1,
+        "package_code": 1,
+        "content": "DOCUMENTOS LEGALES",
+        "weight": "0.50",
+        "length": "30.00",
+        "width": "24.00",
+        "height": "1.00",
+        "coverage_type": "PAQUETEXPRESS",
+        "comments": "ENTREGAR EN OFICIALIA",
+        "created_at": datetime(2026, 8, 11, 18, 1, 12),
+    })
+
+
+def test_update_shipment_validates_before_http(monkeypatch):
+    called = {"api": False}
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+    monkeypatch.setattr(
+        px,
+        "api_update_shipment",
+        lambda *_args, **_kwargs: called.update(api=True),
+    )
+
+    with pytest.raises(px.PaquetexpressValidationError):
+        px.update_shipment(10, {"name_receiver": "x"})
+
+    assert called["api"] is False
+
+
+def test_update_shipment_serializes_coverage_fields(monkeypatch):
+    captured: dict = {}
+    updated = _shipping_dto()
+
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+
+    def _fake_update(id_shipping, payload, token):
+        captured["id_shipping"] = id_shipping
+        captured["payload"] = payload
+        captured["token"] = token
+        return updated
+
+    monkeypatch.setattr(px, "api_update_shipment", _fake_update)
+
+    result = px.update_shipment(10, _valid_update_form())
+
+    assert result is updated
+    assert captured["id_shipping"] == 10
+    assert captured["token"] == "token-ok"
+    assert captured["payload"]["coverage_type"] == "PAQUETEXPRESS"
+    assert captured["payload"]["state"] == "CIUDAD DE MEXICO"
+    assert captured["payload"]["city"] == "CIUDAD DE MEXICO"
+    assert captured["payload"]["colony"] == "FLORIDA"
+    assert captured["payload"]["postal_code"] == "01030"
+    assert captured["payload"]["weight"] == "0.50"
+    assert "id_shipping" not in captured["payload"]
+    assert "created_at" not in captured["payload"]
+
+
+def test_update_shipment_maps_session_expired(monkeypatch):
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+
+    def _raise_expired(_id, _payload, _token):
+        raise px.ShipmentsSessionExpiredError("expired")
+
+    monkeypatch.setattr(px, "api_update_shipment", _raise_expired)
+
+    with pytest.raises(px.PaquetexpressSessionExpiredError, match="expired"):
+        px.update_shipment(10, _valid_update_form())
+
+
+def test_update_shipment_maps_api_error(monkeypatch):
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+
+    def _raise_api(_id, _payload, _token):
+        raise px.ShipmentsApiError("falló el backend")
+
+    monkeypatch.setattr(px, "api_update_shipment", _raise_api)
+
+    with pytest.raises(px.PaquetexpressServiceError, match="falló el backend"):
+        px.update_shipment(10, _valid_update_form())

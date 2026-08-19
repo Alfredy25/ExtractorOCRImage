@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QAction, QDesktopServices, QKeySequence
+from PySide6.QtGui import QAction, QDesktopServices, QKeySequence, QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -45,6 +45,7 @@ from app.views.export_dialog import ExportDialog
 from app.views.export_shipments import ExportShipments
 from app.views.session_relogin import prompt_relogin_after_session_expired
 from app.views.shipment_window import ShipmentWindow
+from app.config import IMAGES_DIR
 
 logger = logging.getLogger(__name__)
 

@@ -39,6 +39,7 @@ from app.services.paquetexpress_service import (
     list_shipments_by_date_range,
 )
 from app.views.session_relogin import prompt_relogin_after_session_expired
+from app.views.shipment_window import ShipmentWindow
 
 _PAGE_SIZE = 25
 
@@ -224,6 +225,7 @@ class ExportShipments(QDialog):
 
         layout.addWidget(self.tabla, 1)
         layout.addWidget(self._build_pagination_footer())
+        self.tabla.itemSelectionChanged.connect(self._update_edit_button)
         return card
 
     def _build_pagination_footer(self) -> QWidget:
@@ -259,6 +261,14 @@ class ExportShipments(QDialog):
         actions = QHBoxLayout()
         actions.setSpacing(SPACE["sm"])
         actions.addStretch(1)
+
+        self._btn_edit = text_button("Editar", variant="ghost", icon="edit_document")
+        self._btn_edit.setObjectName("shipmentsEditButton")
+        self._btn_edit.setMinimumHeight(38)
+        self._btn_edit.setMinimumWidth(140)
+        self._btn_edit.setEnabled(False)
+        self._btn_edit.clicked.connect(self._do_edit)
+        actions.addWidget(self._btn_edit)
 
         btn_cancel = text_button("Cancelar", variant="ghost", icon="close")
         btn_cancel.setObjectName("shipmentsCancelButton")
@@ -316,6 +326,7 @@ class ExportShipments(QDialog):
         page_items = self._shipments[start:end]
         self._fill_table_rows(page_items)
         self._update_pagination_controls()
+        self._update_edit_button()
 
     # --- Datos ---------------------------------------------------------
 
@@ -366,6 +377,48 @@ class ExportShipments(QDialog):
                 item = QTableWidgetItem("" if value is None else str(value))
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.tabla.setItem(row, column, item)
+
+    def _selected_shipment(self) -> ShippingDto | None:
+        selection = self.tabla.selectionModel()
+        if selection is None:
+            return None
+        rows = selection.selectedRows()
+        if len(rows) != 1:
+            return None
+        index = self._page * _PAGE_SIZE + rows[0].row()
+        if 0 <= index < len(self._shipments):
+            return self._shipments[index]
+        return None
+
+    def _update_edit_button(self):
+        if not hasattr(self, "_btn_edit"):
+            return
+        self._btn_edit.setEnabled(self._selected_shipment() is not None)
+
+    def _replace_shipment(self, updated: ShippingDto) -> None:
+        selected_row = None
+        for index, item in enumerate(self._shipments):
+            if item.id_shipping == updated.id_shipping:
+                self._shipments[index] = updated
+                start = self._page * _PAGE_SIZE
+                if start <= index < start + _PAGE_SIZE:
+                    selected_row = index - start
+                break
+        self._render_current_page()
+        if selected_row is not None:
+            self.tabla.selectRow(selected_row)
+
+    def _do_edit(self):
+        shipment = self._selected_shipment()
+        if shipment is None:
+            return
+        dialog = ShipmentWindow.for_edit(shipment, parent=self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        updated = dialog.updated_shipment
+        if updated is None:
+            return
+        self._replace_shipment(updated)
 
     def fill_table(self, shipments: list[ShippingDto]) -> None:
         """Carga todos los envíos y muestra la primera página."""

@@ -13,6 +13,23 @@ from app.config import API_BASE_URL
 from app.utils.logs import log_directory
 from app.views.login_window import LoginWindow
 from app.views.main_window import MainWindow
+from app.config import IMAGES_DIR
+from PySide6.QtGui import QIcon
+
+# Identidad ante la barra de tareas de Windows (no es el nombre del proceso).
+_WINDOWS_APP_ID = "FGC.ExtractorOCR"
+
+
+def _set_windows_app_user_model_id(app_id: str) -> None:
+    """Declara quién es esta app para que Windows no la mezcle con python.exe."""
+    if sys.platform != "win32":
+        return
+    try:
+        from ctypes import windll
+
+        windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+    except (AttributeError, OSError):
+        return
 
 
 def setup_logging() -> Path:
@@ -48,11 +65,15 @@ def main():
     log.info("Log file: %s", log_file)
     log.info("Backend API: %s", API_BASE_URL)
 
+    # Debe ir antes de QApplication: Windows agrupa la ventana con este ID.
+    _set_windows_app_user_model_id(_WINDOWS_APP_ID)
+
     # Alta DPI: debe llamarse antes de crear QApplication
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(str(IMAGES_DIR/"extractor_ocr.png")))
     app.setApplicationName("Extractor OCR")
     app.setApplicationDisplayName("Extractor OCR - Destinatarios")
 

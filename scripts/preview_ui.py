@@ -122,10 +122,10 @@ def receives_mouse(widget: QWidget) -> bool:
 from app.views.login_window import LoginWindow  # noqa: E402
 
 login = LoginWindow(login_fn=lambda email, password: None)
-shot(login, "01_login", 520, 640)
+shot(login, "01_login", 520, 680)
 login._on_failure("Credenciales incorrectas. Verifica tu correo y contraseña.")
-shot(login, "02_login_error", 520, 640)
-check("login: campos y boton presentes", bool(login._email and login._pass and login._btn_login))
+shot(login, "02_login_error", 520, 680)
+check("login: campos y boton presentes", bool(login._email and login._pass and login._btn_login and login._remember_user))
 check("login: boton recibe el raton", receives_mouse(login._btn_login))
 login.close()
 
