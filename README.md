@@ -194,8 +194,11 @@ python -m PyInstaller `
   --name "ExtractorOCR" `
   --icon ".\extractor_ocr.ico" `
   --paths "." `
+  --add-data "app\assets;app\assets" `
   "app\main.py"
 ```
+
+`--icon` solo pone el icono del `.exe` en el Explorador de Windows. Los iconos de la interfaz salen de las fuentes e imágenes en `app/assets` (sobre todo `app/assets/fonts/MaterialSymbolsOutlined.ttf`). `--add-data` las copia a `dist\ExtractorOCR\_internal\app\assets`. En PowerShell el `;` de `--add-data` tiene que ir **entre comillas**; si no, PowerShell lo interpreta como fin de comando.
 
 El ejecutable queda en:
 
@@ -203,7 +206,7 @@ El ejecutable queda en:
 dist\ExtractorOCR\ExtractorOCR.exe
 ```
 
-Antes de crear el instalador, abre ese `.exe` y valida que la ventana de login aparezca correctamente.
+Antes de crear el instalador, abre ese `.exe` y valida que la ventana de login aparezca **con iconos** (botones, menú y logo). Si faltan, revisa que exista `dist\ExtractorOCR\_internal\app\assets\fonts\MaterialSymbolsOutlined.ttf`. Si reutilizas `ExtractorOCR.spec`, también debe incluir esa carpeta en `datas`.
 
 ### 2. Crear instalador con Inno Setup
 

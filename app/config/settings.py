@@ -1,5 +1,6 @@
 """Configuración central de la aplicación."""
 import os
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -37,8 +38,20 @@ def api_abs_url(path: str) -> str:
     return abs_url
 
 
+def _resolve_app_root() -> Path:
+    """Directorio ``app/`` en desarrollo y en el bundle de PyInstaller.
+
+    Con ``--onedir``, los datos van a ``sys._MEIPASS`` (la carpeta ``_internal``).
+    ``Path(__file__)`` no apunta a un archivo real cuando el código viaja en el
+    archivo PYZ, así que las fuentes e imágenes hay que resolverlas desde ahí.
+    """
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        return Path(sys._MEIPASS) / "app"
+    return Path(__file__).resolve().parent.parent
+
+
 # Rutas
-APP_ROOT = Path(__file__).resolve().parent.parent
+APP_ROOT = _resolve_app_root()
 PROJECT_ROOT = APP_ROOT.parent
 DATA_DIR = APP_ROOT / "data"
 ASSETS_DIR = APP_ROOT / "assets"
