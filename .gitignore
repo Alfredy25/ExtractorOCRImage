@@ -29,3 +29,6 @@ data/db.sqlite3
 /installer_output
 
 Documentacion_ExtractorOCR.pdf
+/Certificado_confianza/
+*.zip
+*.rar

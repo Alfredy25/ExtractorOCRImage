@@ -236,7 +236,7 @@ Los logs no se guardan dentro de la carpeta instalada; la app los crea automáti
 
 ### 3. Variables de entorno
 
-El instalador configura variables de usuario como `API_BASE_URL`, `LOGIN_ENDPOINT`, `REGISTROS_ENDPOINT`, `API_TIMEOUT_SECONDS`, `OPENAI_MODEL`, `TIMEOUT_SECONDS` y `EXPORT_DIR`.
+El instalador configura variables de usuario alineadas con [`.env.example`](.env.example): `API_BASE_URL`, `LOGIN_ENDPOINT`, `REGISTROS_ENDPOINT`, `COVERTURAS_ENDPOINT`, `ENVIOS_PX_ENDPOINT`, `API_TIMEOUT_SECONDS`, `OPENAI_MODEL`, `TIMEOUT_SECONDS` y `EXPORT_DIR`. `API_BASE_URL` queda en producción (`https://tools.feuh.com.mx`).
 
 La clave `OPENAI_API_KEY` no debe incluirse en el instalador ni en el repositorio. Agrégala como variable de entorno de usuario en cada máquina:
 
