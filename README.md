@@ -1,6 +1,6 @@
 # Extractor OCR — Destinatarios
 
-Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **destinatario** en fotos de etiquetas de sobres, usando **visión por IA** (OpenAI, por defecto `gpt-4o`). Los datos editados se **persisten en un backend FastAPI** (JWT + API REST); la clave de OpenAI solo se usa en el cliente para llamadas a la API de visión.
+Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **destinatario** en fotos de etiquetas de sobres, usando **visión por IA** (OpenAI, por defecto `gpt-4o`). Los datos editados se **persisten en un backend FastAPI** (JWT + API REST); la clave de OpenAI solo se usa en el cliente para llamadas a la API de visión. Además permite **crear y consultar envíos Paquetexpress**, consultar **coberturas** por código postal y **exportar** esos envíos a Excel con el layout listo para importar en Paquetexpress.
 
 ## Qué hace la app
 
@@ -8,6 +8,8 @@ Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **dest
 - Rotación, recorte libre o cuadrado 1:1, envío del recorte a la IA y formulario de campos estructurados.
 - Registro por **sede** obligatoria: `AJUSCO` o `COYOACÁN`.
 - **Exportación** por rango de fechas (CSV / Excel) con los datos obtenidos desde el backend.
+- **Envíos Paquetexpress**: consulta de cobertura por CP (API `COVERTURAS_ENDPOINT`), creación/edición de envíos y listado vía `ENVIOS_PX_ENDPOINT`.
+- **Exportación de envíos** a Excel con columnas y formato preparados para carga en Paquetexpress (desde **Ver envíos**).
 - **Temas** desde el menú Ver; registro de actividad en `%LOCALAPPDATA%\ExtractorOCR\logs\extractor_ocr.log` (la app crea la carpeta automáticamente al iniciar).
 
 ## Requisitos
@@ -30,18 +32,6 @@ pip install -r requirements.txt
 copy .env.example .env          # Windows; en Unix: cp .env.example .env
 ```
 
-**Un solo entorno virtual:** usa solo la carpeta **`.venv`** en la raíz del repo (es la que ignora Git en `.gitignore`). Si además tienes una carpeta `venv/`, es redundante y suele confundir (dos activaciones distintas, dos `pip install`, etc.).
-
-**Si PyInstaller u otras herramientas fallan con `C:\Python314\python.exe` no encontrado:** tus archivos `.venv\pyvenv.cfg` y `venv\pyvenv.cfg` guardan el intérprete **base** con el que se creó el entorno. Si Python se instaló o actualizó en otra ruta (p. ej. `...\AppData\Local\Programs\Python\Python314\`), esos venv quedan **rotos**. Solución: borra las carpetas `.venv` y `venv` (solo locales, no van al Git), y crea de nuevo **solo** `.venv` con el Python que sí exista, por ejemplo en PowerShell desde la raíz del proyecto:
-
-```powershell
-py -3.14 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-```
-
-Comprueba con `py -0p` qué versiones tienes y ajusta `-3.14` si usas otra.
-
 Edita `.env` con al menos:
 
 - URL del API y credenciales de uso habitual (ver tabla siguiente).
@@ -58,6 +48,8 @@ Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en
 | `API_BASE_URL` | URL base del FastAPI **sin** barra final (ej. `http://127.0.0.1:8000`). |
 | `LOGIN_ENDPOINT` | Ruta de login (por defecto `/auth/login`). |
 | `REGISTROS_ENDPOINT` | Ruta de registros OCR (por defecto `/registros/`). |
+| `COVERTURAS_ENDPOINT` | Ruta de coberturas Paquetexpress (por defecto `/coverages/`). |
+| `ENVIOS_PX_ENDPOINT` | Ruta de envíos Paquetexpress (por defecto `/shipments-px/`). |
 | `API_TIMEOUT_SECONDS` | Timeout HTTP hacia el backend (segundos). |
 | `OPENAI_API_KEY` | Clave para llamadas a OpenAI desde el cliente. |
 | `OPENAI_MODEL` | Modelo (por defecto `gpt-4o`). |
@@ -67,6 +59,8 @@ Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en
 ### Persistencia desde el cliente
 
 En **uso normal**, guardar listados y altas de extracciones va por **HTTP** al backend (`POST`/`GET` bajo `REGISTROS_ENDPOINT`), con el JWT obtenido en el login.
+
+Los **envíos Paquetexpress** también van por API: alta/consulta/actualización bajo `ENVIOS_PX_ENDPOINT` y consulta de coberturas bajo `COVERTURAS_ENDPOINT` (por código postal).
 
 La app de escritorio no administra base de datos local ni motor SQL; actúa como cliente API-only.
 
@@ -111,7 +105,30 @@ Get-Content "$env:LOCALAPPDATA\ExtractorOCR\logs\extractor_ocr.log" -Wait
 7. Elegir **SEDE**: `AJUSCO` o `COYOACÁN` (obligatorio para enviar/guardar).
 8. **Enviar a IA** y revisar o editar campos en el panel derecho.
 9. **Guardar registro** (botón en el panel derecho; el guardado va al backend salvo modo local de tests).
-10. **Exportar** por fechas: **Archivo → Exportar…**.
+10. **Exportar** registros por fechas: **Archivo → Exportar…** (o el ítem de navegación **Exportar registros**).
+11. (Opcional) **Consultar cobertura** y **crear envío Paquetexpress** a partir de los datos OCR (ver sección siguiente).
+12. (Opcional) **Ver envíos**: consultar el historial por rango de fechas y **exportar a Excel** listo para Paquetexpress.
+
+## Envíos Paquetexpress
+
+Flujo integrado con el OCR, sin sustituir el guardado de registros de destinatario.
+
+### Crear un envío
+
+1. Tras **Enviar a IA** (y con código postal en los campos OCR), pulsa **Consultar cobertura** en el panel derecho.
+2. La app consulta `COVERTURAS_ENDPOINT` con el CP extraído. Si no hay cobertura, muestra un aviso y no abre el formulario.
+3. Si hay cobertura, se abre la ventana **Crear envío Paquetexpress**:
+   - Datos de cobertura (colonia, ciudad, estado, tipo, etc.).
+   - Formulario de envío precargado desde OCR + cobertura (destinatario, domicilio, paquete, etc.).
+   - Campos OCR de solo lectura para comparar y elegir la colonia correcta.
+4. Completa o ajusta los datos y confirma; el alta se envía por `POST` a `ENVIOS_PX_ENDPOINT`.
+
+### Consultar y exportar envíos
+
+1. En la barra lateral, abre **Ver envíos** (ventana **Historial de Envíos**).
+2. Elige rango de **fecha/hora** y pulsa **Consultar**: los datos vienen de `GET` sobre `ENVIOS_PX_ENDPOINT`.
+3. Revisa la tabla (paginada); puedes **Editar** un envío seleccionado (vuelve a consultar cobertura si cambias datos sensibles como la colonia).
+4. **Exportar a Excel** genera un `.xlsx` con columnas y formato alineados al layout de importación de Paquetexpress (nombre sugerido `envios_DD-MM-YYYY.xlsx`).
 
 ## Controles del visor
 
@@ -143,6 +160,8 @@ El guardado de registro no tiene atajo asignado; se hace con el botón **Guardar
 6. **Enviar a IA** (requiere `OPENAI_API_KEY` válida).
 7. Revisar campos, editar si hace falta y **Guardar registro**.
 8. **Archivo → Exportar…** y comprobar el archivo generado.
+9. (Envíos) Con CP válido en OCR: **Consultar cobertura** → completar formulario → crear envío.
+10. (Envíos) **Ver envíos** → consultar por fechas → **Exportar a Excel** y abrir el archivo generado.
 
 ## Tests
 
@@ -158,10 +177,10 @@ Las pruebas de persistencia usan mocks de API para validar el contrato del clien
 ```
 app/
   main.py              # Entrada: logging, login, ventana principal
-  api/                 # Clientes HTTP de autenticación y registros
-  services/            # Casos de uso: OCR, auth, registros y exportación
+  api/                 # Clientes HTTP: auth, registros, coberturas y envíos PX
+  services/            # Casos de uso: OCR, auth, registros, Paquetexpress y exportación
   components/          # Widgets y paneles reutilizables de PySide6
-  views/               # Ventanas principales y diálogos
+  views/               # Ventanas principales, envíos, historial y diálogos
   states/              # Sesión, caché de imágenes y workers
   models/              # Modelos de dominio y esquemas compartidos
   utils/               # Imagen, recorte y mapeos reutilizables
