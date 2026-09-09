@@ -111,59 +111,58 @@ _LENGTH_MESSAGES = {
 }
 
 _FIELD_LABELS = {
-    "name_receiver": "name_receiver",
-    "rfc": "rfc",
-    "country": "country",
-    "state": "state",
-    "city": "city",
-    "colony": "colony",
-    "street": "street",
-    "num_street": "num_street",
-    "postal_code": "postal_code",
-    "email": "email",
-    "phone": "phone",
-    "address_reference": "address_reference",
-    "quantity": "quantity",
-    "package_code": "package_code",
-    "content": "content",
-    "weight": "weight",
-    "length": "length",
-    "width": "width",
-    "height": "height",
-    "coverage_type": "coverage_type",
-    "comments": "comments",
+    "name_receiver": "Destinatario",
+    "rfc": "RFC",
+    "country": "País",
+    "state": "Estado",
+    "city": "Ciudad",
+    "colony": "Colonia",
+    "street": "Calle",
+    "num_street": "Número exterior",
+    "postal_code": "Código Postal",
+    "email": "Email",
+    "phone": "Teléfono",
+    "address_reference": "Referencia de domicilio",
+    "quantity": "Cantidad",
+    "package_code": "Código de paquete",
+    "content": "Contenido",
+    "weight": "Peso (kg)",
+    "length": "Largo (cm)",
+    "width": "Ancho (cm)",
+    "height": "Alto (cm)",
+    "coverage_type": "Tipo de cobertura",
+    "comments": "Comentarios",
 }
 
 
 def _validation_message(field: str, error: dict[str, Any]) -> str:
     error_type = str(error.get("type", ""))
-    label = _FIELD_LABELS.get(field, field)
     if error_type in {"string_too_short", "string_too_long"}:
         return _LENGTH_MESSAGES.get(field, "Longitud inválida")
     if error_type == "string_pattern_mismatch":
-        return f"{label} debe contener únicamente números."
+        return "Debe contener únicamente números"
     if error_type == "missing":
         return "Campo obligatorio"
     if error_type == "value_error":
         return str(error.get("msg", "Valor inválido"))
     if error_type in {"greater_than_equal", "greater_than"}:
         if field == "quantity":
-            return "quantity debe ser mayor o igual a 1."
+            return "Debe ser mayor o igual a 1"
         if field in {"weight", "length", "width", "height"}:
-            return f"{label} debe ser mayor a 0."
+            return "Debe ser mayor a 0"
         return "Debe ser mayor o igual al valor mínimo permitido"
     if error_type == "less_than_equal":
         if field == "package_code":
-            return "package_code debe estar entre 1 y 63."
+            return "Debe estar entre 1 y 63"
         return "Debe ser menor o igual al valor máximo permitido"
     if error_type in {"int_parsing", "int_type"}:
-        return f"{label} debe ser un número entero."
+        return "Debe ser un número entero"
     if error_type in {"decimal_parsing", "float_parsing", "float_type"}:
-        return f"{label} debe ser un número decimal válido."
+        return "Debe ser un número decimal válido"
     if error_type == "decimal_max_digits":
-        return f"{label} excede el máximo de 8 dígitos."
+        return "Excede el máximo de 8 dígitos"
     if error_type == "decimal_max_places":
-        return f"{label} admite máximo 2 decimales."
+        return "Admite máximo 2 decimales"
     return str(error.get("msg", "Valor inválido"))
 
 
@@ -176,7 +175,7 @@ def validate_shipping(data: dict[str, Any]) -> tuple[ShippingRequest | None, lis
         for detail in exc.errors():
             field = ".".join(str(part) for part in detail.get("loc", ())) or "shipping"
             errors.append({
-                "campo": field,
+                "campo": _FIELD_LABELS.get(field, field),
                 "error": _validation_message(field, detail),
             })
         return None, errors

@@ -67,6 +67,11 @@ def _first_non_empty(*values: Any) -> str:
     return ""
 
 
+def _join_non_empty(*values: Any, sep: str = " ") -> str:
+    parts = [str(value or "").strip() for value in values]
+    return sep.join(part for part in parts if part)
+
+
 def _to_optional_string(value: Any) -> str | None:
     text = str(value or "").strip()
     return text or None
@@ -104,7 +109,7 @@ def build_shipment_draft(ocr_form_data: dict[str, Any], coverage: CoverageItem) 
     """Arma los valores iniciales del formulario de envío desde OCR + cobertura."""
     campos = ocr_form_data.get("campos") or {}
     return {
-        "name_receiver": _first_non_empty(
+        "name_receiver": _join_non_empty(
             campos.get("nombre_titulo"),
             campos.get("cargo_dependencia"),
         ),
@@ -239,74 +244,206 @@ replacements_vocales = {
     "Í": "I",
     "Ó": "O",
     "Ú": "U",
-    "/": "",
-    ",": "",
-    ".": ""
+    "?": "Ñ",
 }
 
-replacements_direcciones = {
-    "AVENIDA": "AV",
-    "BOULEVARD":"BLVD",
-    "CARRETERA": "CARR",
-    "CALLE": "C",
-    "EDIFICIO": "EDIF"
+replacements_especiales = {
+    "\\": "",
+    ":": "",
+    "[": "",
+    "]": "",
+    "#": "",
+    "°": "",
+    "-": " ",
+    '"': "",
+    ",": "",
+    "!": "",
+    "¿": "",
+    "¡": "",
+    "“": "",
+    "”": "",
+}
+
+
+replacements_frases_largas = {
+    "SECRETARIA DE ADMINISTRACION TRIBUTARIA": "S.A.T.",
+    "SECRETARIA DE CONTRALORIA GENERAL": "S.C.E.",
+    "ORGANO INTERNO DE CONTROL": "O.I.C.",
+    "ORGANO DE CONTROL INTERNO": "O.I.C.",
+    "CONTRALORIA GENERAL DEL ESTADO": "C.G.E.",
+    "BAJA CALIFORNIA SUR": "B.C.S.",
+    "SAN LUIS POTOSI": "S.L.P.",
 }
 
 replacements_cargos = {
-    "MAESTRO": "MTRO",
-    "MAESTRA": "MTRA",
-    "PROFESORA": "PROFA",
-    "PROFESOR": "PROF",
-    "DIPUTADO": "DIP",
-    "DIPUTADA": "DIP",
-    "SENADOR": "SEN",
-    "SENADORA": "SEN",
-    "DOCTOR": "DR",
-    "DOCTORA": "DRA",
-    "TITULAR": "TIT",
-    "SECRETARIO": "SEC",
-    "PRESIDENTE": "PDTE",
-    "PRESIDENTA": "PDTA",
-    "ADMINISTRADORA": "ADMIN",
-    "ADMINISTRADOR": "ADMIN",
-    "GENERAL": "GRAL",
-    "ORGANO INTERNO DE CONTROL": "OIC",
-    "ORGANO DE CONTROL INTERNO": "OIC",
-    "DIRECTOR": "DIR",
+    "ADMINISTRADORA": "ADMIN.",
+    "ADMINISTRADOR": "ADMIN.",
+    "ADMINISTRACION": "ADMON.",
+    "PRESIDENTA": "PDTA.",
+    "PRESIDENTE": "PDTE.",
+    "DIRECTORA": "DIR.A",
+    "DIRECTOR": "DIR.",
+    "SECRETARIA": "SECRET.A",
+    "SECRETARIO": "SEC.",
+    "GOBERNADOR": "GOB.",
     "UNIVERSIDAD": "UNI",
-    "AUTONOMA": "AUT",
-    "SECRETARIO": "SEC",
-    "GOBERNADOR": "GOB",
-    }
+    "AUTONOMA": "AUT.",
+    "MAESTRA": "MTRA.",
+    "MAESTRO": "MTRO.",
+    "PROFESORA": "PROFA.",
+    "PROFESOR": "PROF.",
+    "DIPUTADA": "DIP.",
+    "DIPUTADO": "DIP.",
+    "SENADORA": "SEN.",
+    "SENADOR": "SEN.",
+    "DOCTORA": "DRA.",
+    "DOCTOR": "DR.",
+    "TITULAR": "TIT.",
+    "GENERAL": "GRAL.",
+    "CONTADOR PUBLICO": "C.P.",
+    "CIUDADANO": "C.",
+    "CIUDAD": "C.D."
+}
+
+replacements_direcciones = {
+    "AVENIDA": "AV.",
+    "BOULEVARD": "BLVD.",
+    "CARRETERA": "CARR.",
+    "CALLE": "C.",
+    "EDIFICIO": "EDIF."
+}
 
 def _replace_whole_words(text: str, mapping: dict[str, str]) -> str:
+    """Reemplaza solo palabras completas usando un diccionario origen → destino.
+
+    Parameters
+    ----------
+    text:
+        Cadena ya en mayúsculas donde se buscan las claves.
+    mapping:
+        Diccionario ``{"PALABRA": "ABREV."}``. Las claves más largas
+        tienen prioridad para no recortar un término dentro de otro
+        (``ADMINISTRADORA`` antes que ``ADMINISTRADOR``).
+
+    Returns
+    -------
+    str
+        El mismo ``text`` si viene vacío o el ``mapping`` está vacío;
+        si no, el texto con cada coincidencia sustituida por su valor.
+    """
     if not text or not mapping:
         return text
+
+    # \b = límite de palabra (espacio, inicio/fin o puntuación).
+    # (?:A|B|C) = una de las claves, sin capturar grupo extra.
+    # re.escape evita que caracteres como "." se lean como regex.
+    # key=len, reverse=True pone primero las frases más largas.
     pattern = re.compile(
         r"\b(?:"
         + "|".join(re.escape(key) for key in sorted(mapping, key=len, reverse=True))
         + r")\b"
     )
+    # pattern.sub recorre cada match. El lambda recibe ese match y
+    # devuelve mapping[texto_encontrado], que es lo que se escribe.
     return pattern.sub(lambda match: mapping[match.group(0)], text)
 
-def normalize_shipment_fields(data: dict[str, Any]) -> dict[str, Any]:
-    """Normaliza una copia con campos limpios. No valida ni llama API"""
+def _clean_spaces(text: str) -> str:
+    text = re.sub(r"\.{2,}", ".", text)
+    return re.sub(r"\s+", " ", text).strip()
 
-    # primero los convertimos a mayúsculas
+
+def normalize_shipment_fields(data: dict[str, Any]) -> dict[str, Any]:
+    """Normaliza una copia con campos limpios. No valida ni llama API."""
     normalized = {
         "name_receiver": str(data.get("name_receiver") or "").strip().upper(),
         "street": str(data.get("street") or "").strip().upper(),
+        "num_street": str(data.get("num_street") or "").strip().upper(),
+        "phone": str(data.get("phone") or "").strip().upper(),
         "address_reference": str(data.get("address_reference") or "").strip().upper(),
     }
 
-    # luego realizamos los reemplazos de las vocales
     for key, value in replacements_vocales.items():
-        normalized["name_receiver"] = normalized["name_receiver"].replace(key, value)
-        normalized["street"] = normalized["street"].replace(key, value)
-        normalized["address_reference"] = normalized["address_reference"].replace(key, value)
-    
-    normalized["street"] = _replace_whole_words(normalized["street"], replacements_direcciones)
-    normalized["address_reference"] = _replace_whole_words(normalized["address_reference"], replacements_direcciones)
-    normalized["name_receiver"] = _replace_whole_words(normalized["name_receiver"], replacements_cargos)
+        for field in normalized:
+            normalized[field] = normalized[field].replace(key, value)
 
+    normalized["name_receiver"] = normalize_name_receiver(normalized["name_receiver"])
+    normalized["street"] = normalize_street(normalized["street"])
+    normalized["num_street"] = normalize_num_street(normalized["num_street"])
+    normalized["phone"] = normalize_phone(normalized["phone"])
+    normalized["address_reference"] = normalize_address_reference(
+        normalized["address_reference"]
+    )
     return normalized
+
+
+def quitar_puntos_entre_letras(text: str) -> str:
+    # Letra . Letra
+    text = re.sub(r"(?<=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])\.(?=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])", "", text)
+    # Letra . Espacio
+    text = re.sub(r"(?<=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])\.(?=\s)", "", text)
+    # Espacio . Letra
+    text = re.sub(r"(?<=\s)\.(?=[A-Za-zÁÉÍÓÚÜÑáéíóúüñ])", "", text)
+    return text
+
+
+def replace_special_characters(
+    text: str,
+    conservar_parentesis: bool = False,
+    conservar_diagonal: bool = False,
+) -> str:
+    if not text:
+        return text
+    if not conservar_parentesis:
+        text = text.replace("(", "").replace(")", "")
+    if not conservar_diagonal:
+        text = text.replace("/", "")
+
+    for key, value in replacements_especiales.items():
+        text = text.replace(key, value)
+    return _clean_spaces(text)
+
+
+def normalize_name_receiver(name: str) -> str:
+    name_normalized = _replace_whole_words(name, replacements_frases_largas)
+    name_normalized = _replace_whole_words(name_normalized, replacements_cargos)
+    return replace_special_characters(name_normalized, conservar_diagonal=True)
+
+
+def normalize_street(street: str) -> str:
+    street_normalized = _replace_whole_words(street, replacements_direcciones)
+    return replace_special_characters(street_normalized)
+
+
+def normalize_num_street(num_street: str) -> str:
+    if not num_street:
+        return ""
+    # Conserva únicamente puntos entre números.
+    num_street_normalized = quitar_puntos_entre_letras(num_street)
+    num_street_normalized = replace_special_characters(num_street_normalized)
+    num_street_normalized = _replace_whole_words(
+        num_street_normalized,
+        {word: "" for word in ("NUMERO", "NUM", "NOM", "NO", "TEL", "TELEFONO")},
+    )
+    return _clean_spaces(num_street_normalized)
+
+
+def normalize_phone(phone: str) -> str:
+    if not phone:
+        return ""
+    phone_normalized = phone.replace(".", "")
+    phone_normalized = replace_special_characters(phone_normalized)
+    phone_normalized = _replace_whole_words(
+        phone_normalized,
+        {word: "" for word in ("TELEFONO", "TEL")},
+    )
+    return _clean_spaces(phone_normalized)
+
+
+def normalize_address_reference(address_reference: str) -> str:
+    if not address_reference:
+        return ""
+    address_reference_normalized = _replace_whole_words(
+        address_reference, replacements_direcciones
+    )
+    return replace_special_characters(address_reference_normalized)
+

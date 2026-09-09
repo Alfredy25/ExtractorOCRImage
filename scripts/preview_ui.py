@@ -27,7 +27,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import numpy as np  # noqa: E402
 from PySide6.QtCore import QEvent, QPoint, QPointF, Qt  # noqa: E402
-from PySide6.QtGui import QMouseEvent  # noqa: E402
+from PySide6.QtGui import QMouseEvent, QWheelEvent  # noqa: E402
 from PySide6.QtWidgets import QApplication, QScrollArea, QWidget  # noqa: E402
 
 from app.components.theme import apply_theme  # noqa: E402
@@ -279,9 +279,30 @@ check("envios: 9 campos OCR", len(shipment._ocr_reference_fields) == 9)
 check("envios: 2 colonias en combo", shipment._colony_combo.count() == 2)
 check(
     "envios: borrador inicial desde OCR",
-    shipment._shipment_fields["name_receiver"].text() == "LIC. MARIA FERNANDA GARCIA LOPEZ",
+    shipment._shipment_fields["name_receiver"].text()
+    == "LIC. MARIA FERNANDA GARCIA LOPEZ DIRECTORA DE ADMINISTRACION",
     shipment._shipment_fields["name_receiver"].text(),
 )
+counted_keys = ("name_receiver", "street", "num_street", "address_reference")
+for key in counted_keys:
+    field = shipment._shipment_fields[key]
+    label = shipment._length_labels.get(key)
+    check(
+        f"envios: contador {key}",
+        label is not None and label.text() == str(len(field.text())),
+        f"texto={len(field.text())} label={None if label is None else label.text()}",
+    )
+street = shipment._shipment_fields["street"]
+street_before = street.text()
+street.setText("ABC DE")
+app.processEvents()
+check(
+    "envios: contador se actualiza al editar",
+    shipment._length_labels["street"].text() == "6",
+    shipment._length_labels["street"].text(),
+)
+street.setText(street_before)
+app.processEvents()
 check("envios: pais fijo MEXICO", shipment._shipment_fields["country"].text() == "MEXICO")
 check("envios: pais no editable", shipment._shipment_fields["country"].isReadOnly())
 check("envios: CP de cobertura", shipment._coverage_fields["postal_code"].text() == "01030")
@@ -303,6 +324,50 @@ check(
     repr(payload.get("comments")),
 )
 shot(shipment, "07_envios_colonia", 1500, 940)
+
+# La rueda del ratón no debe alterar cantidad, código ni medidas al hacer
+# scroll sobre el formulario (aunque el puntero esté encima del spinbox).
+numeric_keys = ("package_code", "quantity", "weight", "length", "width", "height")
+numeric_before = {key: shipment._shipment_fields[key].value() for key in numeric_keys}
+for key in numeric_keys:
+    widget = shipment._shipment_fields[key]
+    wheel = QWheelEvent(
+        QPointF(widget.rect().center()),
+        QPointF(widget.mapToGlobal(widget.rect().center())),
+        QPoint(0, 0),
+        QPoint(0, 120),
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+        Qt.ScrollPhase.NoScrollPhase,
+        False,
+    )
+    QApplication.sendEvent(widget, wheel)
+app.processEvents()
+numeric_after = {key: shipment._shipment_fields[key].value() for key in numeric_keys}
+check(
+    "envios: scroll no cambia campos numericos",
+    numeric_before == numeric_after,
+    f"antes={numeric_before} despues={numeric_after}",
+)
+colony_before = shipment._colony_combo.currentIndex()
+colony_widget = shipment._colony_combo
+colony_wheel = QWheelEvent(
+    QPointF(colony_widget.rect().center()),
+    QPointF(colony_widget.mapToGlobal(colony_widget.rect().center())),
+    QPoint(0, 0),
+    QPoint(0, 120),
+    Qt.MouseButton.NoButton,
+    Qt.KeyboardModifier.NoModifier,
+    Qt.ScrollPhase.NoScrollPhase,
+    False,
+)
+QApplication.sendEvent(colony_widget, colony_wheel)
+app.processEvents()
+check(
+    "envios: scroll no cambia colonia",
+    shipment._colony_combo.currentIndex() == colony_before,
+    f"antes={colony_before} despues={shipment._colony_combo.currentIndex()}",
+)
 
 # El formulario de envío es largo: se baja el scroll para revisar los campos de
 # paquete (cantidad, peso y medidas), que usan controles numéricos.

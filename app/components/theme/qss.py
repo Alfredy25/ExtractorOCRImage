@@ -271,7 +271,7 @@ QLabel[role="subtitle"] {{
 }}
 /* Las etiquetas monoespaciadas fijan su fuente por código (QSS no soporta
    letter-spacing), así que aquí solo se define el color. */
-QLabel[role="sectionLabel"], QLabel[role="fieldLabel"] {{
+QLabel[role="sectionLabel"], QLabel[role="fieldLabel"], QLabel[role="fieldLength"] {{
     color: {c["on_surface_variant"]};
 }}
 QLabel[role="cardIcon"] {{

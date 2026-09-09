@@ -5,12 +5,13 @@ from __future__ import annotations
 from typing import Any
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QWheelEvent
 from PySide6.QtWidgets import (
     QComboBox, QDialog, QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,QLabel,
     QLineEdit, QMessageBox, QScrollArea, QSizePolicy, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
-from app.components.theme import SPACE
+from app.components.theme import FONT_SIZE, SPACE, mono_font
 from app.components.widgets import (
     Banner, Card, divider, icon_label,
     labeled_field, section_label, subtitle, text_button,
@@ -27,6 +28,26 @@ from app.views.session_relogin import prompt_relogin_after_session_expired
 # Campos con datos técnicos: se muestran en monoespaciada para facilitar el
 # cotejo carácter a carácter contra la etiqueta del sobre.
 _MONO_KEYS = {"rfc", "phone", "num_street", "package_code", "quantity", "weight", "length", "width", "height",}
+_COUNTED_KEYS = {"name_receiver", "street", "num_street", "address_reference"}
+
+
+class _IgnoreWheelMixin:
+    """Deja pasar la rueda al scroll del formulario en lugar de cambiar el valor."""
+
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        event.ignore()
+
+
+class _NoWheelSpinBox(_IgnoreWheelMixin, QSpinBox):
+    pass
+
+
+class _NoWheelDoubleSpinBox(_IgnoreWheelMixin, QDoubleSpinBox):
+    pass
+
+
+class _NoWheelComboBox(_IgnoreWheelMixin, QComboBox):
+    pass
 
 
 def _coverage_from_shipment(shipment: ShippingDto) -> CoverageItem:
@@ -60,6 +81,7 @@ class ShipmentWindow(QDialog):
         self._coverages = coverages
         self._ocr_form_data = ocr_form_data
         self._shipment_fields: dict[str, QWidget] = {}
+        self._length_labels: dict[str, QLabel] = {}
         self._coverage_fields: dict[str, QLineEdit] = {}
         self._ocr_reference_fields: dict[str, QLineEdit] = {}
         self._draft_initialized = existing is not None
@@ -202,7 +224,7 @@ class ShipmentWindow(QDialog):
         """Combo de colonia + campos de solo lectura (+ botón consultar en edición)."""
         card = Card("Cobertura Paquetexpress", "map")
 
-        self._colony_combo = QComboBox()
+        self._colony_combo = _NoWheelComboBox()
         self._colony_combo.currentIndexChanged.connect(self._on_colony_changed)
         card.body.addWidget(labeled_field("Colonia", self._colony_combo))
 
@@ -352,13 +374,13 @@ class ShipmentWindow(QDialog):
 
     def _field(self, label: str, key: str, editable: bool, widget_type: str) -> QWidget:
         if widget_type == "int":
-            field_widget: QWidget = QSpinBox()
+            field_widget: QWidget = _NoWheelSpinBox()
             field_widget.setRange(1, 999999)
             field_widget.setSingleStep(1)
             field_widget.setEnabled(editable)
             field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         elif widget_type == "double":
-            field_widget = QDoubleSpinBox()
+            field_widget = _NoWheelDoubleSpinBox()
             field_widget.setRange(0.00, 999999.99)
             field_widget.setDecimals(2)
             field_widget.setSingleStep(0.01)
@@ -382,7 +404,35 @@ class ShipmentWindow(QDialog):
             field_widget.setReadOnly(not editable)
             field_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self._shipment_fields[key] = field_widget
-        return labeled_field(label, field_widget, mono=key in _MONO_KEYS)
+        display = field_widget
+        if key in _COUNTED_KEYS and isinstance(field_widget, QLineEdit):
+            display = self._with_char_count(key, field_widget)
+        return labeled_field(label, display, mono=key in _MONO_KEYS)
+
+    def _with_char_count(self, key: str, field: QLineEdit) -> QWidget:
+        """Número pequeño a la derecha del recuadro: largo del texto, espacios incluidos."""
+        row = QWidget()
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SPACE["xs"])
+
+        count = QLabel("0")
+        count.setObjectName(f"shipmentFieldLength_{key}")
+        count.setProperty("role", "fieldLength")
+        count.setFont(mono_font(FONT_SIZE["label_sm"]))
+        count.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        count.setFixedWidth(count.fontMetrics().horizontalAdvance("888"))
+        count.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+        def _refresh(_text: str = "") -> None:
+            count.setText(str(len(field.text())))
+
+        field.textChanged.connect(_refresh)
+        _refresh()
+        self._length_labels[key] = count
+        layout.addWidget(field, 1)
+        layout.addWidget(count, 0, Qt.AlignmentFlag.AlignVCenter)
+        return row
 
     # --- Valores de los campos -----------------------------------------
 
@@ -565,7 +615,7 @@ class ShipmentWindow(QDialog):
                 create_shipment(payload)
         except PaquetexpressValidationError as exc:
             details = "\n\n".join(
-                f"• {error['campo']} {error['error']}." for error in exc.errors
+                f"• {error['campo']}: {error['error']}." for error in exc.errors
             )
             QMessageBox.critical(
                 self,
