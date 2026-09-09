@@ -104,16 +104,23 @@ def _http_error_detail(response: httpx.Response) -> str:
     return text[:500] if text else "(sin detalle)"
 
 
-def list_by_date_range(desde: datetime, hasta: datetime, token: str) -> list[ShippingDto]:
-    """Lista los envios de fechas entre desde y hasta."""
+def list_by_date_range(
+    desde: datetime,
+    hasta: datetime,
+    token: str,
+    my_shipments: bool = False,
+) -> list[ShippingDto]:
+    """Lista los envíos entre ``desde`` y ``hasta``.
+
+    ``my_shipments=True`` pide solo los creados por el usuario autenticado.
+    """
     url = api_abs_url(ENVIOS_PX_ENDPOINT)
     headers = {"Authorization": f"Bearer {token}"}
     params: dict[str, Any] = {
-        "fecha_inicio": desde, # isoformat()
-        "fecha_fin": hasta,  # .isoformat()
+        "fecha_inicio": desde,
+        "fecha_fin": hasta,
+        "my_shipments": my_shipments,
     }
-    print("fecha_inicio: ", params["fecha_inicio"])
-    print("fecha_fin: ", params["fecha_fin"])
     try:
         with httpx.Client(timeout=API_TIMEOUT_SECONDS) as client:
             response = client.get(url, headers=headers, params=params)

@@ -376,3 +376,46 @@ def test_update_shipment_maps_api_error(monkeypatch):
 
     with pytest.raises(px.PaquetexpressServiceError, match="falló el backend"):
         px.update_shipment(10, _valid_update_form())
+
+
+def test_list_shipments_by_date_range_forwards_my_shipments_false(monkeypatch):
+    captured: dict = {}
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+
+    def _fake_list(desde, hasta, token, my_shipments=False):
+        captured["desde"] = desde
+        captured["hasta"] = hasta
+        captured["token"] = token
+        captured["my_shipments"] = my_shipments
+        return []
+
+    monkeypatch.setattr(px, "list_by_date_range", _fake_list)
+
+    start = datetime(2026, 9, 1, 8, 0)
+    end = datetime(2026, 9, 9, 18, 0)
+    rows = px.list_shipments_by_date_range(start, end)
+
+    assert rows == []
+    assert captured["token"] == "token-ok"
+    assert captured["desde"] == start
+    assert captured["hasta"] == end
+    assert captured["my_shipments"] is False
+
+
+def test_list_shipments_by_date_range_forwards_my_shipments_true(monkeypatch):
+    captured: dict = {}
+    monkeypatch.setattr(px, "get_access_token", lambda: "token-ok")
+
+    def _fake_list(_desde, _hasta, _token, my_shipments=False):
+        captured["my_shipments"] = my_shipments
+        return [_shipping_dto()]
+
+    monkeypatch.setattr(px, "list_by_date_range", _fake_list)
+
+    rows = px.list_shipments_by_date_range(
+        datetime(2026, 9, 1), datetime(2026, 9, 9), my_shipments=True
+    )
+
+    assert captured["my_shipments"] is True
+    assert len(rows) == 1
+    assert rows[0].id_shipping == 10

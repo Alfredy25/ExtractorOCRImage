@@ -802,19 +802,41 @@ QDialog#ShipmentsHistoryWindow QLabel[role="headline"] {{
     color: {c["on_surface"]};
 }}
 QDialog#ShipmentsHistoryWindow QDateEdit,
-QDialog#ShipmentsHistoryWindow QTimeEdit {{
+QDialog#ShipmentsHistoryWindow QTimeEdit,
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo {{
     background-color: {c["surface_container_high"]};
     color: {c["on_surface"]};
     border: 1px solid {c["outline_variant"]};
     border-radius: {r["control"]}px;
     padding: 6px 10px;
     min-height: 22px;
-    font-family: "{mono}";
     font-size: {FONT_SIZE["body_sm"]}px;
 }}
+QDialog#ShipmentsHistoryWindow QDateEdit,
+QDialog#ShipmentsHistoryWindow QTimeEdit {{
+    font-family: "{mono}";
+}}
 QDialog#ShipmentsHistoryWindow QDateEdit:focus,
-QDialog#ShipmentsHistoryWindow QTimeEdit:focus {{
+QDialog#ShipmentsHistoryWindow QTimeEdit:focus,
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo:focus {{
     border: 1px solid {c["primary_container"]};
+}}
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo {{
+    padding-right: 28px;
+    min-width: 176px;
+}}
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo QAbstractItemView {{
+    background-color: {c["surface_container_high"]};
+    color: {c["on_surface"]};
+    border: 1px solid {c["outline_variant"]};
+    padding: 4px;
+    outline: none;
+    selection-background-color: {c["primary_container"]};
+    selection-color: {c["on_primary_container"]};
+}}
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo QAbstractItemView::item {{
+    min-height: 28px;
+    padding: 6px 10px;
 }}
 QFrame#ShipmentsTableCard {{
     background-color: {c["surface_container_lowest"]};

@@ -1,5 +1,7 @@
 """Tests del contrato HTTP para creación de envíos Paquetexpress."""
 
+from datetime import datetime
+
 import pytest
 
 from app.api import shipments_api
@@ -199,3 +201,75 @@ def test_update_shipment_raises_session_expired(monkeypatch):
 
     with pytest.raises(shipments_api.ShipmentsSessionExpiredError):
         shipments_api.update_shipment(10, _valid_payload(), "token-ok")
+
+
+def _list_range_client(captured: dict, body, status: int = 200):
+    class FakeClient:
+        def __init__(self, timeout):
+            captured["timeout"] = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def get(self, url, headers, params):
+            captured["url"] = url
+            captured["headers"] = headers
+            captured["params"] = params
+            return shipments_api.httpx.Response(status, json=body)
+
+    return FakeClient
+
+
+def test_list_by_date_range_sends_my_shipments_false(monkeypatch):
+    captured: dict = {}
+    monkeypatch.setattr(
+        shipments_api.httpx, "Client", _list_range_client(captured, [])
+    )
+    start = datetime(2026, 9, 1, 8, 0)
+    end = datetime(2026, 9, 9, 18, 0)
+
+    rows = shipments_api.list_by_date_range(start, end, "token-ok")
+
+    assert rows == []
+    assert captured["url"].endswith("/shipments-px/")
+    assert captured["headers"]["Authorization"] == "Bearer token-ok"
+    assert captured["params"]["fecha_inicio"] == start
+    assert captured["params"]["fecha_fin"] == end
+    assert captured["params"]["my_shipments"] is False
+
+
+def test_list_by_date_range_sends_my_shipments_true(monkeypatch):
+    captured: dict = {}
+    monkeypatch.setattr(
+        shipments_api.httpx, "Client", _list_range_client(captured, [])
+    )
+
+    shipments_api.list_by_date_range(
+        datetime(2026, 9, 1, 8, 0),
+        datetime(2026, 9, 9, 18, 0),
+        "token-ok",
+        my_shipments=True,
+    )
+
+    assert captured["params"]["my_shipments"] is True
+
+
+def test_list_by_date_range_parses_dto_list(monkeypatch):
+    captured: dict = {}
+    monkeypatch.setattr(
+        shipments_api.httpx,
+        "Client",
+        _list_range_client(captured, [_updated_dto_json()]),
+    )
+
+    rows = shipments_api.list_by_date_range(
+        datetime(2026, 8, 1), datetime(2026, 8, 31), "token-ok", my_shipments=False
+    )
+
+    assert len(rows) == 1
+    assert rows[0].id_shipping == 10
+    assert rows[0].colony == "FLORIDA"
+    assert captured["params"]["my_shipments"] is False

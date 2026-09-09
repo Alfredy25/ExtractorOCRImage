@@ -5,9 +5,10 @@ from __future__ import annotations
 from datetime import datetime, time
 from pathlib import Path
 
-from PySide6.QtCore import QDate, Qt, QStandardPaths, QTime
+from PySide6.QtCore import QDate, QSize, Qt, QStandardPaths, QTime
 from PySide6.QtWidgets import (
     QAbstractItemView,
+    QComboBox,
     QDateEdit,
     QDialog,
     QFileDialog,
@@ -24,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.components.theme import SPACE
+from app.components.theme import COLOR, SPACE, qicon
 from app.components.widgets import (
     divider,
     field_label,
@@ -119,7 +120,7 @@ class ExportShipments(QDialog):
         title.setProperty("role", "headline")
         layout.addWidget(title)
         layout.addWidget(
-            subtitle("Gestión y registro de envíos procesados.")
+            subtitle("Consulta por rango de fechas y por quién creó el envío.")
         )
         return header
 
@@ -150,6 +151,7 @@ class ExportShipments(QDialog):
 
         layout.addWidget(self._datetime_group("Fecha inicio", self._date_from, self._time_from))
         layout.addWidget(self._datetime_group("Fecha fin", self._date_to, self._time_to))
+        layout.addWidget(self._scope_group())
         layout.addStretch(1)
 
         btn_consult = text_button("Consultar", variant="ghost", icon="search")
@@ -181,6 +183,35 @@ class ExportShipments(QDialog):
         row.addWidget(time_edit)
         column.addLayout(row)
         return group
+
+    def _scope_group(self) -> QWidget:
+        """Filtro de alcance: todos los envíos del rango o solo los del usuario."""
+        group = QWidget()
+        column = QVBoxLayout(group)
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(SPACE["xs"])
+        column.addWidget(field_label("Alcance"))
+
+        icon_color = COLOR["on_surface_variant"]
+        self._scope_combo = QComboBox()
+        self._scope_combo.setObjectName("shipmentsScopeCombo")
+        self._scope_combo.setIconSize(QSize(18, 18))
+        self._scope_combo.setMinimumWidth(176)
+        self._scope_combo.setMinimumHeight(max(34, self._date_from.sizeHint().height()))
+        self._scope_combo.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed
+        )
+        self._scope_combo.setToolTip(
+            "Todos: envíos del rango de fechas.\n"
+            "Solo míos: únicamente los que creaste con tu usuario."
+        )
+        self._scope_combo.addItem(qicon("public", 18, icon_color), "Todos", False)
+        self._scope_combo.addItem(qicon("person", 18, icon_color), "Solo míos", True)
+        column.addWidget(self._scope_combo)
+        return group
+
+    def _my_shipments_filter(self) -> bool:
+        return bool(self._scope_combo.currentData())
 
     def _build_table_card(self) -> QFrame:
         card = QFrame()
@@ -434,6 +465,7 @@ class ExportShipments(QDialog):
 
         dt_desde = datetime.combine(d0, t0)
         dt_hasta = datetime.combine(d1, t1)
+        my_shipments = self._my_shipments_filter()
         if dt_desde > dt_hasta:
             QMessageBox.warning(
                 self,
@@ -442,7 +474,9 @@ class ExportShipments(QDialog):
             )
             return
         try:
-            shipments = list_shipments_by_date_range(dt_desde, dt_hasta)
+            shipments = list_shipments_by_date_range(
+                dt_desde, dt_hasta, my_shipments=my_shipments
+            )
         except PaquetexpressSessionExpiredError as exc:
             prompt_relogin_after_session_expired(
                 self, f"No se pudieron obtener envíos: {exc}"
@@ -458,9 +492,12 @@ class ExportShipments(QDialog):
             return
         if not shipments:
             self.fill_table([])
-            QMessageBox.information(
-                self, "Sin datos", "No hay envíos en el rango seleccionado."
+            empty_msg = (
+                "No hay envíos tuyos en el rango seleccionado."
+                if my_shipments
+                else "No hay envíos en el rango seleccionado."
             )
+            QMessageBox.information(self, "Sin datos", empty_msg)
             return
         self.fill_table(shipments)
 

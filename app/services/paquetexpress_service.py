@@ -228,11 +228,18 @@ def update_shipment(id_shipping: int, data: dict[str, Any]) -> ShippingDto:
     except ShipmentsApiError as exc:
         raise PaquetexpressServiceError(str(exc)) from exc
 
-def list_shipments_by_date_range(desde: datetime, hasta: datetime) -> list[ShippingDto]:
-    """Lista los envíos de fechas entre desde y hasta."""
+def list_shipments_by_date_range(
+    desde: datetime,
+    hasta: datetime,
+    my_shipments: bool = False,
+) -> list[ShippingDto]:
+    """Lista los envíos de fechas entre desde y hasta.
+
+    ``my_shipments=True`` limita el resultado a los del usuario en sesión.
+    """
     token = _required_token()
     try:
-        return list_by_date_range(desde, hasta, token)
+        return list_by_date_range(desde, hasta, token, my_shipments=my_shipments)
     except ShipmentsSessionExpiredError as exc:
         raise PaquetexpressSessionExpiredError(str(exc)) from exc
     except ShipmentsApiError as exc:

@@ -388,6 +388,57 @@ shot(export, "09_exportar", 620, 640)
 check("exportar: combo de sedes con 3 opciones", export._sede.count() == 3)
 check("exportar: 2 formatos", export._format.count() == 2)
 export.close()
+
+# --- 5. Historial de envios --------------------------------------------
+from datetime import datetime as _dt  # noqa: E402
+
+from app.models.shipping import ShippingDto  # noqa: E402
+from app.views.export_shipments import ExportShipments  # noqa: E402
+
+history = ExportShipments()
+history.setWindowState(Qt.WindowState.WindowNoState)
+check("historial: combo alcance con 2 opciones", history._scope_combo.count() == 2)
+check(
+    "historial: alcance por defecto es todos",
+    history._my_shipments_filter() is False,
+)
+history._scope_combo.setCurrentIndex(1)
+check(
+    "historial: solo mios activa my_shipments",
+    history._my_shipments_filter() is True,
+)
+history._scope_combo.setCurrentIndex(0)
+sample = ShippingDto.model_validate(
+    {
+        "id_shipping": 12,
+        "id_folio": 19,
+        "name_receiver": "DR. PEPE PINEDO PINEDO",
+        "rfc": "XAXX010101000",
+        "country": "MEXICO",
+        "state": "CIUDAD DE MEXICO",
+        "city": "CIUDAD DE MEXICO",
+        "colony": "FLORIDA",
+        "street": "CTO. CERRO DEL GATO",
+        "num_street": "123",
+        "postal_code": "01030",
+        "email": "destinatario@example.com",
+        "phone": "5512345678",
+        "address_reference": "Puerta gris",
+        "quantity": 1,
+        "package_code": 1,
+        "content": "DOCUMENTOS LEGALES",
+        "weight": "1.00",
+        "length": "30.00",
+        "width": "20.00",
+        "height": "1.00",
+        "coverage_type": "PAQUETEXPRESS",
+        "comments": "ENTREGAR EN OFICIALIA",
+        "created_at": _dt(2026, 8, 11, 18, 1, 12),
+    }
+)
+history.fill_table([sample, sample])
+shot(history, "10_historial_envios", 1360, 860)
+history.close()
 window.close()
 
 print()
