@@ -281,7 +281,37 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 - Capa de datos del cliente API-only: `skills/data_access_layer.md`.
 
 
-# Quitarlas de esta sesión
+## Una vez hecho lo anterior instalar la aplicación actual siguiendo estos pasos
+- Desinstalar la aplicación anterior
+- Quitar las variables de entorno con el siguiente código abriendo la terminal de powershell como administrador
+
+  ```powershell
+  $names = @(
+    'API_BASE_URL','LOGIN_ENDPOINT','REGISTROS_ENDPOINT','COVERTURAS_ENDPOINT',
+    'ENVIOS_PX_ENDPOINT','API_TIMEOUT_SECONDS','OPENAI_MODEL','TIMEOUT_SECONDS','EXPORT_DIR'
+  )
+
+  "=== Usuario ==="
+  $names | ForEach-Object { "{0}={1}" -f $_, [Environment]::GetEnvironmentVariable($_, 'User') }
+
+  "=== Máquina ==="
+  $names | ForEach-Object { "{0}={1}" -f $_, [Environment]::GetEnvironmentVariable($_, 'Machine') }
+
+
+  $names = @(
+    'API_BASE_URL','LOGIN_ENDPOINT','REGISTROS_ENDPOINT','COVERTURAS_ENDPOINT',
+    'ENVIOS_PX_ENDPOINT','API_TIMEOUT_SECONDS','OPENAI_MODEL','TIMEOUT_SECONDS','EXPORT_DIR'
+  )
+
+  foreach ($n in $names) {
+    [Environment]::SetEnvironmentVariable($n, $null, 'User')
+    [Environment]::SetEnvironmentVariable($n, $null, 'Machine')
+  }
+  ```
+- Ejecutar el nuevo instalador creado con Inno Setup
+- Iniciar Session
+
+## Al programar quitarlas de esta sesión las variables de entorno 
 Remove-Item Env:API_BASE_URL -ErrorAction SilentlyContinue
 Remove-Item Env:LOGIN_ENDPOINT -ErrorAction SilentlyContinue
 Remove-Item Env:COVERTURAS_ENDPOINT -ErrorAction SilentlyContinue

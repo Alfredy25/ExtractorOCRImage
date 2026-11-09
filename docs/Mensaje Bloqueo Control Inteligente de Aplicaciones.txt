@@ -1,0 +1,14 @@
+El Control Inteligente de Aplicaciones bloqueó una aplicación que podría no ser segura
+
+Bloqueamos C:\dev\Dist_extractor_OCR\V1.0.2\dist\ExtractorOCR.exe porque no pudimos comprobar su publicador para confirmar que era seguro ejecutarlo
+
+Esta aplicación se bloqueó para ayudar a proteger el dispositivo y los datos.
+Microsoft revisará la aplicación para confirmar si es segura.
+
+¿Tienes comentarios generales? Compártelos en el centro de opiniones.
+
+Botón_1 -> De acuerdo 
+Botón_2 -> Obtener aplicaciones en Store
+
+
+

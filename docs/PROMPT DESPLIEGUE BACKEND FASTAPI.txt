@@ -1,0 +1,65 @@
+🧠 DESPLIEGUE BACKEND FASTAPI A PRODUCCIÓN (VPS HOSTINGER)
+=========================================================
+
+Contexto:
+Tengo un backend FastAPI YA FUNCIONAL en desarrollo local (auth JWT, Alembic, MySQL, CRUD).
+Quiero desplegarlo a un VPS de Hostinger con Ubuntu para PRODUCCIÓN REAL.
+
+Condiciones IMPORTANTES:
+- NO asumas nada.
+- Quiero hacerlo PASO A PASO, por FASES.
+- Muestra EXACTAMENTE una sola fase por respuesta.
+- NO anticipes fases futuras.
+- NO mezcles pasos.
+- Detente al final de cada fase y espera confirmación.
+
+Estado actual real:
+- El VPS ya existe y es accesible por SSH.
+- En el VPS YA existe una base de datos MySQL VACÍA (sin tablas).
+- Esa base de datos se llenará usando Alembic (alembic upgrade head).
+- NO quiero perder control ni datos.
+- El backend usa variables de entorno (.env).
+- El backend usa Alembic y SQLAlchemy.
+- El backend ya fue probado con Postman y funciona.
+
+Objetivo FINAL:
+- API corriendo en PRODUCCIÓN REAL
+- Uvicorn + systemd
+- Nginx como reverse proxy
+- HTTPS (Let's Encrypt)
+- Puerto 8000 NO expuesto públicamente
+- Swagger NO expuesto en producción
+- Migraciones Alembic aplicadas correctamente
+
+Reglas estrictas:
+1) Una fase por mensaje
+2) Cada fase debe incluir:
+   - Por qué se hace
+   - Comandos exactos
+   - Archivos exactos (si aplica)
+   - Validación de que salió bien
+3) NO seguir sin que yo escriba: "listo para la siguiente fase"
+4) No usar atajos ni frases tipo “esto se hace normalmente”
+5) Pensar siempre en PRODUCCIÓN, no en desarrollo
+
+Fases esperadas (NO las ejecutes todas de una vez):
+- Preparación del VPS
+- Usuario del sistema
+- Python + venv
+- Dependencias del sistema
+- Subida del proyecto
+- Variables de entorno
+- Configuración Alembic para producción
+- Ejecución de migraciones
+- Prueba directa con Uvicorn
+- systemd (servicio)
+- Nginx
+- HTTPS
+- Hardening final (docs, puertos)
+- Checklist final de producción
+
+Comienza con:
+FASE 1: Preparación inicial del VPS
+
+Y detente al final preguntando:
+👉 ¿Continuamos? Responde: listo para la siguiente fase

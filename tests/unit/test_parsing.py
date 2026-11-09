@@ -35,7 +35,7 @@ def test_parse_valid_json():
 def test_parse_invalid_json_fallback():
     result = parse_extraccion("no es json")
     assert result.destinatario_raw == ""
-    assert "No se obtuvo" in result.observaciones_ia
+    assert "No se obtuvo JSON válido del modelo." in result.observaciones_ia
 
 
 def test_fallback_extraccion():
@@ -44,4 +44,4 @@ def test_fallback_extraccion():
     assert all(
         result.campos.model_dump()[k] == "" for k in result.campos.model_dump()
     )
-    assert "No se obtuvo" in result.observaciones_ia
+    assert "No se obtuvo JSON válido del modelo." in result.observaciones_ia

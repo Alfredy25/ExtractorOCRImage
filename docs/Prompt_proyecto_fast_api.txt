@@ -1,0 +1,224 @@
+Ejecuta el siguiente prompt sin saltarte ninguna instrucción:
+
+🧠 PROYECTO APP DE ESCRITORIO – LOGIN Y AUTENTICACIÓN CON FASTAPI (JWT)
+=====================================================================
+
+👋 BIENVENIDA
+--------------
+Vamos a implementar un **sistema de login en una app de escritorio Python (PySide6)**,
+que se autentica contra un **backend FastAPI con JWT**, para que:
+
+- Cada usuario se identifique con usuario/contraseña
+- Se obtenga un JWT
+- El JWT se use en TODAS las peticiones posteriores
+- El backend pueda saber exactamente quién hizo cada acción
+- La app funcione igual en cualquier computadora con el mismo ejecutable
+
+🎯 OBJETIVO FINAL:
+- App con pantalla de login
+- Autenticación contra API FastAPI
+- Almacenar JWT de forma segura
+- Todas las operaciones se hacen “a nombre” del usuario autenticado
+
+---
+
+📣 INSTRUCCIONES GENERALES
+--------------------------
+⚠️ MODO INTERACTIVO ESTRICTO (POR FASES)
+
+REGLAS:
+1) Muestra EXACTAMENTE una sola fase por respuesta.
+2) NO anticipes fases futuras.
+3) Termina SIEMPRE con:
+   👉 ¿Continuamos? Responde: **listo** para la Fase X
+4) Solo avanza cuando el usuario escriba **listo**.
+5) Cada archivo debe:
+   - Ser COMPLETO
+   - Listo para copiar y pegar
+   - Indicar ruta + nombre + (NUEVO) o (MODIFICADO)
+6) Usa `# [NUEVO]` y `# [MODIFICADO]` solo si el archivo ya existía.
+7) Usa comentarios claros explicando QUÉ hace el código y POR QUÉ.
+8) No reescribas toda la app, solo lo necesario para el login.
+9) No hardcodear usuarios ni tokens en la app.
+10) El backend es la única autoridad sobre identidad.
+
+---
+
+🎯 CONTEXTO TÉCNICO
+-------------------
+- App: Python + PySide6
+- Backend: FastAPI con JWT (access + refresh)
+- Login vía endpoint `/auth/login`
+- Tokens enviados en header Authorization
+- App compilada y distribuida como ejecutable (.exe)
+
+---
+
+📦 ESTRUCTURA ACTUAL RELEVANTE
+------------------------------
+app/
+├── main.py
+├── ui/
+│   └── main_window.py
+├── core/
+│   ├── repository.py
+│   └── export.py
+├── config.py
+
+---
+
+📦 ESTRUCTURA OBJETIVO
+----------------------
+app/
+├── main.py                       (MODIFICADO)
+├── ui/
+│   ├── login_window.py           (NUEVO)
+│   └── main_window.py
+├── core/
+│   ├── auth_client.py            (NUEVO)
+│   ├── api_client.py
+│   └── repository.py
+├── config.py                     (MODIFICADO)
+
+---
+
+==================================================
+🚀 FASES DE IMPLEMENTACIÓN DEL LOGIN
+==================================================
+
+### FASE 1: DISEÑO DEL FLUJO DE LOGIN
+**Por qué:** Entender cómo se autenticará el usuario en la app.
+
+**Qué hacer:**
+- Explicar el flujo completo:
+  - App inicia
+  - Muestra ventana de login
+  - Usuario ingresa credenciales
+  - Se llama a la API
+  - Se guarda el JWT
+  - Se abre la ventana principal
+- NO generar código todavía.
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 2.
+
+---
+
+### FASE 2: CONFIGURACIÓN DE LA API
+**Por qué:** Centralizar URL del backend y parámetros.
+
+**Qué hacer:**
+- **Archivo (MODIFICADO): `app/config.py`**
+- Agregar:
+  - API_BASE_URL
+  - AUTH_ENDPOINT
+  - TIMEOUT
+- Explicar por qué se hace así.
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 3.
+
+---
+
+### FASE 3: CLIENTE DE AUTENTICACIÓN
+**Por qué:** Separar lógica de login de la UI.
+
+**Qué hacer:**
+- **Archivo (NUEVO): `app/core/auth_client.py`**
+- Implementar:
+  - `login(username, password)`
+  - Guardado de access_token
+  - Guardado de refresh_token
+  - Manejo de errores HTTP
+- Explicar cómo se usan los tokens.
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 4.
+
+---
+
+### FASE 4: VENTANA DE LOGIN (PySide6)
+**Por qué:** Permitir que cada usuario se identifique.
+
+**Qué hacer:**
+- **Archivo (NUEVO): `app/ui/login_window.py`**
+- Crear UI con:
+  - Input usuario
+  - Input contraseña
+  - Botón “Iniciar sesión”
+- Validaciones básicas
+- Mostrar errores si login falla
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 5.
+
+---
+
+### FASE 5: INTEGRACIÓN LOGIN → VENTANA PRINCIPAL
+**Por qué:** No permitir acceso sin autenticación.
+
+**Qué hacer:**
+- **Archivo (MODIFICADO): `app/main.py`**
+- Flujo:
+  - Mostrar LoginWindow
+  - Si login exitoso → abrir MainWindow
+  - Si login falla → permanecer en login
+- Explicar el flujo de ventanas
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 6.
+
+---
+
+### FASE 6: USO DEL JWT EN TODAS LAS PETICIONES
+**Por qué:** El backend debe saber quién ejecuta acciones.
+
+**Qué hacer:**
+- **Archivo (MODIFICADO): `app/core/api_client.py`**
+- Agregar:
+  - Header `Authorization: Bearer <token>`
+  - Manejo de token expirado
+- Explicar cómo el token identifica al usuario
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 7.
+
+---
+
+### FASE 7: PRUEBAS FUNCIONALES DEL LOGIN
+**Por qué:** Verificar que todo el flujo funciona.
+
+**Qué hacer:**
+- Probar:
+  - Login correcto
+  - Login incorrecto
+  - Login con usuario inactivo
+  - Peticiones autenticadas
+- Confirmar que el backend guarda `created_by` correctamente
+
+👉 ¿Continuamos? Responde: **listo** para la Fase 8.
+
+---
+
+### FASE 8: PERSISTENCIA DEL TOKEN (OPCIONAL)
+**Por qué:** Evitar login en cada arranque (si se desea).
+
+**Qué hacer:**
+- Guardar token de forma local (archivo o almacenamiento seguro)
+- Cargar token al iniciar app
+- Validar token antes de usarlo
+
+👉 ¿Continuamos? Responde: **listo** para finalizar.
+
+---
+
+✨ MENSAJE FINAL
+----------------
+Muestra un mensaje indicando que:
+
+- La app permite que cualquier usuario se identifique
+- El mismo ejecutable funciona para todos
+- El backend registra auditoría correcta
+- El sistema está listo para uso multiusuario
+
+
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhbGZyZWRvIiwiZXhwIjoxNzc2OTczNDYzLCJ0eXBlIjoiYWNjZXNzIn0.rscVcXVKNMYjlzoNVApKoaO-zxzaPfA-OgpFVzRNJNM",
+
+las fechas a seleccionar tengan fecha y horario las dos por separado es decir para seleccionar la fecha dd/mm/yyyy y horario hh/mm 
+en la Sede (opcional): al abrir el modal aparecen las seden de un color negro estas tienen que ser de un color blanco para que se vean
+al igual que el campo seleccionable de Sede el campo Formato al seleccionar igual aparecen en color negro tienen que ser de color blanco las letras ojo estamos hablando que las letras tienen que ser de color blanco en el modo oscuro de la app 
+y al exportar la carpeta inicial debe ser descargas no data/exports

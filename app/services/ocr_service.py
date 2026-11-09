@@ -3,6 +3,10 @@ import base64
 import io
 import logging
 import time
+from pathlib import Path
+from app.services.open_ia_service import call_ai
+import json
+from rich.console import Console
 
 import cv2
 import numpy as np
@@ -10,6 +14,7 @@ from openai import OpenAI
 
 from app.config import AI_RETRY_COUNT, OPENAI_API_KEY, OPENAI_MODEL, TIMEOUT_SECONDS
 from app.services.parsing_service import parse_extraccion
+from app.utils.image_io import load_image
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +79,11 @@ Contexto adicional:
   * Este dato es SOLO contexto; no lo infieras en los campos ni lo agregues al JSON si no aparece en la etiqueta.
 
 Calidad:
-- Si hay partes cortadas, reflejos, inclinación, baja resolución o números dudosos, descríbelos en "observaciones_ia".
+- Si hay partes cortadas, reflejos, inclinación, baja resolución o números dudosos, descríbelos en "observaciones_ia" indicando:
+    - "Imagen borrosa."
+    - "Texto parcialmente cortado."
+    - "Reflejos en la etiqueta."
+    - "Inclinación pronunciada."
 - Si todo es legible, escribe: "Sin observaciones."
 
 Responde EXCLUSIVAMENTE con el JSON válido.
@@ -100,17 +109,17 @@ def extract_fields(image_np: np.ndarray, sede: str) -> dict:
     Envía el recorte a OpenAI y devuelve el dict de extracción.
     Con reintentos y fallback si el JSON es inválido.
     """
-    client = OpenAI(api_key=OPENAI_API_KEY)
     data_url = _image_to_data_url(image_np)
     user_content = USER_PROMPT_TEMPLATE.format(SEDE=sede.strip().upper())
 
     last_error = None
     for attempt in range(AI_RETRY_COUNT + 1):
         try:
-            response = client.chat.completions.create(
+            response = call_ai(
                 model=OPENAI_MODEL,
-                temperature=0,
-                response_format={"type": "json_object"},
+                reasoning="none",
+                temperature=1,
+                response_format="json_object",
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {
@@ -121,11 +130,10 @@ def extract_fields(image_np: np.ndarray, sede: str) -> dict:
                         ],
                     },
                 ],
-                max_tokens=1200,
                 timeout=TIMEOUT_SECONDS,
+                max_tokens=1200
             )
-            raw = response.choices[0].message.content
-            parsed = parse_extraccion(raw)
+            parsed = parse_extraccion(response)
             return parsed.model_dump()
         except Exception as e:
             last_error = e
@@ -154,3 +162,27 @@ def extract_fields(image_np: np.ndarray, sede: str) -> dict:
         + (f" Error: {last_error}" if last_error else ""),
     }
     return fallback
+
+
+if __name__ == "__main__":
+    """
+    Costo:
+        GPT-4o -> input $2.50 X 1(M) & output $10.00 X 1(M)
+        GPT-6 Luna -> input $0.10 X 1(M) & output $0.50 X 1(M)
+    GPT-4O
+        Costo por imagen
+            1,923 input
+            265 output
+        Total = 3.73 USD X 500 imgs
+    GPT-6-LUNA
+        Costo por imagen
+            1,923 input
+            265 output
+        Total = 0.16 USD X 500 imgs
+        
+    """
+    image_path = Path(__file__).parent.parent.parent / "recortes_tests" / "recorte_imagen_test2.png"
+    image = load_image(image_path)
+    response_json = extract_fields(image, sede="AJUSCO")
+    
+
