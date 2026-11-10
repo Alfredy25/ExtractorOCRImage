@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-background": "#e5e2e1", "outline": "#8a91a0", "error": "#ffb4ab", "secondary-fixed": "#d9e2ff", "on-tertiary-fixed-variant": "#304b4c", "primary-container": "#3a90ff", "on-secondary-container": "#002662", "surface-bright": "#393939", "on-tertiary-fixed": "#022020", "on-secondary-fixed": "#001945", "secondary-container": "#578cff", "on-secondary-fixed-variant": "#00419c", "tertiary-container": "#799696", "surface-dim": "#131313", "surface-container": "#202020", "tertiary": "#aecccc", "background": "#131313", "surface-variant": "#353535", "on-primary": "#003063", "surface-container-low": "#1b1b1c", "on-surface": "#e5e2e1", "primary-fixed-dim": "#a9c7ff", "inverse-on-surface": "#303030", "primary-fixed": "#d6e3ff", "tertiary-fixed-dim": "#aecccc", "inverse-surface": "#e5e2e1", "primary": "#a9c7ff", "on-surface-variant": "#c0c6d6", "on-primary-fixed": "#001b3d", "surface-container-highest": "#353535", "surface-container-lowest": "#0e0e0e", "surface-tint": "#a9c7ff", "on-primary-fixed-variant": "#00468b", "on-secondary": "#002c6f", "secondary-fixed-dim": "#b0c6ff", "outline-variant": "#404754", "tertiary-fixed": "#cae8e8", "surface": "#131313", "on-error-container": "#ffdad6", "on-error": "#690005", "on-primary-container": "#002957", "on-tertiary": "#193535", "secondary": "#b0c6ff", "surface-container-high": "#2a2a2a", "inverse-primary": "#005db6", "error-container": "#93000a", "on-tertiary-container": "#112e2f" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "md": "16px", "margin-desktop": "32px", "xl": "32px", "base": "4px", "gutter": "16px", "lg": "24px", "sm": "8px", "xs": "4px", "margin-mobile": "16px" }, "fontFamily": { "label-caps": [ "JetBrains Mono" ], "headline-md": [ "Hanken Grotesk" ], "headline-lg-mobile": [ "Hanken Grotesk" ], "body-md": [ "Geist" ], "code-md": [ "JetBrains Mono" ], "body-lg": [ "Geist" ], "headline-lg": [ "Hanken Grotesk" ], "body-sm": [ "Geist" ], "headline-xl": [ "Hanken Grotesk" ] }, "fontSize": { "label-caps": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "body-md": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "code-md": [ "14px", { "lineHeight": "20px", "fontWeight": "500" } ], "body-lg": [ "18px", { "lineHeight": "28px", "fontWeight": "400" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-sm": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between py-lg px-md"><div class="flex flex-col gap-xl"><div class="flex items-center gap-sm px-xs"><img alt="Minimalist geometric document scanner icon for an OCR application, using bright blue #0085ff accents, sleek and modern tech style.. Design context: - Primary color: #0085ff
+- Font: hankenGrotesk
+- Mode: dark
+- Roundness: rounded-sm
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Xttyudbei_AnkLPQ5-hfRMcq5xtRYdJKHVIxb_7RejfWuH-yXc9lJMyeRgrFkAx4mv5-b7ZX_flxifRgn2IWOmnfRYmti80Zv0FTOIFwij81s58wGYY02XMRTccMTd56vCzKUl54LicCewh_blknLI5a21zd8qhcxuPSIw8_rh2fhnGIgKChB3IA-nD21C1oblN7n-h6r5gYd5vjzoGmtZAChd6PLStVxQ65M3THSYs-DeHAguCEIbl0O7"/><div class="flex flex-col"><span class="font-headline-md text-body-md font-semibold tracking-tight text-on-surface leading-tight">Extractor OCR</span><span class="font-label-caps text-label-caps uppercase text-outline">Enterprise Core</span></div></div><nav class="flex flex-col gap-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold"><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="workspace-procesamiento" href="#"><span class="material-symbols-outlined text-[20px]">document_scanner</span><span>Workspace / Procesamiento</span></a><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="historial-de-envios" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Historial de Envíos</span></a><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="directorio-de-destinatarios" href="#"><span class="material-symbols-outlined text-[20px]">contacts</span><span>Directorio de Destinatarios</span></a></nav></div><div class="flex items-center justify-between px-xs py-sm bg-surface-container rounded-lg"><div class="flex flex-col"><span class="font-label-caps text-label-caps text-outline uppercase">Motor OCR</span><span class="font-code-md text-code-md text-primary font-medium">v4.2.0-online</span></div><span class="h-2 w-2 rounded-full bg-primary-container animate-pulse"></span></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-xl"><div class="flex items-center gap-md"><span class="font-headline-md text-body-lg text-on-surface font-semibold">Extractor OCR</span><div class="flex items-center gap-xs px-sm py-xs bg-surface-container rounded-lg"><span class="material-symbols-outlined text-primary text-[16px]">corporate_fare</span><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Sede Central Madrid</span></div></div><div class="flex items-center gap-lg"><div class="flex items-center gap-sm bg-surface-container px-md py-xs rounded-lg w-72"><span class="material-symbols-outlined text-outline text-[18px]">search</span><input class="bg-transparent text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none w-full" placeholder="Buscar documentos, IDs o lotes..." type="text"/></div><button aria-label="Notificaciones" class="relative p-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span></button><div class="flex items-center gap-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden lg:flex flex-col"><span class="font-body-sm text-body-sm text-on-surface font-medium leading-none">Admin Operaciones</span><span class="font-label-caps text-label-caps text-outline">enterprise@ocr.internal</span></div></div></div></header><main class="w-full pt-16 px-margin-desktop bg-surface min-h-screen"><div class="flex flex-col w-full pb-16">
+<!-- Header / Action Path Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md mb-lg">
+<div class="flex flex-col">
+<div class="flex items-center gap-xs text-outline font-label-caps text-label-caps uppercase mb-xs">
+<span>Workspace</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span>Validación y Enlace</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-medium">Lote #BATCH-8921-MX</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">
+        Generación de Envío y Cobertura
+      </h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">
+        Conciliación de metadatos OCR contra catálogo Paquetexpress y directorio oficial de destinatarios.
+      </p>
+</div>
+<!-- Right Quick Status -->
+<div class="flex items-center gap-sm bg-surface-container-low px-md py-sm rounded-xl">
+<div class="flex items-center gap-xs">
+<span class="h-2.5 w-2.5 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-label-caps text-label-caps uppercase text-on-surface">Validación Activa</span>
+</div>
+<span class="text-outline font-body-sm">|</span>
+<span class="font-code-md text-code-md text-secondary">Folio: DOC-2026-X992</span>
+</div>
+</div>
+<!-- Main 3-Column Technical Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+<!-- COLUMNA 1: Datos OCR Detectados (3 cols) -->
+<div class="lg:col-span-3 flex flex-col gap-md">
+<div class="bg-surface-container rounded-xl p-md flex flex-col">
+<div class="flex items-center justify-between pb-sm mb-md bg-surface-container-high px-sm py-xs rounded-lg">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">document_scanner</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">Datos OCR Detectados</h2>
+</div>
+<span class="bg-surface-container-lowest text-primary font-label-caps text-label-caps px-xs py-0.5 rounded-md">
+            92.8% AVG
+          </span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mb-md">
+          Extracción automática del manifiesto escaneado. Modo de lectura verificada.
+        </p>
+<!-- OCR Field Items with Confidence Badges -->
+<div class="flex flex-col gap-sm">
+<!-- Item: Nombre -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs group transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Nombre Completo</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">98%</span>
+</div>
+<span class="font-body-md text-body-sm text-on-surface font-semibold tracking-wide">JUAN PÉREZ GARCÍA</span>
+</div>
+<!-- Item: RFC -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">RFC Detectado</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">92%</span>
+</div>
+<span class="font-code-md text-body-sm text-on-surface font-medium">JPG850214XX1</span>
+</div>
+<!-- Item: Dirección -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Dirección / Vía</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">94%</span>
+</div>
+<span class="font-body-md text-body-sm text-on-surface">AV HIDALGO 123, INT 4</span>
+</div>
+<!-- Item: Colonia -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Colonia</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">91%</span>
+</div>
+<span class="font-body-md text-body-sm text-on-surface">DEL CARMEN</span>
+</div>
+<!-- Item: Código Postal -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Código Postal</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">99%</span>
+</div>
+<span class="font-code-md text-body-sm text-on-surface font-semibold">04100</span>
+</div>
+<!-- Item: Ciudad / Estado -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Ciudad / Estado</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">95%</span>
+</div>
+<span class="font-body-md text-body-sm text-on-surface">CIUDAD DE MÉXICO, CDMX</span>
+</div>
+<!-- Item: Teléfono -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Teléfono Contacto</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">88%</span>
+</div>
+<span class="font-code-md text-body-sm text-on-surface">55 1234 5678</span>
+</div>
+<!-- Item: Referencia -->
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Referencia de Entrega</span>
+<span class="bg-surface-variant font-code-md text-label-caps text-primary px-1.5 py-0.5 rounded">85%</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant italic">
+              "Entregar en recepción si no hay nadie"
+            </span>
+</div>
+</div>
+<!-- Botón Ver Documento Original -->
+<button class="mt-lg w-full py-sm px-md rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-body-sm text-body-sm font-medium flex items-center justify-center gap-sm transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-primary">visibility</span>
+<span>Ver documento original</span>
+</button>
+</div>
+<!-- Minified Document Quality Indicator -->
+<div class="bg-surface-container p-md rounded-xl flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-tertiary text-[24px]">verified</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline uppercase">Resolución OCR</span>
+<span class="font-code-md text-code-md text-on-surface">300 DPI - Binarizado</span>
+</div>
+</div>
+<span class="font-code-md text-label-caps text-tertiary">0 errores sintácticos</span>
+</div>
+</div>
+<!-- COLUMNA 2: Cobertura Paquetexpress (3 cols) -->
+<div class="lg:col-span-3 flex flex-col gap-md">
+<div class="bg-surface-container rounded-xl p-md flex flex-col">
+<div class="flex items-center justify-between pb-sm mb-md bg-surface-container-high px-sm py-xs rounded-lg">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-secondary-container text-[20px]">local_shipping</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">Cobertura Paquetexpress</h2>
+</div>
+<span class="flex h-2 w-2 rounded-full bg-primary-container"></span>
+</div>
+<!-- Formulario de Consulta / Validación -->
+<div class="flex flex-col gap-md">
+<!-- Campo Código Postal con Acción -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase flex items-center justify-between">
+<span>Código Postal</span>
+<span class="text-primary font-medium">Validado</span>
+</label>
+<div class="flex items-center gap-xs">
+<div class="relative flex-1">
+<input class="w-full bg-surface-container-low text-on-surface font-code-md text-body-md px-md py-sm rounded-lg focus:outline-none" readonly="" type="text" value="04100"/>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-primary text-[18px]">check_circle</span>
+</div>
+<button class="px-sm py-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-label-caps text-label-caps uppercase transition-colors" title="Volver a consultar" type="button">
+                Consultar
+              </button>
+</div>
+</div>
+<!-- Selector de Colonia Validada -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Colonia Validada (SEPOMEX / PQX)</label>
+<div class="relative bg-surface-container-low rounded-lg">
+<select class="w-full bg-transparent text-on-surface font-body-sm text-body-sm px-md py-sm appearance-none focus:outline-none pr-8 cursor-pointer">
+<option selected="" value="del-carmen">DEL CARMEN (04100)</option>
+<option value="villa-coyoacan">VILLA COYOACÁN (04000)</option>
+<option value="santa-catarina">SANTA CATARINA (04010)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-outline pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+<!-- Campos Autocompletados API -->
+<div class="grid grid-cols-1 gap-sm pt-xs">
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline uppercase">Municipio / Alcaldía</span>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-sm text-on-surface font-medium">COYOACÁN</span>
+<span class="font-label-caps text-label-caps text-outline">API PQX</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline uppercase">Entidad Federativa</span>
+<div class="flex items-center justify-between">
+<span class="font-body-md text-body-sm text-on-surface font-medium">CIUDAD DE MÉXICO</span>
+<span class="font-label-caps text-label-caps text-outline">CDMX</span>
+</div>
+</div>
+</div>
+<!-- Tarjeta de Estatus de Cobertura -->
+<div class="bg-surface-container-lowest p-md rounded-xl mt-xs flex flex-col gap-sm">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">task_alt</span>
+<span class="font-label-caps text-label-caps uppercase text-primary font-bold">Cobertura Confirmada</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface font-medium">
+              Entrega garantizada 24-48 hrs
+            </p>
+<div class="pt-xs flex flex-col gap-xs">
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-outline">SERVICIO</span>
+<span class="text-on-surface font-semibold">Express Terrestre</span>
+</div>
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-outline">CENTRO OPERATIVO</span>
+<span class="text-on-surface">CDMX - Sur (Sur-02)</span>
+</div>
+<div class="flex items-center justify-between font-label-caps text-label-caps">
+<span class="text-outline">FRECUENCIA</span>
+<span class="text-on-surface">Lunes a Sábado Diario</span>
+</div>
+</div>
+</div>
+<!-- Hub Map Visual Anchor -->
+<div class="bg-surface-container-low p-sm rounded-lg flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[24px]">share_location</span>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline uppercase">Ruta Asignada</span>
+<span class="font-code-md text-label-caps text-on-surface">HUB-VALLEJO → RUTA-SUR-40</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- COLUMNA 3: Datos del Envío y Destinatario Especializado (6 cols, más ancha) -->
+<div class="lg:col-span-6 flex flex-col gap-md">
+<!-- SUBSECCIÓN 1: Selección de Destinatario Especializado -->
+<div class="bg-surface-container rounded-xl p-md flex flex-col">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-sm mb-md bg-surface-container-high px-sm py-xs rounded-lg gap-xs">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">badge</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">Destinatario Especializado</h2>
+</div>
+<button class="flex items-center gap-xs text-primary hover:text-on-surface font-label-caps text-label-caps uppercase transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>+ Crear nuevo destinatario</span>
+</button>
+</div>
+<!-- Buscador Rápido Integrado -->
+<div class="flex flex-col gap-xs mb-md">
+<label class="font-label-caps text-label-caps text-outline uppercase">Búsqueda en Directorio Oficial (Nombre o RFC)</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full bg-surface-container-low text-on-surface font-body-sm text-body-sm pl-9 pr-md py-sm rounded-lg focus:outline-none" placeholder="Buscar por RFC, Razón Social o Funcionario..." type="text" value="Juan Pérez García"/>
+</div>
+</div>
+<!-- Resultado Coincidente Desplegable / Coincidencia Directa -->
+<div class="bg-surface-container-low p-sm rounded-lg mb-md flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="bg-surface-variant font-label-caps text-label-caps text-primary px-xs py-0.5 rounded">PERSONA</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-sm text-on-surface font-semibold">LIC. JUAN PÉREZ GARCÍA</span>
+<span class="font-label-caps text-label-caps text-outline">Coincidencia exacta con OCR • Directorio Oficial</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">radio_button_checked</span>
+</div>
+<!-- Ficha de Destinatario Seleccionado -->
+<div class="bg-surface-container-lowest p-md rounded-xl flex flex-col gap-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-sm pb-sm bg-surface-container-high px-sm py-xs rounded-lg">
+<div class="flex items-center gap-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-bold">LIC. JUAN PÉREZ GARCÍA</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Directora General en SAT o Representante</span>
+</div>
+</div>
+<span class="self-start sm:self-auto bg-surface-container text-secondary font-label-caps text-label-caps px-sm py-xs rounded">
+              RFC: JPG850214XX1
+            </span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-sm">
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-outline uppercase">Correo Institucional</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">juan.perez@empresa.com</span>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-outline uppercase">Teléfono y Extensión</span>
+<span class="font-code-md text-body-sm text-on-surface">55 1234 5678 ext. 402</span>
+</div>
+</div>
+<!-- Selector de Domicilios Registrados del Destinatario -->
+<div class="flex flex-col gap-xs pt-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">location_city</span>
+<span>Domicilios Registrados (2)</span>
+</span>
+<button class="text-primary hover:text-on-surface font-label-caps text-label-caps uppercase flex items-center gap-xs transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">add_location_alt</span>
+<span>+ Registrar nuevo domicilio</span>
+</button>
+</div>
+<div class="grid grid-cols-1 gap-xs">
+<!-- Domicilio 1: Seleccionado (Coincide con OCR y Cobertura activa) -->
+<div class="bg-surface-container-low p-sm rounded-lg flex items-start justify-between cursor-pointer">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-primary text-[18px] mt-0.5">radio_button_checked</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-xs">
+<span class="font-body-md text-body-sm text-on-surface font-semibold">Corporativo SAT (Sede Coyoacán)</span>
+<span class="bg-surface-variant font-label-caps text-label-caps text-primary px-1.5 py-0.5 rounded">Predeterminado / OCR</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Av. Hidalgo #123, Int 4, Col. Del Carmen, Coyoacán, CDMX (C.P. 04100)</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-secondary uppercase bg-surface-container px-xs py-0.5 rounded">Activo</span>
+</div>
+<!-- Domicilio 2: Alternativo -->
+<div class="bg-surface-container p-sm rounded-lg flex items-start justify-between cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-0.5">radio_button_unchecked</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-xs">
+<span class="font-body-md text-body-sm text-on-surface font-semibold">Oficinas Centrales Reforma</span>
+<span class="bg-surface-container-low font-label-caps text-label-caps text-outline px-1.5 py-0.5 rounded">Alternativo</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">Paseo de la Reforma #10, Piso 5, Col. Tabacalera, Cuauhtémoc, CDMX (C.P. 06030)</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Domicilio Combinado Consolidado -->
+<div class="flex flex-col gap-xs pt-xs">
+<span class="font-label-caps text-label-caps text-outline uppercase flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span>
+<span>Domicilio de Entrega Consolidado (Para Paquetexpress)</span>
+</span>
+<div class="bg-surface-container-low p-md rounded-lg flex flex-col gap-xs">
+<p class="font-body-md text-body-sm text-on-surface font-medium leading-relaxed">
+                AV HIDALGO #123, INT 4, COL. DEL CARMEN, C.P. 04100, ALCALDÍA COYOACÁN, CIUDAD DE MÉXICO.
+              </p>
+<div class="flex items-center gap-xs text-on-surface-variant font-body-sm text-body-sm pt-xs">
+<span class="material-symbols-outlined text-[16px] text-outline">info</span>
+<span>Instrucción / Referencia: <strong>Entregar en recepción si no hay nadie</strong></span>
+</div>
+</div>
+</div>
+<!-- Campo / Selector de Volante de Correspondencia (Opcional, Relación N:M) -->
+<div class="flex flex-col gap-xs pt-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-outline uppercase flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary">receipt_long</span>
+<span>Volante de Correspondencia Asociado</span>
+<span class="text-outline font-normal">(Opcional • N:M)</span>
+</label>
+<span class="font-label-caps text-label-caps text-primary cursor-pointer hover:underline">+ Nuevo Volante</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-sm">
+<div class="relative bg-surface-container-low rounded-lg">
+<select class="w-full bg-transparent text-on-surface font-code-md text-body-sm px-md py-sm appearance-none focus:outline-none pr-8 cursor-pointer">
+<option selected="" value="vol-4410">VOL-2026-4410 (Oficio SAT-DGA-991)</option>
+<option value="vol-3829">VOL-2026-3829 (Trámite Notificación Fiscal)</option>
+<option value="vol-none">Sin volante pre-asignado</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-outline pointer-events-none text-[18px]">expand_more</span>
+</div>
+<div class="bg-surface-container-low px-md py-sm rounded-lg flex items-center justify-between">
+<div class="flex items-center gap-xs text-outline font-body-sm text-body-sm truncate">
+<span class="material-symbols-outlined text-[16px] text-tertiary">link</span>
+<span class="truncate">Vínculo a expediente existente</span>
+</div>
+<span class="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SUBSECCIÓN 2: Detalles del Paquete -->
+<div class="bg-surface-container rounded-xl p-md flex flex-col">
+<div class="flex items-center justify-between pb-sm mb-md bg-surface-container-high px-sm py-xs rounded-lg">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">inventory_2</span>
+<h2 class="font-headline-md text-body-md font-semibold text-on-surface">Detalles del Paquete</h2>
+</div>
+<span class="font-code-md text-label-caps text-primary uppercase">Guía Pre-asignada</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md mb-md">
+<!-- Código / Folio -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Código de Paquete / Folio</label>
+<div class="bg-surface-container-low px-md py-sm rounded-lg flex items-center justify-between">
+<span class="font-code-md text-body-sm text-on-surface font-bold tracking-wider">PKG-2026-9841</span>
+<span class="material-symbols-outlined text-outline text-[18px]">qr_code</span>
+</div>
+</div>
+<!-- Contenido Declarado -->
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Contenido Declarado</label>
+<div class="bg-surface-container-low px-md py-sm rounded-lg flex items-center justify-between">
+<span class="font-body-md text-body-sm text-on-surface uppercase truncate">DOCUMENTOS LEGALES / EXPEDIENTES</span>
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+</div>
+</div>
+</div>
+<!-- Dimensiones y Cubicaje -->
+<div class="flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline uppercase">Especificaciones Físicas</span>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-sm">
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-outline">PESO BÁSCULA</span>
+<span class="font-code-md text-body-md font-bold text-on-surface">0.5 <span class="text-outline text-label-caps font-normal">KG</span></span>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-outline">LARGO</span>
+<span class="font-code-md text-body-md font-bold text-on-surface">30 <span class="text-outline text-label-caps font-normal">CM</span></span>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-outline">ANCHO</span>
+<span class="font-code-md text-body-md font-bold text-on-surface">25 <span class="text-outline text-label-caps font-normal">CM</span></span>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg flex flex-col">
+<span class="font-label-caps text-label-caps text-outline">ALTO</span>
+<span class="font-code-md text-body-md font-bold text-on-surface">2 <span class="text-outline text-label-caps font-normal">CM</span></span>
+</div>
+</div>
+</div>
+<!-- Cubicaje info banner -->
+<div class="flex items-center justify-between mt-md px-sm py-xs bg-surface-container-lowest rounded-lg font-label-caps text-label-caps text-outline">
+<span>VOLUMEN CALCULADO: 0.0015 M³</span>
+<span class="text-secondary font-medium">TARIFA SOBRE DOCUMENTO A4</span>
+</div>
+</div>
+<!-- Barra Inferior de Acciones Principales -->
+<div class="bg-surface-container rounded-xl p-md flex items-center justify-between gap-md mt-xs shadow-md">
+<button class="px-lg py-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface font-body-sm text-body-sm font-medium transition-colors" type="button">
+          Cancelar
+        </button>
+<div class="flex items-center gap-sm">
+<button class="px-md py-sm rounded-lg bg-surface-container-high hover:bg-surface-variant text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors hidden sm:inline-flex items-center gap-xs" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Guardar Borrador</span>
+</button>
+<button class="px-xl py-sm rounded-lg bg-primary-container hover:bg-secondary-container text-on-primary-container font-body-md text-body-sm font-semibold flex items-center gap-sm transition-all shadow-md active:scale-95" type="button">
+<span class="material-symbols-outlined text-[20px]">local_shipping</span>
+<span>Crear y Validar Envío</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

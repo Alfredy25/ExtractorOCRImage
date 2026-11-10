@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-background": "#e5e2e1", "outline": "#8a91a0", "error": "#ffb4ab", "secondary-fixed": "#d9e2ff", "on-tertiary-fixed-variant": "#304b4c", "primary-container": "#3a90ff", "on-secondary-container": "#002662", "surface-bright": "#393939", "on-tertiary-fixed": "#022020", "on-secondary-fixed": "#001945", "secondary-container": "#578cff", "on-secondary-fixed-variant": "#00419c", "tertiary-container": "#799696", "surface-dim": "#131313", "surface-container": "#202020", "tertiary": "#aecccc", "background": "#131313", "surface-variant": "#353535", "on-primary": "#003063", "surface-container-low": "#1b1b1c", "on-surface": "#e5e2e1", "primary-fixed-dim": "#a9c7ff", "inverse-on-surface": "#303030", "primary-fixed": "#d6e3ff", "tertiary-fixed-dim": "#aecccc", "inverse-surface": "#e5e2e1", "primary": "#a9c7ff", "on-surface-variant": "#c0c6d6", "on-primary-fixed": "#001b3d", "surface-container-highest": "#353535", "surface-container-lowest": "#0e0e0e", "surface-tint": "#a9c7ff", "on-primary-fixed-variant": "#00468b", "on-secondary": "#002c6f", "secondary-fixed-dim": "#b0c6ff", "outline-variant": "#404754", "tertiary-fixed": "#cae8e8", "surface": "#131313", "on-error-container": "#ffdad6", "on-error": "#690005", "on-primary-container": "#002957", "on-tertiary": "#193535", "secondary": "#b0c6ff", "surface-container-high": "#2a2a2a", "inverse-primary": "#005db6", "error-container": "#93000a", "on-tertiary-container": "#112e2f" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "md": "16px", "margin-desktop": "32px", "xl": "32px", "base": "4px", "gutter": "16px", "lg": "24px", "sm": "8px", "xs": "4px", "margin-mobile": "16px" }, "fontFamily": { "label-caps": [ "JetBrains Mono" ], "headline-md": [ "Hanken Grotesk" ], "headline-lg-mobile": [ "Hanken Grotesk" ], "body-md": [ "Geist" ], "code-md": [ "JetBrains Mono" ], "body-lg": [ "Geist" ], "headline-lg": [ "Hanken Grotesk" ], "body-sm": [ "Geist" ], "headline-xl": [ "Hanken Grotesk" ] }, "fontSize": { "label-caps": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" } ], "headline-md": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "fontWeight": "600" } ], "body-md": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "code-md": [ "14px", { "lineHeight": "20px", "fontWeight": "500" } ], "body-lg": [ "18px", { "lineHeight": "28px", "fontWeight": "400" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-sm": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" } ] } } } };</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low z-50 flex flex-col justify-between py-lg px-md"><div class="flex flex-col gap-xl"><div class="flex items-center gap-sm px-xs"><img alt="Minimalist geometric document scanner icon for an OCR application, using bright blue #0085ff accents, sleek and modern tech style.. Design context: - Primary color: #0085ff
+- Font: hankenGrotesk
+- Mode: dark
+- Roundness: rounded-sm
+. The logo should be visually consistent with these brand tokens." class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Xttyudbei_AnkLPQ5-hfRMcq5xtRYdJKHVIxb_7RejfWuH-yXc9lJMyeRgrFkAx4mv5-b7ZX_flxifRgn2IWOmnfRYmti80Zv0FTOIFwij81s58wGYY02XMRTccMTd56vCzKUl54LicCewh_blknLI5a21zd8qhcxuPSIw8_rh2fhnGIgKChB3IA-nD21C1oblN7n-h6r5gYd5vjzoGmtZAChd6PLStVxQ65M3THSYs-DeHAguCEIbl0O7"/><div class="flex flex-col"><span class="font-headline-md text-body-md font-semibold tracking-tight text-on-surface leading-tight">Extractor OCR</span><span class="font-label-caps text-label-caps uppercase text-outline">Enterprise Core</span></div></div><nav class="flex flex-col gap-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold"><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="workspace-procesamiento" href="#"><span class="material-symbols-outlined text-[20px]">document_scanner</span><span>Workspace / Procesamiento</span></a><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="historial-de-envios" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Historial de Envíos</span></a><a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors font-body-sm text-body-sm" data-path="directorio-de-destinatarios" href="#"><span class="material-symbols-outlined text-[20px]">contacts</span><span>Directorio de Destinatarios</span></a></nav></div><div class="flex items-center justify-between px-xs py-sm bg-surface-container rounded-lg"><div class="flex flex-col"><span class="font-label-caps text-label-caps text-outline uppercase">Motor OCR</span><span class="font-code-md text-code-md text-primary font-medium">v4.2.0-online</span></div><span class="h-2 w-2 rounded-full bg-primary-container animate-pulse"></span></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-xl"><div class="flex items-center gap-md"><span class="font-headline-md text-body-lg text-on-surface font-semibold">Extractor OCR</span><div class="flex items-center gap-xs px-sm py-xs bg-surface-container rounded-lg"><span class="material-symbols-outlined text-primary text-[16px]">corporate_fare</span><span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Sede Central Madrid</span></div></div><div class="flex items-center gap-lg"><div class="flex items-center gap-sm bg-surface-container px-md py-xs rounded-lg w-72"><span class="material-symbols-outlined text-outline text-[18px]">search</span><input class="bg-transparent text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none w-full" placeholder="Buscar documentos, IDs o lotes..." type="text"/></div><button aria-label="Notificaciones" class="relative p-xs rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span></button><div class="flex items-center gap-sm"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div><div class="hidden lg:flex flex-col"><span class="font-body-sm text-body-sm text-on-surface font-medium leading-none">Admin Operaciones</span><span class="font-label-caps text-label-caps text-outline">enterprise@ocr.internal</span></div></div></div></header><main class="w-full pt-16 px-margin-desktop bg-surface min-h-screen"><div class="flex flex-col w-full pb-xl">
+<!-- Sub-Header Context Bar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md mb-lg">
+<div class="flex flex-col">
+<div class="flex items-center gap-xs">
+<span class="font-label-caps text-label-caps uppercase text-primary tracking-wider">Flujo de Despacho • Lote #4892</span>
+<span class="text-outline text-body-sm">•</span>
+<span class="font-label-caps text-label-caps text-outline uppercase">Paso 2 de 3: Indexación</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-xs">Crear Destinatario Especializado</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Valide y estructure la entidad receptora contrastando en paralelo con la lectura del documento escaneado.</p>
+</div>
+<div class="flex items-center gap-sm">
+<div class="flex items-center gap-xs bg-surface-container px-md py-sm rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+<span class="font-code-md text-code-md text-on-surface">Confianza OCR: 98.4%</span>
+</div>
+<button class="flex items-center gap-xs bg-surface-container-high hover:bg-surface-bright px-md py-sm rounded-lg text-on-surface text-body-sm font-body-sm transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Auditoría</span>
+</button>
+</div>
+</div>
+<!-- Main Split Layout (35% OCR / 65% Structured Form) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-start">
+<!-- LEFT COLUMN (35%): OCR Reference Deck -->
+<div class="lg:col-span-4 flex flex-col gap-md sticky top-20">
+<!-- Source Reference Card -->
+<div class="bg-surface-container-low rounded-xl p-lg flex flex-col gap-md shadow-md relative overflow-hidden">
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">document_scanner</span>
+<span class="font-label-caps text-label-caps uppercase font-bold tracking-wider">Referencia OCR</span>
+</div>
+<span class="px-sm py-xs bg-surface-container-highest text-primary font-code-md text-label-caps rounded-lg">DOC-SAT-9921</span>
+</div>
+<!-- Document Preview Thumbnail Snippet -->
+<div class="flex items-center justify-between p-sm bg-surface-container rounded-lg border border-outline-variant/30"><div class="flex items-center gap-xs"><span class="material-symbols-outlined text-primary text-[18px]">description</span><div class="flex flex-col"><span class="font-code-md text-code-md text-on-surface font-semibold">Manifiesto_Entrada_2026.pdf</span><span class="font-label-caps text-label-caps text-outline">Pág. 1 de 1 • Escaneo 300 DPI</span></div></div><span class="font-label-caps text-label-caps px-xs py-0.5 bg-primary/10 text-primary rounded">VALIDADO</span></div>
+<!-- Extracted Data Blocks -->
+<div class="flex flex-col gap-xs pt-xs">
+<div class="p-sm bg-surface-container rounded-lg flex flex-col gap-0.5 group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Nombre Detectado</span>
+<button class="text-primary hover:text-on-surface transition-colors" onclick="navigator.clipboard.writeText('JUAN PÉREZ GARCÍA')" title="Copiar" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+<p class="font-code-md text-code-md text-on-surface font-semibold" id="ocr-source-name">JUAN PÉREZ GARCÍA</p>
+</div>
+<div class="p-sm bg-surface-container rounded-lg flex flex-col gap-0.5 group hover:bg-surface-container-high transition-colors">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Dirección Detectada</span>
+<button class="text-primary hover:text-on-surface transition-colors" onclick="navigator.clipboard.writeText('Av. Hidalgo 123, Col. Del Carmen, Coyoacán, CDMX, C.P. 04100')" title="Copiar" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+<p class="font-code-md text-code-md text-on-surface" id="ocr-source-address">Av. Hidalgo 123, Col. Del Carmen, Coyoacán, CDMX, C.P. 04100</p>
+</div>
+<div class="grid grid-cols-2 gap-xs">
+<div class="p-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-outline uppercase">Teléfono</span>
+<p class="font-code-md text-code-md text-on-surface" id="ocr-source-phone">55 1234 5678</p>
+</div>
+<div class="p-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-outline uppercase">Folio Origen</span>
+<p class="font-code-md text-code-md text-primary font-bold" id="ocr-source-folio">VOL-2026-4410</p>
+</div>
+</div>
+<div class="p-sm bg-surface-container rounded-lg flex flex-col gap-0.5">
+<span class="font-label-caps text-label-caps text-outline uppercase">Referencia de Entrega OCR</span>
+<p class="font-code-md text-code-md text-on-surface-variant" id="ocr-source-ref">Entregar en recepción</p>
+</div>
+</div>
+<!-- Quick Transfer Assistant Action -->
+<button class="mt-xs w-full py-sm px-md bg-primary/10 hover:bg-primary/20 text-primary rounded-lg font-body-sm text-body-sm font-semibold flex items-center justify-center gap-sm transition-all shadow-sm" id="btn-autofill" type="button">
+<span class="material-symbols-outlined text-[20px]">auto_fix_high</span>
+<span>Rellenar campos con datos OCR</span>
+</button>
+<!-- Visual Recognition Signal Sparkline -->
+<div class="bg-surface-container rounded-lg p-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline uppercase">Tasa de Extracción</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">9/9 tokens validados</span>
+</div>
+<svg class="w-24 h-6 text-primary" fill="none" preserveaspectratio="none" viewbox="0 0 100 24">
+<path d="M0 18 L15 14 L30 16 L45 8 L60 10 L75 4 L90 7 L100 2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+<!-- Quick Guidance Mini Card -->
+<div class="bg-surface-container-low rounded-xl p-md flex items-start gap-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">info</span>
+<p class="font-body-sm text-body-sm leading-relaxed">
+          Los destinatarios creados en este paso quedan vinculados con su domicilio maestro para envíos futuros de correspondencia física.
+        </p>
+</div>
+</div>
+<!-- RIGHT COLUMN (65%): Form Engine -->
+<div class="lg:col-span-8 flex flex-col gap-lg">
+<form class="flex flex-col gap-lg" id="form-destinatario">
+<!-- Selector Tipo Destinatario Tabs con Indicación de Reglas de Validación -->
+<div class="bg-surface-container-low rounded-xl p-md shadow-md flex flex-col gap-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps text-outline uppercase">Tipo de Destinatario Institucional</span>
+<span class="font-label-caps text-label-caps text-primary bg-primary/10 px-sm py-0.5 rounded" id="tipo-rules-badge">Persona: Título y Nombre obligatorios</span>
+</div>
+<div class="grid grid-cols-3 gap-xs p-xs bg-surface-container rounded-lg" id="tipo-tabs">
+<button class="tab-btn py-sm text-body-sm font-body-sm font-semibold rounded-lg text-center transition-all bg-primary-container text-on-primary-container shadow-sm flex items-center justify-center gap-xs" data-tipo="persona" id="tab-persona" type="button">
+<span class="material-symbols-outlined text-[18px]">person</span>
+<span>PERSONA</span>
+</button>
+<button class="tab-btn py-sm text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface rounded-lg text-center transition-all flex items-center justify-center gap-xs" data-tipo="gobierno" id="tab-gobierno" type="button">
+<span class="material-symbols-outlined text-[18px]">account_balance</span>
+<span>GOBIERNO</span>
+</button>
+<button class="tab-btn py-sm text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface rounded-lg text-center transition-all flex items-center justify-center gap-xs" data-tipo="privada" id="tab-privada" type="button">
+<span class="material-symbols-outlined text-[18px]">domain</span>
+<span>PRIVADA</span>
+</button>
+</div>
+</div>
+<!-- SECCIÓN: Identidad & Filiación Dinámica -->
+<div class="bg-surface-container-low rounded-xl p-lg shadow-md flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">badge</span>
+<h2 class="font-headline-md text-headline-md text-on-surface" id="identidad-section-title">Identidad &amp; Filiación</h2>
+</div>
+<span class="font-label-caps text-label-caps text-outline uppercase" id="identidad-rule-hint">Persona física especializada</span>
+</div>
+<!-- BLOQUE EXCLUSIVO DE PERSONA (Título + Nombre) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md" id="bloque-persona">
+<!-- Título Institucional con Búsqueda y Creación Rápida -->
+<div class="md:col-span-5 flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="titulo-search">Título Honorífico <span class="text-primary">*</span></label>
+<button class="font-label-caps text-label-caps text-primary hover:underline flex items-center gap-0.5" onclick="openModal('modal-titulo')" type="button">
+<span class="material-symbols-outlined text-[14px]">add_circle</span>
+<span>Crear título</span>
+</button>
+</div>
+<div class="relative">
+<select class="w-full bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg appearance-none focus:outline-none focus:bg-surface-bright transition-colors cursor-pointer" id="titulo-select">
+<option value="LIC.">LIC. — Licenciado/a</option>
+<option value="DR.">DR. — Doctor/a</option>
+<option value="MTRO.">MTRO. — Maestro/a</option>
+<option value="ING.">ING. — Ingeniero/a</option>
+<option value="C.P.">C.P. — Contador/a Público/a</option>
+<option value="CIU.">CIU. — Ciudadano/a</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Nombre Completo de Persona (En mayúsculas) -->
+<div class="md:col-span-7 flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="nombre-completo">Nombre Completo <span class="text-primary">*</span></label>
+<span class="font-label-caps text-label-caps text-primary uppercase">MAYÚSCULAS</span>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container text-on-surface font-body-md text-body-md uppercase px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="nombre-completo" placeholder="NOMBRE(S) Y APELLIDOS" type="text" value="JUAN PÉREZ GARCÍA"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline text-[20px]">person_outline</span>
+</div>
+</div>
+</div>
+<!-- BLOQUE INSTITUCIONAL: Organización / Dependencia (Obligatorio en Gobierno/Privada, opcional en Persona) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<div class="md:col-span-7 flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="org-select">Organización / Institución <span class="hidden text-primary" id="org-required-star">*</span></label>
+<button class="font-label-caps text-label-caps text-primary hover:underline flex items-center gap-0.5" onclick="openModal('modal-org')" type="button">
+<span class="material-symbols-outlined text-[14px]">add_business</span>
+<span>Crear organización</span>
+</button>
+</div>
+<div class="relative">
+<select class="w-full bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg appearance-none focus:outline-none focus:bg-surface-bright transition-colors cursor-pointer" id="org-select">
+<option value="SAT">Servicio de Administración Tributaria (SAT)</option>
+<option value="SHCP">Secretaría de Hacienda y Crédito Público (SHCP)</option>
+<option value="TFJA">Tribunal Federal de Justicia Administrativa (TFJA)</option>
+<option value="BANXICO">Banco de México (Banxico)</option>
+<option value="PEMEX">Petróleos Mexicanos (PEMEX)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<div class="md:col-span-5 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="estado-inst">Estado de la Institución <span class="hidden text-primary" id="estado-required-star">*</span></label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="estado-inst" placeholder="CDMX / Jalisco / etc." type="text" value="Ciudad de México"/>
+</div>
+</div>
+<!-- Cargo / Puesto (con modal rápido de creación) -->
+<div class="flex flex-col gap-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="cargo-select">Cargo / Puesto Institucional <span class="text-outline">(Opcional)</span></label>
+<button class="font-label-caps text-label-caps text-primary hover:underline flex items-center gap-0.5" onclick="openModal('modal-cargo')" type="button">
+<span class="material-symbols-outlined text-[14px]">work_outline</span>
+<span>Crear cargo</span>
+</button>
+</div>
+<div class="relative">
+<select class="w-full bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg appearance-none focus:outline-none focus:bg-surface-bright transition-colors cursor-pointer" id="cargo-select">
+<option value="Director de Auditoría">Director de Auditoría</option>
+<option value="Titular de Oficialía Mayor">Titular de Oficialía Mayor</option>
+<option value="Director General Jurídico">Director General Jurídico</option>
+<option value="Jefe de Correspondencia y Despacho">Jefe de Correspondencia y Despacho</option>
+<option value="Institucional genérico">Institucional genérico (Sin persona)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Previsualización de Línea Institucional -->
+<div class="bg-surface-container rounded-lg p-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline uppercase">Previsualización de Línea Institucional:</span>
+<p class="font-body-md text-body-md font-semibold text-primary mt-0.5" id="preview-linea">Director de Auditoría en Servicio de Administración Tributaria (SAT)</p>
+</div>
+<span class="material-symbols-outlined text-outline text-[20px]">corporate_fare</span>
+</div>
+</div>
+<!-- SECCIÓN: Canales de Contacto -->
+<div class="bg-surface-container-low rounded-xl p-lg shadow-md flex flex-col gap-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">contact_mail</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Canales de Contacto</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<div class="md:col-span-6 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="correo">Correo Electrónico Oficial</label>
+<div class="relative">
+<input class="w-full bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="correo" placeholder="usuario@dependencia.gob.mx" type="email" value="juan.perez@sat.gob.mx"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline text-[20px]">alternate_email</span>
+</div>
+</div>
+<div class="md:col-span-4 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="telefono">Teléfono (10 Dígitos)</label>
+<div class="relative">
+<input class="w-full bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="telefono" maxlength="10" placeholder="5512345678" type="tel" value="5512345678"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline text-[20px]">call</span>
+</div>
+</div>
+<div class="md:col-span-2 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="extension">Extensión</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="extension" placeholder="4921" type="text" value="4921"/>
+</div>
+</div>
+</div>
+<!-- SECCIÓN: Domicilio Inicial (Base Obligatorio) -->
+<div class="bg-surface-container-low rounded-xl p-lg shadow-md flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">location_on</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Domicilio Inicial Obligatorio</h2>
+</div>
+<span class="font-label-caps text-label-caps px-sm py-xs bg-surface-container text-outline rounded uppercase">Sede Predeterminada</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<div class="md:col-span-8 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="calle">Calle / Avenida</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="calle" placeholder="Av. Insurgentes Sur" type="text" value="Av. Hidalgo"/>
+</div>
+<div class="md:col-span-4 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="numero-ext-int">Número Ext. / Int.</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="numero-ext-int" placeholder="123 - Piso 4" type="text" value="123"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<div class="md:col-span-7 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="colonia">Colonia</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="colonia" placeholder="Col. Juárez" type="text" value="Del Carmen"/>
+</div>
+<div class="md:col-span-5 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="codigo-postal">Código Postal (C.P.)</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="codigo-postal" maxlength="5" placeholder="04100" type="text" value="04100"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="alcaldia">Alcaldía / Municipio</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="alcaldia" placeholder="Coyoacán" type="text" value="Coyoacán"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="ciudad">Ciudad</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="ciudad" placeholder="Ciudad de México" type="text" value="Ciudad de México"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="estado-dom">Estado del Domicilio</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="estado-dom" placeholder="CDMX" type="text" value="CDMX"/>
+</div>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="ref-entrega">Referencia de Entrega Específica</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors" id="ref-entrega" placeholder="Edificio, piso, ventanilla de oficialía..." type="text" value="Edificio 2, Ventanilla 4"/>
+</div>
+</div>
+<!-- SECCIÓN: Volantes de Correspondencia (Relación N:M) -->
+<div class="bg-surface-container-low rounded-xl p-lg shadow-md flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[22px]">confirmation_number</span>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Volantes de Correspondencia</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Relación muchos a muchos: asocie múltiples volantes a este destinatario.</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-primary bg-primary/10 px-sm py-xs rounded uppercase">N:M Vinculados</span>
+</div>
+<!-- Lista de Chips de Volantes Asociados -->
+<div class="flex flex-col gap-xs">
+<span class="font-label-caps text-label-caps text-outline uppercase">Volantes actualmente vinculados</span>
+<div class="flex flex-wrap items-center gap-xs p-sm bg-surface-container rounded-lg min-h-16" id="volantes-chips-container">
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container-high rounded-full border border-primary/20 text-on-surface font-code-md text-code-md" data-folio="VOL-2026-4410">
+<span class="material-symbols-outlined text-[16px] text-primary">link</span>
+<span>VOL-2026-4410</span>
+<button class="text-outline hover:text-error ml-1 flex items-center" onclick="this.parentElement.remove()" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Formulario rápido para asociar un volante adicional -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md items-end">
+<div class="md:col-span-8 flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="nuevo-folio-input">Agregar Folio de Volante</label>
+<div class="relative">
+<input class="w-full bg-surface-container text-on-surface font-code-md text-code-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright transition-colors uppercase" id="nuevo-folio-input" placeholder="VOL-2026-XXXX" type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-outline text-[20px]">tag</span>
+</div>
+</div>
+<div class="md:col-span-4 flex">
+<button class="w-full py-sm px-md bg-surface-container-high hover:bg-surface-bright text-primary border border-primary/30 rounded-lg font-body-sm text-body-sm font-semibold flex items-center justify-center gap-xs transition-colors" id="btn-add-volante" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Asociar Volante</span>
+</button>
+</div>
+</div>
+</div>
+<!-- FOOTER ACTIONS: Sticky Control Bar -->
+<div class="sticky bottom-4 z-20 bg-surface-container-low/95 backdrop-blur-md rounded-xl p-md shadow-xl flex flex-col sm:flex-row items-center justify-between gap-md border border-outline-variant/20">
+<div class="flex items-center gap-xs text-on-surface-variant text-body-sm font-body-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">save</span>
+<span>Los cambios se guardan localmente para este despacho.</span>
+</div>
+<div class="flex items-center gap-md w-full sm:w-auto justify-end">
+<button class="px-lg py-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm font-medium transition-colors" type="button">
+      Volver al flujo de envío
+    </button>
+<button class="px-lg py-sm bg-primary-container hover:opacity-90 text-on-primary-container rounded-lg font-body-sm text-body-sm font-semibold flex items-center gap-xs shadow-md transition-all" id="btn-submit" type="button">
+<span class="material-symbols-outlined text-[20px]">send_and_archive</span>
+<span>Guardar y Usar en Envío Actual</span>
+</button>
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+<script>
+  // Dynamic Tab Switcher for Recipient Type
+  const tabs = document.querySelectorAll('#tipo-tabs button');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        t.className = 'tab-btn py-sm text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface rounded-lg text-center transition-all flex items-center justify-center gap-xs';
+      });
+      tab.className = 'tab-btn py-sm text-body-sm font-body-sm font-semibold rounded-lg text-center transition-all bg-primary-container text-on-primary-container shadow-sm flex items-center justify-center gap-xs';
+    });
+  });
+
+  // Force uppercase on recipient full name input
+  const nameInput = document.getElementById('nombre-completo');
+  nameInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+
+  // Dynamic preview line calculation
+  const cargoInput = document.getElementById('cargo');
+  const instInput = document.getElementById('institucion');
+  const previewLine = document.getElementById('preview-linea');
+
+  function updatePreview() {
+    const cargo = cargoInput.value.trim();
+    const inst = instInput.value.trim();
+    if (cargo && inst) {
+      previewLine.textContent = `${cargo} en ${inst}`;
+    } else if (cargo) {
+      previewLine.textContent = cargo;
+    } else if (inst) {
+      previewLine.textContent = inst;
+    } else {
+      previewLine.textContent = 'Sin cargo especificado';
+    }
+  }
+
+  cargoInput.addEventListener('input', updatePreview);
+  instInput.addEventListener('input', updatePreview);
+
+  // Autofill button micro-interaction
+  const autofillBtn = document.getElementById('btn-autofill');
+  autofillBtn.addEventListener('click', () => {
+    // Fill identity
+    document.getElementById('titulo').value = 'LIC.';
+    nameInput.value = 'LIC. JUAN PÉREZ GARCÍA';
+    
+    // Fill Address
+    document.getElementById('calle').value = 'Av. Hidalgo';
+    document.getElementById('numero-ext-int').value = '123';
+    document.getElementById('colonia').value = 'Del Carmen';
+    document.getElementById('codigo-postal').value = '04100';
+    document.getElementById('alcaldia').value = 'Coyoacán';
+    document.getElementById('ciudad').value = 'Ciudad de México';
+    document.getElementById('estado-dom').value = 'CDMX';
+    document.getElementById('ref-entrega').value = 'Edificio 2, Ventanilla 4 (Entregar en recepción)';
+
+    // Fill contact & folio
+    document.getElementById('telefono').value = '5512345678';
+    document.getElementById('folio-volante').value = 'VOL-2026-4410';
+
+    updatePreview();
+
+    // Pulse feedback visual
+    autofillBtn.classList.add('bg-primary', 'text-on-primary');
+    setTimeout(() => {
+      autofillBtn.classList.remove('bg-primary', 'text-on-primary');
+    }, 400);
+  });
+
+  // Submission handler micro-interaction
+  document.getElementById('btn-submit').addEventListener('click', () => {
+    const submitBtn = document.getElementById('btn-submit');
+    const prevText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span><span>Guardando...</span>';
+    setTimeout(() => {
+      submitBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span><span>¡Listo para despacho!</span>';
+      setTimeout(() => {
+        submitBtn.innerHTML = prevText;
+      }, 1500);
+    }, 600);
+  });
+</script></main></div><!-- MODAL: Crear Nuevo Título Honorífico -->
+<div class="fixed inset-0 z-50 hidden bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center p-md" id="modal-titulo">
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-lg w-full max-w-md shadow-xl flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<h3 class="font-headline-md text-body-lg text-on-surface font-semibold">Nuevo Título Honorífico</h3>
+</div>
+<button class="text-outline hover:text-on-surface" onclick="closeModal('modal-titulo')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Abreviatura (ej. ARQ.)</label>
+<input class="bg-surface-container text-on-surface font-code-md text-code-md uppercase px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright" id="nuevo-titulo-abrev" placeholder="ARQ." type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Significado Completo</label>
+<input class="bg-surface-container text-on-surface font-body-sm text-body-sm px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright" id="nuevo-titulo-desc" placeholder="Arquitecto / Arquitecta" type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-end gap-sm pt-xs">
+<button class="px-md py-sm bg-surface-container text-on-surface rounded-lg font-body-sm text-body-sm" onclick="closeModal('modal-titulo')" type="button">Cancelar</button>
+<button class="px-md py-sm bg-primary-container text-on-primary-container font-semibold rounded-lg font-body-sm text-body-sm flex items-center gap-xs" onclick="saveNuevoTitulo()" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Guardar Título</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MODAL: Crear Nueva Organización / Institución -->
+<div class="fixed inset-0 z-50 hidden bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center p-md" id="modal-org">
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-lg w-full max-w-md shadow-xl flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">add_business</span>
+<h3 class="font-headline-md text-body-lg text-on-surface font-semibold">Nueva Organización / Institución</h3>
+</div>
+<button class="text-outline hover:text-on-surface" onclick="closeModal('modal-org')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Nombre Oficial de la Organización</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright" id="nueva-org-nombre" placeholder="Ej. Secretaría de Economía" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Estado de la Institución</label>
+<input class="bg-surface-container text-on-surface font-body-sm text-body-sm px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright" id="nueva-org-estado" placeholder="Ej. Ciudad de México" type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-end gap-sm pt-xs">
+<button class="px-md py-sm bg-surface-container text-on-surface rounded-lg font-body-sm text-body-sm" onclick="closeModal('modal-org')" type="button">Cancelar</button>
+<button class="px-md py-sm bg-primary-container text-on-primary-container font-semibold rounded-lg font-body-sm text-body-sm flex items-center gap-xs" onclick="saveNuevaOrg()" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Guardar Organización</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MODAL: Crear Nuevo Cargo / Puesto -->
+<div class="fixed inset-0 z-50 hidden bg-surface-container-lowest/80 backdrop-blur-sm flex items-center justify-center p-md" id="modal-cargo">
+<div class="bg-surface-container-low border border-outline-variant/40 rounded-xl p-lg w-full max-w-md shadow-xl flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs text-primary">
+<span class="material-symbols-outlined text-[20px]">work_outline</span>
+<h3 class="font-headline-md text-body-lg text-on-surface font-semibold">Nuevo Cargo / Puesto</h3>
+</div>
+<button class="text-outline hover:text-on-surface" onclick="closeModal('modal-cargo')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="flex flex-col gap-sm">
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Nombre / Significado del Cargo</label>
+<input class="bg-surface-container text-on-surface font-body-md text-body-md px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright" id="nuevo-cargo-nombre" placeholder="Ej. Subdirector de Enlace Administrativo" type="text"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-caps text-label-caps text-outline uppercase">Abreviatura Institucional (Opcional)</label>
+<input class="bg-surface-container text-on-surface font-code-md text-code-md uppercase px-md py-sm rounded-lg focus:outline-none focus:bg-surface-bright" id="nuevo-cargo-abrev" placeholder="Ej. SUB-ADM" type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-end gap-sm pt-xs">
+<button class="px-md py-sm bg-surface-container text-on-surface rounded-lg font-body-sm text-body-sm" onclick="closeModal('modal-cargo')" type="button">Cancelar</button>
+<button class="px-md py-sm bg-primary-container text-on-primary-container font-semibold rounded-lg font-body-sm text-body-sm flex items-center gap-xs" onclick="saveNuevoCargo()" type="button">
+<span class="material-symbols-outlined text-[18px]">check</span>
+<span>Guardar Cargo</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  // Modal controllers
+  function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.remove('hidden');
+  }
+  function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('hidden');
+  }
+
+  function saveNuevoTitulo() {
+    const abrev = document.getElementById('nuevo-titulo-abrev').value.trim().toUpperCase();
+    const desc = document.getElementById('nuevo-titulo-desc').value.trim();
+    if (abrev) {
+      const sel = document.getElementById('titulo-select');
+      const opt = document.createElement('option');
+      opt.value = abrev;
+      opt.textContent = `${abrev} — ${desc || abrev}`;
+      sel.appendChild(opt);
+      sel.value = abrev;
+      closeModal('modal-titulo');
+      document.getElementById('nuevo-titulo-abrev').value = '';
+      document.getElementById('nuevo-titulo-desc').value = '';
+    }
+  }
+
+  function saveNuevaOrg() {
+    const nombre = document.getElementById('nueva-org-nombre').value.trim();
+    const estado = document.getElementById('nueva-org-estado').value.trim();
+    if (nombre) {
+      const sel = document.getElementById('org-select');
+      const opt = document.createElement('option');
+      opt.value = nombre;
+      opt.textContent = nombre;
+      sel.appendChild(opt);
+      sel.value = nombre;
+      if (estado) {
+        document.getElementById('estado-inst').value = estado;
+      }
+      updateDynamicPreview();
+      closeModal('modal-org');
+      document.getElementById('nueva-org-nombre').value = '';
+      document.getElementById('nueva-org-estado').value = '';
+    }
+  }
+
+  function saveNuevoCargo() {
+    const nombre = document.getElementById('nuevo-cargo-nombre').value.trim();
+    if (nombre) {
+      const sel = document.getElementById('cargo-select');
+      const opt = document.createElement('option');
+      opt.value = nombre;
+      opt.textContent = nombre;
+      sel.appendChild(opt);
+      sel.value = nombre;
+      updateDynamicPreview();
+      closeModal('modal-cargo');
+      document.getElementById('nuevo-cargo-nombre').value = '';
+      document.getElementById('nuevo-cargo-abrev').value = '';
+    }
+  }
+
+  // Type Tab Controller & Validations
+  let currentTipo = 'persona';
+  function setTipo(tipo) {
+    currentTipo = tipo;
+    const bloquePersona = document.getElementById('bloque-persona');
+    const rulesBadge = document.getElementById('tipo-rules-badge');
+    const ruleHint = document.getElementById('identidad-rule-hint');
+    const orgStar = document.getElementById('org-required-star');
+    const estadoStar = document.getElementById('estado-required-star');
+    const secTitle = document.getElementById('identidad-section-title');
+
+    const tabs = ['persona', 'gobierno', 'privada'];
+    tabs.forEach(t => {
+      const btn = document.getElementById('tab-' + t);
+      if (btn) {
+        if (t === tipo) {
+          btn.className = 'tab-btn py-sm text-body-sm font-body-sm font-semibold rounded-lg text-center transition-all bg-primary-container text-on-primary-container shadow-sm flex items-center justify-center gap-xs';
+        } else {
+          btn.className = 'tab-btn py-sm text-body-sm font-body-sm text-on-surface-variant hover:text-on-surface rounded-lg text-center transition-all flex items-center justify-center gap-xs';
+        }
+      }
+    });
+
+    if (tipo === 'persona') {
+      if (bloquePersona) bloquePersona.classList.remove('hidden');
+      if (rulesBadge) rulesBadge.textContent = 'Persona: Título y Nombre obligatorios';
+      if (ruleHint) ruleHint.textContent = 'Persona física especializada';
+      if (orgStar) orgStar.classList.add('hidden');
+      if (estadoStar) estadoStar.classList.add('hidden');
+      if (secTitle) secTitle.textContent = 'Identidad & Filiación';
+    } else {
+      // Gobierno o Privada
+      if (bloquePersona) bloquePersona.classList.add('hidden');
+      const tipoNombre = tipo === 'gobierno' ? 'Entidad Gubernamental' : 'Entidad Privada / Empresa';
+      if (rulesBadge) rulesBadge.textContent = `${tipoNombre}: Nombre persona y título no aplican. Organización obligatoria.`;
+      if (ruleHint) ruleHint.textContent = 'Institución obligatoria (sin persona)';
+      if (orgStar) orgStar.classList.remove('hidden');
+      if (estadoStar) estadoStar.classList.remove('hidden');
+      if (secTitle) secTitle.textContent = `Identidad Institucional (${tipo.toUpperCase()})`;
+    }
+    updateDynamicPreview();
+  }
+
+  document.getElementById('tab-persona')?.addEventListener('click', () => setTipo('persona'));
+  document.getElementById('tab-gobierno')?.addEventListener('click', () => setTipo('gobierno'));
+  document.getElementById('tab-privada')?.addEventListener('click', () => setTipo('privada'));
+
+  // Dynamic Preview Line updater
+  function updateDynamicPreview() {
+    const cargoSel = document.getElementById('cargo-select')?.value || '';
+    const orgSel = document.getElementById('org-select')?.value || '';
+    const nameVal = document.getElementById('nombre-completo')?.value || '';
+    const preview = document.getElementById('preview-linea');
+    if (!preview) return;
+
+    if (currentTipo === 'persona') {
+      preview.textContent = `${nameVal ? nameVal + ' • ' : ''}${cargoSel} en ${orgSel}`;
+    } else {
+      preview.textContent = `${orgSel} [${cargoSel}]`;
+    }
+  }
+
+  document.getElementById('cargo-select')?.addEventListener('change', updateDynamicPreview);
+  document.getElementById('org-select')?.addEventListener('change', updateDynamicPreview);
+  document.getElementById('nombre-completo')?.addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase();
+    updateDynamicPreview();
+  });
+
+  // Multiple Volantes (N:M) handler
+  document.getElementById('btn-add-volante')?.addEventListener('click', () => {
+    const input = document.getElementById('nuevo-folio-input');
+    const val = input.value.trim().toUpperCase();
+    if (!val) return;
+    const container = document.getElementById('volantes-chips-container');
+    const chip = document.createElement('div');
+    chip.className = 'flex items-center gap-xs px-sm py-1 bg-surface-container-high rounded-full border border-primary/20 text-on-surface font-code-md text-code-md';
+    chip.setAttribute('data-folio', val);
+    chip.innerHTML = `<span class="material-symbols-outlined text-[16px] text-primary">link</span><span>${val}</span><button type="button" onclick="this.parentElement.remove()" class="text-outline hover:text-error ml-1 flex items-center"><span class="material-symbols-outlined text-[16px]">close</span></button>`;
+    container.appendChild(chip);
+    input.value = '';
+  });
+</script></body></html>
