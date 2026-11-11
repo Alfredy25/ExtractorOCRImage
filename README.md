@@ -312,7 +312,10 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 - Iniciar Session
 
 ## Al programar quitarlas de esta sesión las variables de entorno 
+```powershell
 Remove-Item Env:API_BASE_URL -ErrorAction SilentlyContinue
 Remove-Item Env:LOGIN_ENDPOINT -ErrorAction SilentlyContinue
 Remove-Item Env:COVERTURAS_ENDPOINT -ErrorAction SilentlyContinue
 Remove-Item Env:REGISTROS_ENDPOINT -ErrorAction SilentlyContinue
+Remove-Item Env:OPENAI_MODEL -ErrorAction SilentlyContinue
+```
