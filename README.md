@@ -7,6 +7,7 @@ Aplicación de **escritorio** (Python, PySide6) para extraer el texto del **dest
 - Carga una o varias imágenes (JPG, JPEG, PNG), lista y vista previa con zoom y recorte.
 - Rotación, recorte libre o cuadrado 1:1, envío del recorte a la IA y formulario de campos estructurados.
 - Registro por **sede** obligatoria: `AJUSCO` o `COYOACÁN`.
+- **Búsqueda de destinatarios** en el directorio (`RECEIVERS_ENDPOINT`) con filtros, orden y paginación, antes de extraer la foto.
 - **Exportación** por rango de fechas (CSV / Excel) con los datos obtenidos desde el backend.
 - **Envíos Paquetexpress**: consulta de cobertura por CP (API `COVERTURAS_ENDPOINT`), creación/edición de envíos y listado vía `ENVIOS_PX_ENDPOINT`.
 - **Exportación de envíos** a Excel con columnas y formato preparados para carga en Paquetexpress (desde **Ver envíos**).
@@ -50,6 +51,7 @@ Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en
 | `REGISTROS_ENDPOINT` | Ruta de registros OCR (por defecto `/registros/`). |
 | `COVERTURAS_ENDPOINT` | Ruta de coberturas Paquetexpress (por defecto `/coverages/`). |
 | `ENVIOS_PX_ENDPOINT` | Ruta de envíos Paquetexpress (por defecto `/shipments-px/`). |
+| `RECEIVERS_ENDPOINT` | Ruta del directorio de destinatarios (por defecto `/receivers/`). |
 | `API_TIMEOUT_SECONDS` | Timeout HTTP hacia el backend (segundos). |
 | `OPENAI_API_KEY` | Clave para llamadas a OpenAI desde el cliente. |
 | `OPENAI_MODEL` | Modelo (por defecto `gpt-4o`). |
@@ -102,26 +104,37 @@ Get-Content "$env:LOCALAPPDATA\ExtractorOCR\logs\extractor_ocr.log" -Wait
 4. **Rotar** si hace falta (menú **Edición** o controles del panel).
 5. **Modo de recorte**: libre o cuadrado 1:1.
 6. **Seleccionar región** en el visor (arrastrar con el botón izquierdo) y **Aplicar recorte**.
-7. Elegir **SEDE**: `AJUSCO` o `COYOACÁN` (obligatorio para enviar/guardar).
-8. **Enviar a IA** y revisar o editar campos en el panel derecho.
-9. **Guardar registro** (botón en el panel derecho; el guardado va al backend salvo modo local de tests).
-10. **Exportar** registros por fechas: **Archivo → Exportar…** (o el ítem de navegación **Exportar registros**).
-11. (Opcional) **Consultar cobertura** y **crear envío Paquetexpress** a partir de los datos OCR (ver sección siguiente).
-12. (Opcional) **Ver envíos**: consultar el historial por rango de fechas y **exportar a Excel** listo para Paquetexpress.
+7. **Buscar al destinatario** en la sección **Destinatario** del inspector, leyendo el nombre en la foto. Todavía no hay OCR.
+8. Si aparece, elegir uno de sus domicilios y pulsar **Crear envío con este destinatario** (ver sección siguiente).
+9. Si no aparece, desplegar **Datos extraídos**, elegir **SEDE** (`AJUSCO` o `COYOACÁN`), **Enviar a IA** y revisar o editar los campos.
+10. **Consultar cobertura** con el código postal del OCR y completar el alta de destinatario y envío.
+11. **Guardar registro** (botón del inspector; solo se habilita cuando hay datos OCR que guardar).
+12. **Exportar** registros por fechas: **Archivo → Exportar…** (o el ítem de navegación **Exportar registros**).
+13. (Opcional) **Ver envíos**: consultar el historial por rango de fechas y **exportar a Excel** listo para Paquetexpress.
 
 ## Envíos Paquetexpress
 
-Flujo integrado con el OCR, sin sustituir el guardado de registros de destinatario.
+El flujo completo está documentado en [`docs/flows/flow_create_shipment_px.md`](docs/flows/flow_create_shipment_px.md). El inspector del Workspace tiene dos secciones plegables, una por rama: se busca al destinatario **antes** de extraer, y el OCR solo entra en juego cuando la búsqueda no encuentra nada.
 
-### Crear un envío
+### Rama A: el destinatario ya existe
 
-1. Tras **Enviar a IA** (y con código postal en los campos OCR), pulsa **Consultar cobertura** en el panel derecho.
-2. La app consulta `COVERTURAS_ENDPOINT` con el CP extraído. Si no hay cobertura, muestra un aviso y no abre el formulario.
-3. Si hay cobertura, se abre la ventana **Crear envío Paquetexpress**:
-   - Datos de cobertura (colonia, ciudad, estado, tipo, etc.).
-   - Formulario de envío precargado desde OCR + cobertura (destinatario, domicilio, paquete, etc.).
-   - Campos OCR de solo lectura para comparar y elegir la colonia correcta.
-4. Completa o ajusta los datos y confirma; el alta se envía por `POST` a `ENVIOS_PX_ENDPOINT`.
+1. En **Destinatario**, buscar por nombre de la persona o de la organización. La consulta arranca en página 1, 10 por página, ordenada por `id` ascendente; se pueden cambiar tipo, estado, orden y dirección, y paginar los resultados.
+2. Elegir el destinatario y uno de sus domicilios. Si solo tiene uno, queda elegido.
+3. Pulsar **Crear envío con este destinatario**: se abre **Crear envío Paquetexpress** con la **imagen del recorte** como referencia, sin campos OCR.
+4. La ventana consulta `COVERTURAS_ENDPOINT` con el **código postal del domicilio**. Si no hay cobertura, avisa, se cierra y no queda registro OCR.
+5. Con cobertura: elegir colonia, completar paquete, RFC y comentarios, y confirmar (`POST` a `ENVIOS_PX_ENDPOINT`).
+
+En esta rama no se extrae la foto, así que tampoco hay registro OCR que guardar.
+
+### Rama B: el destinatario no existe
+
+1. La búsqueda sin coincidencias despliega sola la sección **Datos extraídos**.
+2. Elegir **SEDE** y pulsar **Enviar a IA**; revisar o corregir los campos.
+3. Pulsar **Consultar cobertura**: la app consulta `COVERTURAS_ENDPOINT` con el **CP del OCR**. Si no hay cobertura, no se abre la creación ni se da de alta al destinatario; solo queda **Guardar registro**.
+4. Con cobertura se abre **Crear envío Paquetexpress** con las coberturas, los campos OCR de solo lectura y el alta de destinatario. Esta pantalla ya no vuelve a buscar.
+5. **Dar de alta destinatario** abre el formulario precargado con el OCR (`POST` a `RECEIVERS_ENDPOINT`, con su domicilio en la misma petición). Si responde 409, se reutiliza el destinatario existente.
+6. Completar paquete, RFC y comentarios y confirmar el envío.
+7. De vuelta en el Workspace, pulsar **Guardar registro** para persistir la extracción.
 
 ### Consultar y exportar envíos
 
@@ -156,12 +169,14 @@ El guardado de registro no tiene atajo asignado; se hace con el botón **Guardar
 2. Arrancar `python -m app.main` e **iniciar sesión**.
 3. Abrir una imagen de prueba y seleccionarla en la lista.
 4. Rotar si procede; trazar recorte y aplicar.
-5. Seleccionar **SEDE**.
-6. **Enviar a IA** (requiere `OPENAI_API_KEY` válida).
-7. Revisar campos, editar si hace falta y **Guardar registro**.
-8. **Archivo → Exportar…** y comprobar el archivo generado.
-9. (Envíos) Con CP válido en OCR: **Consultar cobertura** → completar formulario → crear envío.
-10. (Envíos) **Ver envíos** → consultar por fechas → **Exportar a Excel** y abrir el archivo generado.
+5. (Rama A) Buscar un destinatario que exista, elegir domicilio y **Crear envío con este destinatario**; comprobar que la ventana muestra el recorte y la cobertura del CP del domicilio.
+6. (Rama A) Completar paquete y confirmar; al volver al Workspace, **Guardar registro** debe seguir deshabilitado.
+7. (Rama B) Buscar un nombre que no exista y comprobar que **Datos extraídos** se despliega solo.
+8. (Rama B) Seleccionar **SEDE** y **Enviar a IA** (requiere `OPENAI_API_KEY` válida).
+9. (Rama B) **Consultar cobertura** con el CP del OCR, dar de alta al destinatario y crear el envío.
+10. (Rama B) De vuelta en el Workspace, revisar campos y **Guardar registro**.
+11. **Archivo → Exportar…** y comprobar el archivo generado.
+12. (Envíos) **Ver envíos** → consultar por fechas → **Exportar a Excel** y abrir el archivo generado.
 
 ## Tests
 

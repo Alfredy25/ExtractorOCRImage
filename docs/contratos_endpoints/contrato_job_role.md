@@ -148,8 +148,8 @@ Header:
 | meaning | string | sí | — | body. 3–150. `QLineEdit` con `setMaxLength(150)`. |
 
 ### Validaciones
-- `abbreviation`: letras (incluida `ñ`), punto y espacio. Sin dígitos y sin acentos. Se guarda en mayúsculas. `dir.` queda `DIR.`.
-- `meaning`: letras con acentos, `ñ` y espacio. Sin dígitos y sin punto. Se guarda en forma de título. `director general` queda `Director General`.
+- `abbreviation`: patrón `^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ. ]+$` (letras con acento, `Ññ`, dígitos, punto y espacio). Se guarda en mayúsculas. `dir.` queda `DIR.`.
+- `meaning`: patrón `^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ. ]+$` (letras con acento, `Ññ`, dígitos, punto y espacio). Se guarda en forma de título. `director general` queda `Director General`.
 - La abreviatura no puede repetirse. La comparación es en mayúsculas.
 
 ### Respuesta

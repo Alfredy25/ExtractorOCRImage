@@ -38,7 +38,7 @@ Si el paso 3 no trae coincidencias (`total` 0, `items` `[]`), no es un error. Si
 5b. Se consulta cobertura con el código postal del OCR (`GET /coverages/?cp={cp}`).
 6b. Si responde 404, no se abre la creación ni se crea destinatario. Solo se guarda el registro OCR.
 7b. Si hay coberturas, se abre la pantalla de creación con esa lista y, al lado, el alta del destinatario precargada con el OCR.
-8b. Se crea el destinatario (`POST /receivers/`), con su domicilio en la misma petición. El 201 se usa tal cual. Si responde 409, se usa el `receiver_id` del body.
+8b. Se crea el destinatario (`POST /receivers/`), con su domicilio en la misma petición. El 201 se usa tal cual: calle, número, país, referencia y código postal salen de `addresses` de esa respuesta. Con ese código postal se vuelve a consultar cobertura y se preselecciona la colonia del domicilio creado. Si responde 409, se usa el destinatario encontrado, con el mismo criterio.
 9b. Se completan paquete, RFC y comentarios.
 10b. Se crea el envío (`POST /shipments-px/`).
 11b. Se regresa a Workspace y se guarda el registro OCR. Si el guardado falla, el envío ya creado sigue.
@@ -251,7 +251,7 @@ El PATCH de destinatario **no** entra aquí: no actualiza `addresses` ni `contac
 
 El alta de envío **no** recibe un `receiver_id`. Copia valores al body plano de `ShippingRequest`.
 
-El código postal con el que se consulta cobertura es el del domicilio elegido (paso 6) o el del OCR (paso 5b). Colonia, código postal, ciudad, estado y tipo del envío salen de la cobertura que el usuario elija en esa lista.
+El código postal con el que se consulta cobertura es el del domicilio elegido (paso 6) o, tras crear al destinatario, el de `addresses` en la respuesta del alta (paso 8b). El paso 5b solo abre la pantalla con el código postal del OCR. Colonia, código postal, ciudad, estado y tipo del envío salen de la cobertura que quede seleccionada; la colonia inicial es la del domicilio devuelto, si está en esa lista.
 
 ### De la cobertura seleccionada
 
@@ -271,7 +271,7 @@ Estos campos **no** se toman del domicilio del destinatario ni del OCR.
 
 | Campo envío | Origen `ReceiverDto` | Notas |
 |-------------|----------------------|-------|
-| `name_receiver` | PERSONA: `full_name`. Opcional prefijo `title.abbreviation`. GOBIERNO/PRIVADA: `position.organization.name` (`full_name` llega `null`) | PX: 4–80, obligatorio. Org puede tener hasta 180: hay que caber en 80. El ejemplo del contrato es `DR. PEPE PINEDO PINEDO`. |
+| `name_receiver` | PERSONA: `title.abbreviation` + `full_name` + ` / ` + `job_role.abbreviation` + ` EN ` + `organization.name`. Cargo y organización son opcionales; `EN` solo va si hay ambos. GOBIERNO/PRIVADA: `position.organization.name` | PX: 4–80, obligatorio. Se recorta a 80. |
 | `country` | `addresses[i].country` | 3–50. |
 | `street` | `addresses[i].street` | 3–80. El receiver ya abrevia (`AVENIDA` → `AV.`). El alta PX no vuelve a abreviar. |
 | `num_street` | `addresses[i].num_street` | 1–15. |

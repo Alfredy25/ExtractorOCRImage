@@ -20,7 +20,7 @@ Listar títulos paginados. Busca por abreviatura o significado.
 Sin body.
 
 Query:
-- `search`: string, opcional. Mínimo 2 caracteres, y al menos 3 útiles después de recortar espacios. Letras, números, punto y espacio. Sin tope de 60: el router declara `maxlength`, y ese nombre no limita la cadena.
+- `search`: string, opcional. Mínimo 2 caracteres, y al menos 3 útiles después de recortar espacios. Patrón `^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ. ]+$` (letras, números, punto, espacio y `ñ`). Sin tope de 60: el router declara `maxlength`, y ese nombre no limita la cadena.
 - `page`: int, default 1, >= 1
 - `page_size`: int, default 50, 5–80
 - `order_by`: `id` | `abbrev` | `meaning`, default `id`
@@ -39,7 +39,7 @@ Header:
 | direction | string | no | asc | query. Combo `asc` o `desc`. |
 
 ### Validaciones
-- `search` admite `a-z`, `A-Z`, dígitos, `áéíóúÁÉÍÓÚ`, punto y espacio. No admite `ñ` ni `ü`.
+- `search` admite `a-z`, `A-Z`, dígitos, `áéíóúÁÉÍÓÚñÑ`, punto y espacio (`^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ. ]+$`). No admite `ü`.
 - Se recortan los espacios de los extremos. Si después quedan menos de 3 caracteres, 422 con mensaje `Search debe tener al menos 3 caracteres`.
 - La búsqueda es un fragmento. El término se pasa a mayúsculas. La abreviatura se compara tal como está guardada; el significado se compara en mayúsculas. `abg` encuentra un significado que contenga `ABG`. Una abreviatura guardada como `Abg.` no coincide con el término `ABG`.
 - `order_by` y `direction` solo aceptan los valores de arriba.
@@ -99,11 +99,11 @@ Header:
 ### Campos
 | Campo | Tipo | Requerido | Default | Notas |
 |-------|------|-----------|---------|-------|
-| abbreviation | string | sí | — | body. `QLineEdit`, máximo 60. |
+| abbreviation | string | sí | — | body. `QLineEdit`, 2–60. |
 | meaning | string | sí | — | body. `QLineEdit`, máximo 150. |
 
 ### Validaciones
-- `abbreviation`: 3–60 caracteres.
+- `abbreviation`: 2–60 caracteres.
 - `meaning`: 3–150 caracteres.
 - No hay patrón ni cambio de mayúsculas. Lo que se envía es lo que se guarda.
 - La abreviatura no puede repetirse. La comparación usa la abreviatura enviada en mayúsculas contra la abreviatura guardada. `Dr.` choca con un registro cuyo texto guardado sea `DR.`. No choca con uno guardado como `Dr.`.
