@@ -517,12 +517,19 @@ QComboBox QAbstractItemView {{
     padding: 4px;
     outline: none;
     selection-background-color: {c["primary_container"]};
-    selection-color: {c["on_primary_container"]};
+    selection-color: {c["on_surface"]};
 }}
 QComboBox QAbstractItemView::item {{
     min-height: 26px;
     padding: 4px 8px;
     border-radius: {r["control"]}px;
+    background-color: transparent;
+    color: {c["on_surface"]};
+}}
+QComboBox QAbstractItemView::item:hover,
+QComboBox QAbstractItemView::item:selected {{
+    background-color: {c["primary_container"]};
+    color: {c["on_surface"]};
 }}
 
 QCalendarWidget QWidget {{
@@ -832,11 +839,18 @@ QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo QAbstractItemView {
     padding: 4px;
     outline: none;
     selection-background-color: {c["primary_container"]};
-    selection-color: {c["on_primary_container"]};
+    selection-color: {c["on_surface"]};
 }}
 QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo QAbstractItemView::item {{
     min-height: 28px;
     padding: 6px 10px;
+    background-color: transparent;
+    color: {c["on_surface"]};
+}}
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo QAbstractItemView::item:hover,
+QDialog#ShipmentsHistoryWindow QComboBox#shipmentsScopeCombo QAbstractItemView::item:selected {{
+    background-color: {c["primary_container"]};
+    color: {c["on_surface"]};
 }}
 QFrame#ShipmentsTableCard {{
     background-color: {c["surface_container_lowest"]};

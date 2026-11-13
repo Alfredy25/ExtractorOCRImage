@@ -145,135 +145,6 @@ def test_get_coverages_for_postal_code_maps_not_found(monkeypatch):
         px.get_coverages_for_postal_code("01030")
 
 
-def test_normalize_shipment_fields_returns_only_normalized_keys():
-    result = px.normalize_shipment_fields({
-        "name_receiver": "Juan",
-        "street": "Central",
-        "address_reference": "Puerta",
-        "city": "no debe aparecer",
-    })
-
-    assert set(result) == {
-        "name_receiver",
-        "street",
-        "num_street",
-        "phone",
-        "address_reference",
-    }
-
-
-def test_normalize_shipment_fields_uppercases_and_strips():
-    result = px.normalize_shipment_fields({
-        "name_receiver": "  juan perez  ",
-        "street": "  central  ",
-        "address_reference": "  puerta gris  ",
-    })
-
-    assert result["name_receiver"] == "JUAN PEREZ"
-    assert result["street"] == "CENTRAL"
-    assert result["address_reference"] == "PUERTA GRIS"
-
-
-def test_normalize_shipment_fields_handles_missing_values():
-    result = px.normalize_shipment_fields({})
-
-    assert result["name_receiver"] == ""
-    assert result["street"] == ""
-    assert result["num_street"] == ""
-    assert result["phone"] == ""
-    assert result["address_reference"] == ""
-
-
-@pytest.mark.parametrize(
-    ("street", "expected"),
-    [
-        ("CALLE 12", "C. 12"),
-        ("calle 12", "C. 12"),
-        ("AVENIDA INSURGENTES", "AV. INSURGENTES"),
-        ("BOULEVARD REFORMA", "BLVD. REFORMA"),
-        ("CARRETERA FEDERAL", "CARR. FEDERAL"),
-        ("EDIFICIO A", "EDIF. A"),
-        ("CALLEJON 12", "CALLEJON 12"),
-        ("Callejón 12", "CALLEJON 12"),
-        ("CALLEJÓN, 12", "CALLEJON 12"),
-        ("AVENIDAS NORTE", "AVENIDAS NORTE"),
-    ],
-)
-def test_normalize_shipment_fields_abbreviates_whole_address_words(street, expected):
-    result = px.normalize_shipment_fields({"street": street})
-
-    assert result["street"] == expected
-
-
-def test_normalize_shipment_fields_abbreviates_address_reference():
-    result = px.normalize_shipment_fields({
-        "address_reference": "Edificio B, calle 5",
-    })
-
-    assert result["address_reference"] == "EDIF. B C. 5"
-
-
-@pytest.mark.parametrize(
-    ("name", "expected"),
-    [
-        ("Doctor Juan Perez", "DR. JUAN PEREZ"),
-        ("Doctora Ana Lopez", "DRA. ANA LOPEZ"),
-        ("Maestro Juan", "MTRO. JUAN"),
-        ("Maestra Ana", "MTRA. ANA"),
-        ("Profesor Luis", "PROF. LUIS"),
-        ("Profesora Ana", "PROFA. ANA"),
-        ("Diputado Juan", "DIP. JUAN"),
-        ("Diputada Ana", "DIP. ANA"),
-        ("Senador Juan", "SEN. JUAN"),
-        ("Senadora Ana", "SEN. ANA"),
-        ("Presidente Juan", "PDTE. JUAN"),
-        ("Presidenta Ana", "PDTA. ANA"),
-        ("Administrador Juan", "ADMIN. JUAN"),
-        ("Administradora Ana", "ADMIN. ANA"),
-        ("Director General", "DIR. GRAL."),
-        ("Gobernador Juan", "GOB. JUAN"),
-        ("Titular Juan", "TIT. JUAN"),
-        ("Secretario Juan", "SEC. JUAN"),
-        ("Universidad Autonoma", "UNI AUT."),
-        ("Órgano Interno de Control", "O.I.C."),
-        ("Organo de Control Interno", "O.I.C."),
-        ("Secretaria de Administracion Tributaria", "S.A.T."),
-    ],
-)
-def test_normalize_shipment_fields_abbreviates_whole_title_words(name, expected):
-    result = px.normalize_shipment_fields({"name_receiver": name})
-
-    assert result["name_receiver"] == expected
-
-
-def test_normalize_shipment_fields_removes_special_characters():
-    result = px.normalize_shipment_fields({
-        "name_receiver": 'Juan [Pérez], #1 "Oficial"',
-        "street": "Reforma, [Norte] #12",
-        "num_street": "No. 12-A",
-        "phone": "Tel. 55-1234-5678",
-        "address_reference": "Frente al edificio, (portería)",
-    })
-
-    assert result["name_receiver"] == "JUAN PEREZ 1 OFICIAL"
-    assert result["street"] == "REFORMA NORTE 12"
-    assert result["num_street"] == "12 A"
-    assert result["phone"] == "55 1234 5678"
-    assert result["address_reference"] == "FRENTE AL EDIF. PORTERIA"
-
-
-def test_normalize_shipment_fields_keeps_abbreviation_periods():
-    result = px.normalize_shipment_fields({
-        "name_receiver": "Dr. José Pérez",
-        "street": "Av. Independencia, 10/2",
-        "address_reference": "Frente al edificio.",
-    })
-
-    assert result["name_receiver"] == "DR. JOSE PEREZ"
-    assert result["street"] == "AV. INDEPENDENCIA 102"
-    assert result["address_reference"] == "FRENTE AL EDIF."
-
-
 def _valid_update_form() -> dict:
     draft = px.build_shipment_draft(_ocr_form_data(), _coverage())
     draft["num_street"] = "12"
@@ -419,3 +290,229 @@ def test_list_shipments_by_date_range_forwards_my_shipments_true(monkeypatch):
     assert captured["my_shipments"] is True
     assert len(rows) == 1
     assert rows[0].id_shipping == 10
+
+
+def _audit() -> dict:
+    return {
+        "created_at": "2026-11-10T16:00:00",
+        "updated_at": "2026-11-10T16:00:00",
+        "created_by": 1,
+        "updated_by": None,
+    }
+
+
+def _address(**overrides):
+    from app.models.receiver import AddressDto
+
+    data = {
+        "id": 10,
+        "street": "AV. REFORMA",
+        "num_street": "120",
+        "colony": "OTRA COLONIA",
+        "municipality": "GUADALAJARA",
+        "city": "GUADALAJARA",
+        "state": "JALISCO",
+        "postal_code": "44100",
+        "country": "MEXICO",
+        "address_reference": "FRENTE AL PARQUE",
+        "receiver_id": 1,
+        **_audit(),
+    }
+    data.update(overrides)
+    return AddressDto.model_validate(data)
+
+
+def _receiver(**overrides):
+    from app.models.receiver import ReceiverDto
+
+    data = {
+        "id": 1,
+        "type_entity": "PERSONA",
+        "title": {"id": 3, "abbreviation": "DR.", "meaning": "Doctor", **_audit()},
+        "full_name": "JUAN PEREZ LOPEZ",
+        "email": "juan.perez@ejemplo.com",
+        "position": None,
+        "addresses": [],
+        "contacts": [
+            {
+                "id": 6,
+                "phone": "3312345678",
+                "ext": "12",
+                "id_destinatario": 1,
+                **_audit(),
+            }
+        ],
+        "volantes": [],
+        **_audit(),
+    }
+    data.update(overrides)
+    return ReceiverDto.model_validate(data)
+
+
+def test_build_shipment_payload_uses_persona_title_and_coverage_colony():
+    payload = px.build_shipment_payload_from_receiver(
+        _receiver(),
+        _address(),
+        _coverage(),
+        {"rfc": "XAXX-010101-000", "quantity": 1, "comments": "ENTREGAR EN RECEPCION"},
+    )
+
+    assert payload["name_receiver"] == "DR. JUAN PEREZ LOPEZ"
+    assert payload["colony"] == "FLORIDA"
+    assert payload["postal_code"] == "01030"
+    assert payload["state"] == "CIUDAD DE MEXICO"
+    assert payload["city"] == "CIUDAD DE MEXICO"
+    assert payload["coverage_type"] == "PAQUETEXPRESS"
+    assert payload["street"] == "AV. REFORMA"
+    assert payload["phone"] == "3312345678"
+    assert payload["email"] == "notificaciones@feuh.com.mx"
+    assert payload["rfc"] == "XAXX-010101-000"
+
+
+def test_build_shipment_payload_persona_joins_title_role_and_organization():
+    receiver = _receiver(
+        title={"id": 3, "abbreviation": "M. EN A.P.", "meaning": "Maestro", **_audit()},
+        full_name="SONIA ISELA DIAZ MANJARREZ",
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 2,
+                "abbreviation": "CONT. GRAL. GUB.",
+                "meaning": "Contadora General Gubernamental",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "SECRETARIA",
+                "state": "MEXICO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {"rfc": "XAXX-010101-000"}
+    )
+
+    assert payload["name_receiver"] == (
+        "M. EN A.P. SONIA ISELA DIAZ MANJARREZ / CONT. GRAL. GUB. EN SECRETARIA"
+    )
+
+
+def test_build_shipment_payload_persona_name_stops_at_80_characters():
+    receiver = _receiver(
+        title={"id": 3, "abbreviation": "M. EN A.P.", "meaning": "Maestro", **_audit()},
+        full_name="SONIA ISELA DIAZ MANJARREZ",
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 2,
+                "abbreviation": "CONT. GRAL. GUB.",
+                "meaning": "Contadora",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "SECRETARIA DE FINANZAS DEL GOBIERNO DEL ESTADO DE MEXICO",
+                "state": "MEXICO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {}
+    )
+
+    assert len(payload["name_receiver"]) == 80
+    assert payload["name_receiver"].startswith(
+        "M. EN A.P. SONIA ISELA DIAZ MANJARREZ / CONT. GRAL. GUB. EN "
+    )
+
+
+def test_build_shipment_payload_gobierno_truncates_name_and_skips_short_phone():
+    organization = {
+        "id": 4,
+        "name": "O" * 90,
+        "state": "TABASCO",
+        **_audit(),
+    }
+    receiver = _receiver(
+        type_entity="GOBIERNO",
+        title=None,
+        full_name=None,
+        email=None,
+        position={
+            "id": 8,
+            "job_role": None,
+            "organization": organization,
+            **_audit(),
+        },
+        contacts=[
+            {
+                "id": 6,
+                "phone": "331234567",
+                "ext": None,
+                "id_destinatario": 1,
+                **_audit(),
+            }
+        ],
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver,
+        _address(address_reference=None),
+        _coverage(),
+        {"content": "DOCUMENTOS LEGALES"},
+    )
+
+    assert payload["name_receiver"] == "O" * 80
+    assert len(payload["name_receiver"]) == 80
+    assert payload["phone"] is None
+    assert payload["email"] == "notificaciones@feuh.com.mx"
+    assert payload["address_reference"] is None
+    assert payload["content"] == "DOCUMENTOS LEGALES"
+
+
+def test_build_shipment_payload_uses_form_email_not_receiver_email():
+    payload = px.build_shipment_payload_from_receiver(
+        _receiver(),
+        _address(),
+        _coverage(),
+        {"email": "operacion@feuh.com.mx"},
+    )
+
+    assert payload["email"] == "operacion@feuh.com.mx"
+
+
+def test_build_shipment_payload_uses_selected_contact_not_first():
+    receiver = _receiver(
+        contacts=[
+            {
+                "id": 6,
+                "phone": "3312345678",
+                "ext": "12",
+                "id_destinatario": 1,
+                **_audit(),
+            },
+            {
+                "id": 7,
+                "phone": "5511112222",
+                "ext": "90",
+                "id_destinatario": 1,
+                **_audit(),
+            },
+        ]
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver,
+        _address(),
+        _coverage(),
+        {},
+        contact=receiver.contacts[1],
+    )
+
+    assert payload["phone"] == "5511112222"

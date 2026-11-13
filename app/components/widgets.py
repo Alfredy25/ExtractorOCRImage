@@ -8,7 +8,7 @@ expresar: fuentes con interletraje, brillos y composición de layouts.
 
 from __future__ import annotations
 
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QEvent, QSize, Qt, Signal
 from PySide6.QtGui import QColor, QIcon
 from PySide6.QtWidgets import (
     QFrame,
@@ -276,6 +276,96 @@ class Card(QFrame):
     def set_title(self, text: str) -> None:
         if self._header_layout is not None:
             self._title_label.setText(text)
+
+
+class CollapsibleSection(QFrame):
+    """Bloque con cabecera clicable que muestra u oculta su contenido.
+
+    Permite que dos formularios largos convivan en el mismo panel estrecho: el
+    que no se está usando se pliega y cede su alto al otro.
+    """
+
+    toggled = Signal(bool)
+
+    def __init__(
+        self,
+        title: str,
+        icon: str | None = None,
+        expanded: bool = True,
+        parent: QWidget | None = None,
+    ):
+        super().__init__(parent)
+        self.setObjectName("SectionBox")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(
+            SPACE["sm"] + 4, SPACE["sm"] + 2, SPACE["sm"] + 4, SPACE["sm"] + 4
+        )
+        outer.setSpacing(SPACE["sm"] + 2)
+
+        self._header = QWidget()
+        self._header.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._header_layout = QHBoxLayout(self._header)
+        self._header_layout.setContentsMargins(0, 0, 0, 0)
+        self._header_layout.setSpacing(SPACE["xs"] + 2)
+        if icon:
+            self._header_layout.addWidget(icon_label(icon, 15))
+        self._title_label = section_label(title)
+        self._header_layout.addWidget(self._title_label)
+        self._header_layout.addStretch(1)
+        self._chevron = icon_button("expand_less", "Plegar o desplegar la sección", size=16)
+        self._chevron.clicked.connect(self.toggle)
+        self._header_layout.addWidget(self._chevron)
+        outer.addWidget(self._header)
+
+        self._content = QWidget()
+        self._content_layout = QVBoxLayout(self._content)
+        self._content_layout.setContentsMargins(0, 0, 0, 0)
+        self._content_layout.setSpacing(SPACE["sm"] + 2)
+        outer.addWidget(self._content)
+
+        self._header.installEventFilter(self)
+        self._expanded = expanded
+        self._content.setVisible(expanded)
+        self._sync_chevron()
+
+    @property
+    def body(self) -> QVBoxLayout:
+        """Layout donde añadir el contenido plegable."""
+        return self._content_layout
+
+    def add_header_widget(self, widget: QWidget) -> None:
+        """Inserta un widget a la izquierda del chevron."""
+        self._header_layout.insertWidget(self._header_layout.count() - 1, widget)
+
+    def is_expanded(self) -> bool:
+        return self._expanded
+
+    def set_expanded(self, expanded: bool) -> None:
+        if expanded == self._expanded:
+            return
+        self._expanded = expanded
+        self._content.setVisible(expanded)
+        self._sync_chevron()
+        self.toggled.emit(expanded)
+
+    def toggle(self) -> None:
+        self.set_expanded(not self._expanded)
+
+    def set_title(self, text: str) -> None:
+        self._title_label.setText(text.upper())
+
+    def _sync_chevron(self) -> None:
+        self._chevron.setText(icon_char("expand_less" if self._expanded else "expand_more"))
+
+    def eventFilter(self, watched, event):
+        # Un clic en cualquier parte muerta de la cabecera equivale a pulsar el
+        # chevron; los botones hijos consumen el evento antes de llegar aquí.
+        if watched is self._header and event.type() == QEvent.Type.MouseButtonRelease:
+            self.toggle()
+            return True
+        return super().eventFilter(watched, event)
 
 
 class Banner(QFrame):

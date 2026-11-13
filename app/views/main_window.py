@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QAction, QDesktopServices, QKeySequence, QIcon
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
     QFileDialog,
     QGridLayout,
     QHBoxLayout,
@@ -71,7 +72,7 @@ class MainWindow(QMainWindow):
         self._setup_ui()
         self._setup_actions()
         self._connect_signals()
-        self._update_send_enabled()
+        self._update_actions_enabled()
         self._refresh_topbar()
 
         # Asegurar directorios
@@ -224,12 +225,21 @@ class MainWindow(QMainWindow):
 
         self._btn_apply_crop.clicked.connect(self._on_apply_crop)
         self._btn_retry_crop.clicked.connect(self._on_retry_crop)
-        self._viewer.crop_changed.connect(self._update_send_enabled)
+        self._viewer.crop_changed.connect(self._update_actions_enabled)
 
-        self._right.sede_changed.connect(self._update_send_enabled)
+        self._right.sede_changed.connect(self._update_actions_enabled)
         self._right.send_to_ai_clicked.connect(self._on_send_to_ai)
         self._right.check_coverage_clicked.connect(self._on_check_coverage)
         self._right.save_clicked.connect(self._on_save)
+        self._right.receiver_selected.connect(
+            lambda _receiver, _address: self._update_actions_enabled()
+        )
+        self._right.receiver_cleared.connect(self._update_actions_enabled)
+        self._right.form_changed.connect(self._update_actions_enabled)
+        self._right.create_shipment_for_receiver_clicked.connect(
+            self._on_create_shipment_for_receiver
+        )
+        self._right.edit_receiver_clicked.connect(self._on_edit_receiver)
 
     # --- Navegación ----------------------------------------------------
 
@@ -302,9 +312,12 @@ class MainWindow(QMainWindow):
 
         self._current_image_path = path
         self._queue.set_current_image(path)
+        # El destinatario pertenece al sobre anterior: cada imagen vuelve a
+        # empezar por el paso 2 del flujo.
+        self._right.reset_receiver()
         img = load_image(path)
         if img is None:
-            self._update_send_enabled()
+            self._update_actions_enabled()
             self._refresh_topbar()
             return
 
@@ -328,7 +341,7 @@ class MainWindow(QMainWindow):
             self._viewer.set_image(img)
             self._right.clear_form()
 
-        self._update_send_enabled()
+        self._update_actions_enabled()
         self._refresh_topbar()
 
     def _refresh_topbar(self):
@@ -341,7 +354,7 @@ class MainWindow(QMainWindow):
         if crop_np is not None:
             self._current_crop_np = crop_np
             # Mantenemos la imagen mostrada; el recorte está en _current_crop_np
-            self._update_send_enabled()
+            self._update_actions_enabled()
         else:
             QMessageBox.warning(
                 self,
@@ -354,12 +367,21 @@ class MainWindow(QMainWindow):
         if self._current_image_np is not None:
             self._current_crop_np = None
             self._viewer.clear_selection()
-            self._update_send_enabled()
+            self._update_actions_enabled()
 
-    def _update_send_enabled(self):
+    def _update_actions_enabled(self):
+        """Habilita cada acción según la rama del flujo en la que esté el operador."""
         has_sede = self._right.sede() is not None
         has_crop = self._current_crop_np is not None
+        has_ocr = self._right.has_ocr_data()
+        has_receiver = (
+            self._right.selected_receiver() is not None
+            and self._right.selected_address() is not None
+        )
         self._right.set_send_enabled(bool(has_sede and has_crop))
+        self._right.set_create_shipment_enabled(bool(has_crop and has_receiver))
+        self._right.set_coverage_enabled(has_ocr)
+        self._right.set_save_enabled(has_ocr)
         self._update_canvas_status(has_crop)
 
     def _update_canvas_status(self, has_crop: bool):
@@ -397,6 +419,7 @@ class MainWindow(QMainWindow):
     def _on_ai_finished(self, result: dict):
         self._right.set_loading(False)
         self._right.set_result(result)
+        self._update_actions_enabled()
         self._ai_worker = None
 
     def _on_ai_error(self, msg: str):
@@ -410,7 +433,57 @@ class MainWindow(QMainWindow):
 
     # --- Cobertura y envíos --------------------------------------------
 
+    def _on_create_shipment_for_receiver(self):
+        """Rama con destinatario existente (pasos 4-10): no hay OCR ni registro."""
+        receiver = self._right.selected_receiver()
+        address = self._right.selected_address()
+        if receiver is None or address is None:
+            QMessageBox.warning(
+                self,
+                "Sin destinatario",
+                "Busque al destinatario y elija uno de sus domicilios.",
+            )
+            return
+        if self._current_crop_np is None:
+            QMessageBox.warning(
+                self,
+                "Sin recorte",
+                "Aplique el recorte del sobre: es la referencia de la pantalla de envío.",
+            )
+            return
+
+        dialog = ShipmentWindow.for_receiver(
+            receiver,
+            address,
+            self._current_crop_np,
+            parent=self,
+            contact=self._right.selected_contact(),
+        )
+        # La cobertura se consulta al abrir con el CP del domicilio; si el CP no
+        # tiene cobertura, el diálogo se rechaza solo y se vuelve a Workspace.
+        dialog.exec()
+
+    def _on_edit_receiver(self, receiver) -> None:
+        """Abre el diálogo de alta en modo edición, con el recorte del sobre."""
+        from app.views.receiver_dialog import ReceiverDialog
+
+        dialog = ReceiverDialog.for_edit(
+            receiver,
+            crop_np=self._current_crop_np,
+            address=self._right.selected_address(),
+            parent=self,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.created_receiver is None:
+            return
+        preferred = dialog.preferred_address_id
+        self._right.show_receiver(
+            dialog.created_receiver,
+            preferred,
+            dialog.preferred_contact_id,
+        )
+
     def _on_check_coverage(self):
+        """Rama sin destinatario (paso 5b): cobertura con el código postal del OCR."""
         form_data = self._right.get_form_data()
         campos = form_data.get("campos") or {}
         postal_code = str(campos.get("codigo_postal") or "").strip()
@@ -425,11 +498,14 @@ class MainWindow(QMainWindow):
         try:
             coverages = get_coverages_for_postal_code(postal_code)
         except PaquetexpressCoverageNotFoundError as exc:
-            QMessageBox.critical(
+            QMessageBox.warning(
                 self,
                 "Sin cobertura",
                 (
-                    "No existe cobertura para el código postal consultado.\n\n"
+                    "No existe cobertura para el código postal consultado, así que "
+                    "no se abre la creación del envío ni se da de alta al "
+                    "destinatario.\n\nGuarde el registro OCR y continúe con la "
+                    "siguiente imagen.\n\n"
                     f"{exc}"
                 ),
             )
@@ -447,6 +523,8 @@ class MainWindow(QMainWindow):
             )
             return
 
+        # En esta rama la referencia son los campos OCR, no el recorte: el paso
+        # 7b muestra las coberturas junto al alta precargada con la extracción.
         dialog = ShipmentWindow(coverages, form_data, parent=self)
         dialog.exec()
 
@@ -508,10 +586,11 @@ class MainWindow(QMainWindow):
         self._current_crop_np = None
         self._viewer.set_image(None)
         self._right.clear_form()
+        self._right.reset_receiver()
         self._hud.set_enabled_controls(False)
         if next_path is not None:
             self._on_image_activated(next_path)
-        self._update_send_enabled()
+        self._update_actions_enabled()
         self._refresh_topbar()
 
     # --- Diálogos auxiliares -------------------------------------------

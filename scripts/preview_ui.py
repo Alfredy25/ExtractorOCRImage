@@ -143,7 +143,7 @@ check("workspace: imagen cargada", window._current_image_np is not None)
 check("workspace: cola sin duplicados", window._queue.count() == 1, f"count={window._queue.count()}")
 
 # Datos OCR de ejemplo para ver el inspector poblado.
-window._right.set_result({
+ocr_sample = {
     "destinatario_raw": "LIC. MARIA FERNANDA GARCIA LOPEZ\nDIRECTORA DE ADMINISTRACION",
     "campos": {
         "nombre_titulo": "LIC. MARIA FERNANDA GARCIA LOPEZ",
@@ -159,11 +159,54 @@ window._right.set_result({
         "indicaciones": "Edificio G, entrada principal",
     },
     "observaciones_ia": "Codigo postal legible. Colonia con baja confianza.",
-})
+}
+window._right.set_result(ocr_sample)
 window._right._sede_combo.setCurrentIndex(1)
 app.processEvents()
 check("workspace: sede seleccionada", window._right.sede() == "AJUSCO", f"sede={window._right.sede()}")
+check(
+    "workspace: los datos OCR despliegan su seccion",
+    window._right._extraction_section.is_expanded(),
+)
+check("workspace: guardar habilitado con datos OCR", window._right._btn_save.isEnabled())
 shot(window, "04_workspace_datos", 1500, 940)
+
+# El flujo arranca por la busqueda de destinatario: esa seccion manda y la de
+# extraccion se pliega hasta que haga falta.
+window._right.reset_receiver()
+app.processEvents()
+check("workspace: seccion destinatario desplegada", window._right._receiver_section.is_expanded())
+check(
+    "workspace: seccion de extraccion plegada al reiniciar",
+    not window._right._extraction_section.is_expanded(),
+)
+check(
+    "workspace: crear envio deshabilitado sin destinatario",
+    not window._right._btn_create_shipment.isEnabled(),
+)
+check(
+    "workspace: buscador con paginacion y filtros",
+    window._right._picker._type_combo.count() == 4
+    and window._right._picker._order_combo.count() == 4
+    and window._right._picker._direction_combo.count() == 2,
+)
+check(
+    "workspace: el chevron de la seccion recibe el raton",
+    receives_mouse(window._right._receiver_section._chevron),
+)
+click(window._right._receiver_section._chevron)
+check(
+    "workspace: el clic en el chevron pliega la seccion",
+    not window._right._receiver_section.is_expanded(),
+)
+click(window._right._receiver_section._chevron)
+check(
+    "workspace: el segundo clic la vuelve a desplegar",
+    window._right._receiver_section.is_expanded(),
+)
+shot(window, "04b_workspace_destinatario", 1500, 940)
+window._right.set_form_data(ocr_sample)
+app.processEvents()
 
 # El HUD flota sobre el lienzo: sus botones deben ser pulsables y, a la vez, el
 # resto del lienzo debe seguir recibiendo el arrastre del recorte.
@@ -273,38 +316,22 @@ ocr_data = window._right.get_form_data()
 shipment = ShipmentWindow(coverages, ocr_data)
 shot(shipment, "06_envios", 1500, 940)
 
-check("envios: 16 campos de envio", len(shipment._shipment_fields) == 16, f"n={len(shipment._shipment_fields)}")
+package_keys = {
+    "rfc", "email", "package_code", "quantity", "comments", "content",
+    "weight", "length", "width", "height",
+}
+check(
+    "envios: campos de paquete",
+    set(shipment._shipment_fields) == package_keys,
+    f"claves={sorted(shipment._shipment_fields)}",
+)
 check("envios: 4 campos de cobertura", len(shipment._coverage_fields) == 4)
 check("envios: 9 campos OCR", len(shipment._ocr_reference_fields) == 9)
 check("envios: 2 colonias en combo", shipment._colony_combo.count() == 2)
-check(
-    "envios: borrador inicial desde OCR",
-    shipment._shipment_fields["name_receiver"].text()
-    == "LIC. MARIA FERNANDA GARCIA LOPEZ DIRECTORA DE ADMINISTRACION",
-    shipment._shipment_fields["name_receiver"].text(),
-)
-counted_keys = ("name_receiver", "street", "num_street", "address_reference")
-for key in counted_keys:
-    field = shipment._shipment_fields[key]
-    label = shipment._length_labels.get(key)
-    check(
-        f"envios: contador {key}",
-        label is not None and label.text() == str(len(field.text())),
-        f"texto={len(field.text())} label={None if label is None else label.text()}",
-    )
-street = shipment._shipment_fields["street"]
-street_before = street.text()
-street.setText("ABC DE")
-app.processEvents()
-check(
-    "envios: contador se actualiza al editar",
-    shipment._length_labels["street"].text() == "6",
-    shipment._length_labels["street"].text(),
-)
-street.setText(street_before)
-app.processEvents()
-check("envios: pais fijo MEXICO", shipment._shipment_fields["country"].text() == "MEXICO")
-check("envios: pais no editable", shipment._shipment_fields["country"].isReadOnly())
+check("envios: modo alta sin destinatario fijo", shipment._is_alta_mode)
+check("envios: alta de destinatario sin buscador", shipment._btn_alta is not None)
+check("envios: crear envio deshabilitado sin destinatario", not shipment._btn_submit.isEnabled())
+check("envios: RFC por defecto", shipment._shipment_fields["rfc"].text() == "XAXX-010101-000")
 check("envios: CP de cobertura", shipment._coverage_fields["postal_code"].text() == "01030")
 
 # Cambiar colonia debe refrescar ciudad/estado/tipo sin repisar el borrador.
@@ -312,7 +339,13 @@ shipment._colony_combo.setCurrentIndex(1)
 app.processEvents()
 payload = shipment._shipment_payload_from_form()
 check("envios: colonia del payload sigue la seleccion", payload["colony"] == "AXOTLA", payload["colony"])
-check("envios: payload trae 21 claves", len(payload) == 21, f"n={len(payload)}")
+check("envios: el paquete no trae destinatario libre", "name_receiver" not in payload)
+check("envios: payload de paquete y cobertura", len(payload) == 15, f"n={len(payload)}")
+check(
+    "envios: email por defecto en alta",
+    payload.get("email") == "notificaciones@feuh.com.mx",
+    str(payload.get("email")),
+)
 check(
     "envios: valores iniciales por defecto",
     payload["quantity"] == 1 and payload["package_code"] == 1 and payload["content"],
@@ -378,7 +411,200 @@ if scroll is not None:
     bar.setValue(bar.maximum())
     app.processEvents()
 shot(shipment, "08_envios_paquete", 1500, 940)
+
+# Los diálogos nuevos consultan SEPOMEX y catálogos: en la vista previa no hay red.
+from app.models.receiver import Paginated  # noqa: E402
+from app.models.sepomex import SepomexDto  # noqa: E402
+from app.services import catalogs_service, receivers_service, sepomex_service  # noqa: E402
+from app.views.address_dialog import AddressDialog  # noqa: E402
+from app.views.receiver_dialog import ReceiverDialog  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
+
+sepomex_service.fetch_sepomex = lambda cp: [
+    SepomexDto(
+        id=1,
+        postal_code=cp,
+        settlement="FLORIDA",
+        settlement_type="Colonia",
+        municipality="ALVARO OBREGON",
+        city="CIUDAD DE MEXICO",
+        state="CIUDAD DE MEXICO",
+        state_code="09",
+        zone="Urbano",
+    )
+]
+receivers_service.search_receivers = lambda *_args, **_kwargs: Paginated(
+    page=1, page_size=5, total=0, total_pages=0, has_prev=False, has_next=False, items=[]
+)
+for _name in ("search_titles", "search_job_roles", "search_organizations", "search_volantes"):
+    setattr(catalogs_service, _name, lambda *_args, **_kwargs: [])
+
+receiver_dialog = ReceiverDialog(ocr_data)
+QTest.qWait(400)
+check("destinatario: tipo persona", receiver_dialog._type == "PERSONA")
+check(
+    "destinatario: nombre OCR en mayusculas",
+    receiver_dialog._name.text() == "LIC. MARIA FERNANDA GARCIA LOPEZ",
+    receiver_dialog._name.text(),
+)
+shot(receiver_dialog, "11_crear_destinatario", 1280, 860)
+receiver_dialog.close()
+
+address_dialog = AddressDialog(4)
+shot(address_dialog, "12_nuevo_domicilio", 720, 640)
+check("domicilio: formulario presente", address_dialog._form is not None)
+address_dialog.close()
+
+from app.views.contact_dialog import ContactDialog  # noqa: E402
+
+contact_dialog = ContactDialog(4)
+shot(contact_dialog, "12b_nuevo_contacto", 480, 260)
+check("contacto: telefono presente", contact_dialog._phone is not None)
+contact_dialog.close()
 shipment.close()
+
+# --- 3b. Envio con destinatario existente -------------------------------
+# Rama sin OCR: la referencia es el recorte y la cobertura sale del CP del
+# domicilio elegido, consultado al abrir la pantalla.
+from app.models.receiver import AddressDto, ReceiverDto  # noqa: E402
+from app.views import shipment_window as shipment_window_module  # noqa: E402
+
+_AUDIT_TS = "2026-11-10T16:00:00"
+_audit = {
+    "created_at": _AUDIT_TS,
+    "updated_at": _AUDIT_TS,
+    "created_by": 1,
+    "updated_by": None,
+}
+sample_address = AddressDto.model_validate({
+    "id": 7,
+    "street": "AV. INSURGENTES SUR",
+    "num_street": "1234",
+    "colony": "FLORIDA",
+    "municipality": "ALVARO OBREGON",
+    "city": "CIUDAD DE MEXICO",
+    "state": "CIUDAD DE MEXICO",
+    "postal_code": "01030",
+    "country": "MEXICO",
+    "address_reference": "Edificio G",
+    "receiver_id": 4,
+    **_audit,
+})
+sample_receiver = ReceiverDto.model_validate({
+    "id": 4,
+    "type_entity": "PERSONA",
+    "title": {"id": 1, "abbreviation": "LIC.", "meaning": "Licenciada", **_audit},
+    "full_name": "MARIA FERNANDA GARCIA LOPEZ",
+    "email": "maria.garcia@example.com",
+    "position": None,
+    "addresses": [sample_address.model_dump()],
+    "contacts": [
+        {"id": 3, "phone": "5512345678", "ext": "12", "id_destinatario": 4, **_audit},
+        {"id": 8, "phone": "5587654321", "ext": None, "id_destinatario": 4, **_audit},
+    ],
+    "volantes": [],
+    **_audit,
+})
+
+window._right.show_receiver(sample_receiver, sample_address.id)
+app.processEvents()
+edit_button = window._right._picker._btn_edit
+check("ficha: boton editar destinatario", edit_button is not None and edit_button.isVisible())
+check("ficha: el boton editar recibe el raton", receives_mouse(edit_button))
+contact_choices = window.findChildren(QWidget, "receiverContactChoice")
+check("ficha: elegir contacto si hay varios", len(contact_choices) == 2, f"n={len(contact_choices)}")
+shot(window, "13b_ficha_editar", 1500, 940)
+
+edit_dialog = ReceiverDialog.for_edit(
+    sample_receiver, crop_np=window._current_crop_np, address=sample_address
+)
+shot(edit_dialog, "14_editar_destinatario", 1280, 860)
+QTest.qWait(400)
+check("editar destinatario: modo edicion", edit_dialog._is_edit)
+check("editar destinatario: tipo bloqueado", not edit_dialog._type_buttons["PERSONA"].isEnabled())
+check(
+    "editar destinatario: recorte visible",
+    edit_dialog.findChild(QWidget, "receiverCropPreview") is not None,
+)
+check(
+    "editar destinatario: agregar domicilio",
+    edit_dialog._btn_add_address.isVisible(),
+)
+check(
+    "editar destinatario: editar domicilio",
+    edit_dialog._btn_edit_address.isVisible() and edit_dialog._btn_edit_address.isEnabled(),
+)
+check(
+    "editar destinatario: agregar contacto",
+    edit_dialog._btn_add_contact.isVisible(),
+)
+listed_contacts = edit_dialog.findChildren(QWidget, "receiverContactItem")
+check(
+    "editar destinatario: lista todos los contactos",
+    len(listed_contacts) == 2,
+    f"n={len(listed_contacts)}",
+)
+edit_dialog.close()
+
+edit_address = AddressDialog(4, address=sample_address)
+QTest.qWait(200)
+check("editar domicilio: titulo", edit_address.windowTitle() == "Editar domicilio")
+shot(edit_address, "15_editar_domicilio", 720, 640)
+edit_address.close()
+
+shipment_window_module.get_coverages_for_postal_code = lambda cp: coverages
+
+shipment_receiver = ShipmentWindow.for_receiver(
+    sample_receiver, sample_address, window._current_crop_np
+)
+# Sin maximizar, la captura respeta el tamaño pedido y se ven las tres columnas.
+shipment_receiver.setWindowState(Qt.WindowState.WindowNoState)
+QTest.qWait(200)
+app.processEvents()
+check("envios con destinatario: modo correcto", shipment_receiver._is_receiver_mode)
+check("envios con destinatario: sin columna OCR", not shipment_receiver._ocr_reference_fields)
+check(
+    "envios con destinatario: el recorte es la referencia",
+    not shipment_receiver._crop_label.pixmap().isNull(),
+)
+check(
+    "envios con destinatario: cobertura del CP del domicilio",
+    shipment_receiver._coverage_fields["postal_code"].text() == "01030",
+    shipment_receiver._coverage_fields["postal_code"].text(),
+)
+check(
+    "envios con destinatario: crear envio habilitado",
+    shipment_receiver._btn_submit.isEnabled(),
+)
+receiver_payload = shipment_receiver._payload_from_receiver()
+check(
+    "envios con destinatario: nombre y calle del directorio",
+    receiver_payload["name_receiver"] == "LIC. MARIA FERNANDA GARCIA LOPEZ"
+    and receiver_payload["street"] == "AV. INSURGENTES SUR",
+    f"{receiver_payload['name_receiver']} / {receiver_payload['street']}",
+)
+check(
+    "envios con destinatario: colonia y CP de la cobertura",
+    receiver_payload["colony"] == "FLORIDA" and receiver_payload["postal_code"] == "01030",
+)
+email_field = shipment_receiver.findChild(QWidget, "shipmentEmailField")
+check(
+    "envios con destinatario: email por defecto",
+    email_field is not None and email_field.text() == "notificaciones@feuh.com.mx",
+    "" if email_field is None else email_field.text(),
+)
+check(
+    "envios con destinatario: no usa el correo del directorio",
+    receiver_payload.get("email") == "notificaciones@feuh.com.mx",
+    str(receiver_payload.get("email")),
+)
+check(
+    "envios con destinatario: telefono del contacto",
+    receiver_payload.get("phone") == "5512345678",
+    str(receiver_payload.get("phone")),
+)
+shot(shipment_receiver, "13_envio_destinatario", 1500, 940)
+shipment_receiver.close()
 
 # --- 4. Exportacion -----------------------------------------------------
 from app.views.export_dialog import ExportDialog  # noqa: E402
