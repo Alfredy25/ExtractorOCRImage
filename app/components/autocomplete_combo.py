@@ -218,6 +218,12 @@ class AutocompleteComboBox(QWidget):
     def text(self) -> str:
         return self._combo.currentText().strip()
 
+    def set_text(self, value: str) -> None:
+        """Deja el texto escrito, sin elegir un registro del catálogo."""
+        self._selected = None
+        self._combo.setEditText(value.strip())
+        self._set_status("")
+
     def set_selected(self, item: Any) -> None:
         self._selected = item
         self._results = [item]

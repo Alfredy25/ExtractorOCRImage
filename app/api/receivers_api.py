@@ -17,7 +17,7 @@ from app.api.http_support import (
     validation_errors,
 )
 from app.config import RECEIVERS_ENDPOINT, api_abs_url
-from app.models.receiver import Paginated, ReceiverDto
+from app.models.receiver import Paginated, ReceiverDto, VolanteDto
 
 
 class ReceiversApiError(Exception):
@@ -33,6 +33,14 @@ class ReceiverDuplicateError(ReceiversApiError):
 
     def __init__(self, receiver_id: int, message: str = "El destinatario ya existe"):
         self.receiver_id = receiver_id
+        super().__init__(message)
+
+
+class ReceiverVolanteDuplicateError(ReceiversApiError):
+    """Ese destinatario ya tiene enlazado el volante."""
+
+    def __init__(self, volante_id: int, message: str = "El destinatario ya tiene ese volante"):
+        self.volante_id = volante_id
         super().__init__(message)
 
 
@@ -123,6 +131,34 @@ def create_receiver(payload: dict[str, Any], token: str) -> ReceiverDto:
             f"{error_detail(response)}"
         )
     return _receiver(json_body(response))
+
+
+def add_volante(receiver_id: int, payload: dict[str, Any], token: str) -> VolanteDto:
+    """``POST /receivers/{receiver_id}/volantes``. Solo enlaza el volante."""
+    url = api_abs_url(f"{RECEIVERS_ENDPOINT.rstrip('/')}/{receiver_id}/volantes")
+    response = _call("POST", url, token, json_body=payload)
+    if response.status_code == 409:
+        found = duplicate_id(response, "volante_id")
+        if found is None:
+            raise ReceiversApiError(error_detail(response))
+        raise ReceiverVolanteDuplicateError(found, error_detail(response))
+    if response.status_code == 422:
+        raise ReceiversValidationError(validation_errors(response))
+    if response.status_code >= 400:
+        raise ReceiversApiError(
+            f"No se pudo añadir el volante (código {response.status_code}): "
+            f"{error_detail(response)}"
+        )
+    return _volante(json_body(response))
+
+
+def _volante(payload: Any) -> VolanteDto:
+    if not isinstance(payload, dict):
+        raise ReceiversApiError("La API devolvió un formato inesperado: se esperaba un objeto.")
+    try:
+        return VolanteDto.model_validate(payload)
+    except ValidationError as exc:
+        raise ReceiversApiError(f"El volante tiene formato inválido. {exc}") from exc
 
 
 def patch_receiver(receiver_id: int, payload: dict[str, Any], token: str) -> ReceiverDto:

@@ -119,7 +119,7 @@ El flujo completo está documentado en [`docs/flows/flow_create_shipment_px.md`]
 ### Rama A: el destinatario ya existe
 
 1. En **Destinatario**, buscar por nombre de la persona o de la organización. La consulta arranca en página 1, 10 por página, ordenada por `id` ascendente; se pueden cambiar tipo, estado, orden y dirección, y paginar los resultados.
-2. Elegir el destinatario y uno de sus domicilios. Si solo tiene uno, queda elegido.
+2. Elegir el destinatario y uno de sus domicilios. Si solo tiene uno, queda elegido. **Añadir nuevo volante** solo le enlaza otro número: un destinatario puede tener varios.
 3. Pulsar **Crear envío con este destinatario**: se abre **Crear envío Paquetexpress** con la **imagen del recorte** como referencia, sin campos OCR.
 4. La ventana consulta `COVERTURAS_ENDPOINT` con el **código postal del domicilio**. Si no hay cobertura, avisa, se cierra y no queda registro OCR.
 5. Con cobertura: elegir colonia, completar paquete, RFC y comentarios, y confirmar (`POST` a `ENVIOS_PX_ENDPOINT`).
@@ -132,7 +132,7 @@ En esta rama no se extrae la foto, así que tampoco hay registro OCR que guardar
 2. Elegir **SEDE** y pulsar **Enviar a IA**; revisar o corregir los campos.
 3. Pulsar **Consultar cobertura**: la app consulta `COVERTURAS_ENDPOINT` con el **CP del OCR**. Si no hay cobertura, no se abre la creación ni se da de alta al destinatario; solo queda **Guardar registro**.
 4. Con cobertura se abre **Crear envío Paquetexpress** con las coberturas, los campos OCR de solo lectura y el alta de destinatario. Esta pantalla ya no vuelve a buscar.
-5. **Dar de alta destinatario** abre el formulario precargado con el OCR (`POST` a `RECEIVERS_ENDPOINT`, con su domicilio en la misma petición). Si responde 409, se reutiliza el destinatario existente.
+5. **Dar de alta destinatario** abre el formulario precargado con el OCR (`POST` a `RECEIVERS_ENDPOINT`, con su domicilio en la misma petición). El número de volante escrito a mano en la extracción aparece en la referencia y queda en el volante inicial. Si responde 409, se reutiliza el destinatario existente.
 6. Completar paquete, RFC y comentarios y confirmar el envío.
 7. De vuelta en el Workspace, pulsar **Guardar registro** para persistir la extracción.
 

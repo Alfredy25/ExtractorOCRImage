@@ -166,7 +166,8 @@ class RightPanel(Card):
         section.body.addWidget(
             subtitle(
                 "Solo si la búsqueda no encontró al destinatario: extraiga la "
-                "foto y consulte cobertura con el código postal del OCR."
+                "foto, escriba a mano el número de volante y consulte cobertura "
+                "con el código postal del OCR."
             )
         )
         section.body.addWidget(self._build_sede_section())

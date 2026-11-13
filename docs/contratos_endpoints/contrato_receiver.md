@@ -326,6 +326,51 @@ Cada elemento de `items` es un `ReceiverDto` con la misma forma que la respuesta
 | 401 | usuario inexistente o inactivo | `{"detail": "Usuario no válido o inactivo"}` |
 | 422 | query inválido | `{"errors": [{"message": "Search debe tener al menos 3 caracteres", "field": "search", "type": "value_error"}]}` |
 
+## POST /receivers/{receiver_id}/volantes
+
+### Descripción
+
+Añadir un volante a un destinatario que ya existe. Si el nombre ya está en el catálogo, se reutiliza y solo se enlaza. No modifica nombre, domicilio ni contactos.
+
+### Request
+
+Path:
+
+- `receiver_id`: int >= 1
+
+```json
+{ "name": "VCS-26-131000-00167" }
+```
+
+Header:
+
+- `Authorization`: Bearer &lt;token&gt;
+
+### Campos
+
+| Campo | Tipo | Requerido | Default | Notas |
+|-------|------|-----------|---------|-------|
+| receiver_id | int | sí | — | path. >= 1 |
+| name | string | sí | — | body. 18–35. Se guarda en mayúsculas. |
+
+### Validaciones
+
+- Mismas reglas de largo que el volante del alta.
+- Si ese destinatario ya tiene el volante, 409. Reutilizar un volante de otro destinatario no choca: se enlaza el mismo registro.
+
+### Respuesta
+
+Status: 201 — `VolanteDto`.
+
+### Errores
+
+| Status | Cuándo | Cuerpo |
+|--------|--------|--------|
+| 401 | sin token, token inválido o usuario inactivo | `{"detail": "Not authenticated"}`, `{"detail": "Token inválido o expirado"}` o `{"detail": "Usuario no válido o inactivo"}` |
+| 404 | el destinatario no existe | `{"detail": "Destinatario con id {id} no existe"}` |
+| 409 | ese destinatario ya tiene el volante | `{"detail": {"msg": "El destinatario ya tiene ese volante", "volante_id": 5}}` |
+| 422 | nombre inválido | `{"errors": [{"message": "...", "field": "name", "type": "..."}]}` |
+
 ## PATCH /receivers/{receiver_id}
 
 ### Descripción

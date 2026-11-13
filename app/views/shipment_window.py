@@ -613,11 +613,16 @@ class ShipmentWindow(QDialog):
             ("direccion", "Dirección OCR"),
             ("contacto", "Contacto OCR"),
             ("indicaciones", "Indicaciones OCR"),
+            ("numero_volante", "Número de volante"),
         ):
             line = self._readonly_line()
             self._ocr_reference_fields[key] = line
             card.body.addWidget(
-                labeled_field(label, line, mono=key in ("codigo_postal", "contacto"))
+                labeled_field(
+                    label,
+                    line,
+                    mono=key in ("codigo_postal", "contacto", "numero_volante"),
+                )
             )
         card.body.addStretch(1)
         return card

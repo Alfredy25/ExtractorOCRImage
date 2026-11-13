@@ -326,7 +326,11 @@ check(
     f"claves={sorted(shipment._shipment_fields)}",
 )
 check("envios: 4 campos de cobertura", len(shipment._coverage_fields) == 4)
-check("envios: 9 campos OCR", len(shipment._ocr_reference_fields) == 9)
+check("envios: 10 campos OCR", len(shipment._ocr_reference_fields) == 10)
+check(
+    "envios: referencia con numero de volante",
+    shipment._ocr_reference_fields["numero_volante"].text() == "V-2026-00841",
+)
 check("envios: 2 colonias en combo", shipment._colony_combo.count() == 2)
 check("envios: modo alta sin destinatario fijo", shipment._is_alta_mode)
 check("envios: alta de destinatario sin buscador", shipment._btn_alta is not None)
@@ -447,6 +451,11 @@ check(
     receiver_dialog._name.text() == "LIC. MARIA FERNANDA GARCIA LOPEZ",
     receiver_dialog._name.text(),
 )
+check(
+    "destinatario: volante inicial precargado",
+    receiver_dialog._volante.text() == "V-2026-00841",
+    receiver_dialog._volante.text(),
+)
 shot(receiver_dialog, "11_crear_destinatario", 1280, 860)
 receiver_dialog.close()
 
@@ -461,6 +470,14 @@ contact_dialog = ContactDialog(4)
 shot(contact_dialog, "12b_nuevo_contacto", 480, 260)
 check("contacto: telefono presente", contact_dialog._phone is not None)
 contact_dialog.close()
+
+from app.views.volante_dialog import VolanteDialog  # noqa: E402
+
+volante_dialog = VolanteDialog(4)
+shot(volante_dialog, "12c_nuevo_volante", 560, 320)
+check("volante: buscador presente", volante_dialog._volante is not None)
+check("volante: boton crear", volante_dialog._volante._create_button.isVisible())
+volante_dialog.close()
 shipment.close()
 
 # --- 3b. Envio con destinatario existente -------------------------------
@@ -502,7 +519,9 @@ sample_receiver = ReceiverDto.model_validate({
         {"id": 3, "phone": "5512345678", "ext": "12", "id_destinatario": 4, **_audit},
         {"id": 8, "phone": "5587654321", "ext": None, "id_destinatario": 4, **_audit},
     ],
-    "volantes": [],
+    "volantes": [
+        {"id": 5, "name": "VCS-26-131000-00167", **_audit},
+    ],
     **_audit,
 })
 
@@ -510,6 +529,11 @@ window._right.show_receiver(sample_receiver, sample_address.id)
 app.processEvents()
 edit_button = window._right._picker._btn_edit
 check("ficha: boton editar destinatario", edit_button is not None and edit_button.isVisible())
+add_volante = window._right._picker._btn_add_volante
+check("ficha: boton añadir volante", add_volante is not None and add_volante.isVisible())
+check("ficha: el boton añadir volante recibe el raton", receives_mouse(add_volante))
+volante_lines = window.findChildren(QWidget, "receiverVolanteItem")
+check("ficha: lista el volante del destinatario", len(volante_lines) == 1, f"n={len(volante_lines)}")
 check("ficha: el boton editar recibe el raton", receives_mouse(edit_button))
 contact_choices = window.findChildren(QWidget, "receiverContactChoice")
 check("ficha: elegir contacto si hay varios", len(contact_choices) == 2, f"n={len(contact_choices)}")

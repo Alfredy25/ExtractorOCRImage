@@ -163,6 +163,35 @@ def test_patch_receiver_duplicate_exposes_id(monkeypatch):
     assert exc.value.receiver_id == 8
 
 
+def test_add_volante_posts_name_to_receiver(monkeypatch):
+    captured = _install(
+        monkeypatch,
+        201,
+        {"id": 5, "name": "VCS-26-131000-00167", **_audit()},
+    )
+
+    created = receivers_api.add_volante(4, {"name": "VCS-26-131000-00167"}, "token-ok")
+
+    assert created.id == 5
+    assert created.name == "VCS-26-131000-00167"
+    assert captured["method"] == "POST"
+    assert captured["url"].endswith("/receivers/4/volantes")
+    assert captured["json"] == {"name": "VCS-26-131000-00167"}
+
+
+def test_add_volante_duplicate_exposes_id(monkeypatch):
+    _install(
+        monkeypatch,
+        409,
+        {"detail": {"msg": "El destinatario ya tiene ese volante", "volante_id": 5}},
+    )
+
+    with pytest.raises(receivers_api.ReceiverVolanteDuplicateError) as exc:
+        receivers_api.add_volante(4, {"name": "VCS-26-131000-00167"}, "token-ok")
+
+    assert exc.value.volante_id == 5
+
+
 def test_patch_receiver_validation(monkeypatch):
     _install(
         monkeypatch,

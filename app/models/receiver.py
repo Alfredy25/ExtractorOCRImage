@@ -455,6 +455,7 @@ _FIELD_LABELS = {
     "phone": "Teléfono",
     "ext": "Extensión",
     "volante.name": "Volante",
+    "name": "Volante",
     "street": "Calle",
     "num_street": "Número",
     "colony": "Colonia",
@@ -487,6 +488,7 @@ _LENGTH_MESSAGES = {
     "phone": "Debe tener entre 8 y 10 dígitos",
     "ext": "Debe tener máximo 5 dígitos",
     "volante.name": "Debe tener entre 18 y 35 caracteres",
+    "name": "Debe tener entre 18 y 35 caracteres",
     "street": "Debe tener entre 3 y 80 caracteres",
     "num_street": "Debe tener entre 1 y 15 caracteres",
     "colony": "Debe tener entre 3 y 60 caracteres",
@@ -649,6 +651,16 @@ def validate_receiver_update(
         return ReceiverUpdateRequest(), []
     try:
         return ReceiverUpdateRequest.model_validate(data), []
+    except ValidationError as exc:
+        return None, _dedupe(_from_validation(exc))
+
+
+def validate_volante(
+    name: str,
+) -> tuple[VolanteInput | None, list[dict[str, str]]]:
+    """Valida el nombre antes de enlazar un volante a un destinatario."""
+    try:
+        return VolanteInput.model_validate({"name": name}), []
     except ValidationError as exc:
         return None, _dedupe(_from_validation(exc))
 

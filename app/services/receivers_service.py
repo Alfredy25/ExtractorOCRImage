@@ -10,10 +10,12 @@ from app.models.receiver import (
     Paginated,
     PositionDto,
     ReceiverDto,
+    VolanteDto,
     match_estado,
     present_api_errors,
     validate_receiver,
     validate_receiver_update,
+    validate_volante,
 )
 from app.services.auth_service import get_access_token
 
@@ -33,6 +35,14 @@ class ReceiverDuplicateError(ReceiverServiceError):
 
     def __init__(self, receiver_id: int, message: str = "El destinatario ya existe"):
         self.receiver_id = receiver_id
+        super().__init__(message)
+
+
+class ReceiverVolanteDuplicateError(ReceiverServiceError):
+    """El destinatario ya tiene ese volante."""
+
+    def __init__(self, volante_id: int, message: str = "El destinatario ya tiene ese volante"):
+        self.volante_id = volante_id
         super().__init__(message)
 
 
@@ -261,6 +271,28 @@ def create_receiver(form_data: dict[str, Any]) -> ReceiverDto:
         return receivers_api.create_receiver(body, token)
     except receivers_api.ReceiverDuplicateError as exc:
         raise ReceiverDuplicateError(exc.receiver_id, str(exc)) from exc
+    except receivers_api.ReceiversSessionExpiredError as exc:
+        raise ReceiverSessionExpiredError(str(exc)) from exc
+    except receivers_api.ReceiversValidationError as exc:
+        raise ReceiverValidationError(present_api_errors(exc.errors)) from exc
+    except receivers_api.ReceiversApiError as exc:
+        raise ReceiverServiceError(str(exc)) from exc
+
+
+def add_volante(receiver_id: int, name: str) -> VolanteDto:
+    """Valida el nombre y lo enlaza al destinatario que ya existe."""
+    model, errors = validate_volante(name)
+    if errors or model is None:
+        raise ReceiverValidationError(errors)
+    token = _required_token()
+    try:
+        return receivers_api.add_volante(
+            receiver_id,
+            {"name": model.name.upper()},
+            token,
+        )
+    except receivers_api.ReceiverVolanteDuplicateError as exc:
+        raise ReceiverVolanteDuplicateError(exc.volante_id, str(exc)) from exc
     except receivers_api.ReceiversSessionExpiredError as exc:
         raise ReceiverSessionExpiredError(str(exc)) from exc
     except receivers_api.ReceiversValidationError as exc:

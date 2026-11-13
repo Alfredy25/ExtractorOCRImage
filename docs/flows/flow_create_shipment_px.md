@@ -34,7 +34,7 @@ Que el destinatario exista no implica un envío PX anterior. Destinatario y env�
 
 Si el paso 3 no trae coincidencias (`total` 0, `items` `[]`), no es un error. Sigue la otra rama:
 
-4b. Se extraen los datos de la foto, incluido el código postal.
+4b. Se extraen los datos de la foto, incluido el código postal. El número de volante lo escribe a mano el administrador en **Número de volante**.
 5b. Se consulta cobertura con el código postal del OCR (`GET /coverages/?cp={cp}`).
 6b. Si responde 404, no se abre la creación ni se crea destinatario. Solo se guarda el registro OCR.
 7b. Si hay coberturas, se abre la pantalla de creación con esa lista y, al lado, el alta del destinatario precargada con el OCR.
@@ -225,7 +225,9 @@ Si se omite `page_size`, el contrato usa 50. Este flujo lo manda en 10. Cambiar 
 
 Solo corre en el paso 8b, después de confirmar cobertura (paso 5b). La pantalla de creación muestra las coberturas y, al lado, el formulario de alta precargado con el OCR. La búsqueda del paso 2 ya dio vacía, así que esta pantalla no vuelve a buscar.
 
-`POST /receivers/` crea el destinatario y, en la misma petición, su `address` (obligatoria). `contact` y `volante` son opcionales.
+`POST /receivers/` crea el destinatario y, en la misma petición, su `address` (obligatoria). `contact` y `volante` son opcionales. La referencia OCR muestra el número de volante escrito en la extracción, y el alta lo trae precargado en `volante.name` para guardarlo con el destinatario inicial.
+
+Si el destinatario ya existe, la ficha del Workspace tiene **Añadir nuevo volante**. Ahí se busca con `GET /volante/`. Si no está, **Crear** lo da de alta con `POST /volante/`. Elegido o recién creado, se asigna con `POST /receivers/{receiver_id}/volantes`. Si ese destinatario ya lo tenía, responde 409. Un destinatario puede tener varios. No abre el alta ni cambia el envío.
 
 | `type_entity` | Obligatorio | Prohibido |
 |---------------|-------------|-----------|

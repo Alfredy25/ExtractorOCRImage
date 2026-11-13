@@ -60,6 +60,7 @@ _OCR_FIELDS = (
     ("direccion", "Dirección OCR"),
     ("contacto", "Contacto OCR"),
     ("indicaciones", "Indicaciones OCR"),
+    ("numero_volante", "Número de volante"),
 )
 
 _TITLE_FIELDS = (
@@ -254,7 +255,13 @@ class ReceiverDialog(QDialog):
             line.setReadOnly(True)
             line.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
             line.setCursor(Qt.CursorShape.IBeamCursor)
-            card.body.addWidget(labeled_field(label, line, mono=key in {"codigo_postal", "contacto"}))
+            card.body.addWidget(
+                labeled_field(
+                    label,
+                    line,
+                    mono=key in {"codigo_postal", "contacto", "numero_volante"},
+                )
+            )
         return card
 
     def _build_identity_card(self) -> Card:
@@ -389,8 +396,15 @@ class ReceiverDialog(QDialog):
         return card
 
     def _build_volante_card(self) -> Card:
-        card = Card("Volante", "receipt_long")
-        card.body.addWidget(subtitle("Opcional. El nombre debe tener entre 18 y 35 caracteres."))
+        card = Card("Volante inicial" if not self._is_edit else "Volante", "receipt_long")
+        if self._is_edit:
+            hint = "Los volantes nuevos se añaden desde la ficha del destinatario."
+        else:
+            hint = (
+                "Opcional. Use el número escrito en la extracción. "
+                "Se guarda con este destinatario. Entre 18 y 35 caracteres."
+            )
+        card.body.addWidget(subtitle(hint))
         self._volante = AutocompleteComboBox(
             catalogs_service.search_volantes,
             lambda item: item.name,
@@ -459,6 +473,7 @@ class ReceiverDialog(QDialog):
         self._name.setText(str(self._campos.get("nombre_titulo") or "").strip().upper())
         self._phone.setText(_digits(str(self._campos.get("contacto") or "")))
         self._address.set_initial_from_ocr(self._campos)
+        self._volante.set_text(str(self._campos.get("numero_volante") or "").strip().upper())
         self._refresh_preview()
 
     def _warn(self, message: str) -> None:
@@ -466,9 +481,6 @@ class ReceiverDialog(QDialog):
 
     def _on_save(self) -> None:
         if self._busy:
-            return
-        if not self._is_edit and self._volante.text() and self._volante.selected() is None:
-            self._warn("Seleccione el volante de la lista o créelo. Si no aplica, borre el texto.")
             return
         if self._role.text() and self._role.selected() is None:
             self._warn("Seleccione el cargo de la lista o créelo. Si no aplica, borre el texto.")
@@ -519,6 +531,8 @@ class ReceiverDialog(QDialog):
         volante = self._volante.selected()
         if volante is not None:
             data["volante_name"] = volante.name
+        elif not self._is_edit:
+            data["volante_name"] = self._volante.text()
         if self._type == "PERSONA":
             data["full_name"] = self._name.text().strip()
             title = self._title.selected()

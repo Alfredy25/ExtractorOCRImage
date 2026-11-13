@@ -3,7 +3,7 @@
 import pytest
 
 from app.api import receivers_api
-from app.models.receiver import Paginated, ReceiverDto, validate_receiver
+from app.models.receiver import Paginated, ReceiverDto, VolanteDto, validate_receiver
 from app.services import receivers_service as rs
 
 
@@ -302,3 +302,41 @@ def test_search_forwards_paging_and_order(monkeypatch):
     assert _empty_page.kwargs["page_size"] == 25
     assert _empty_page.kwargs["order_by"] == "full_name"
     assert _empty_page.kwargs["direction"] == "desc"
+
+
+def test_add_volante_sends_uppercase_name(monkeypatch):
+    captured: dict = {}
+
+    def _fake(receiver_id, payload, token):
+        captured["receiver_id"] = receiver_id
+        captured["payload"] = payload
+        captured["token"] = token
+        return VolanteDto.model_validate({
+            "id": 5,
+            "name": payload["name"],
+            "created_at": "2026-11-10T16:00:00",
+            "updated_at": "2026-11-10T16:00:00",
+            "created_by": 1,
+            "updated_by": None,
+        })
+
+    monkeypatch.setattr(rs, "get_access_token", lambda: "token-ok")
+    monkeypatch.setattr(rs.receivers_api, "add_volante", _fake)
+
+    created = rs.add_volante(4, "  vcs-26-131000-00167  ")
+
+    assert created.name == "VCS-26-131000-00167"
+    assert captured["receiver_id"] == 4
+    assert captured["payload"] == {"name": "VCS-26-131000-00167"}
+
+
+def test_add_volante_rejects_short_name_without_http(monkeypatch):
+    def _fail(*_args, **_kwargs):
+        raise AssertionError("no debía llamar a la API")
+
+    monkeypatch.setattr(rs.receivers_api, "add_volante", _fail)
+
+    with pytest.raises(rs.ReceiverValidationError) as exc:
+        rs.add_volante(4, "V-2026")
+
+    assert exc.value.errors[0]["campo"] == "Volante"

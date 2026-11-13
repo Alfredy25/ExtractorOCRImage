@@ -227,6 +227,11 @@ class ReceiverPicker(QWidget):
         ficha_layout = QVBoxLayout(self._ficha)
         ficha_layout.setContentsMargins(0, SPACE["sm"], 0, 0)
         ficha_layout.setSpacing(SPACE["xs"])
+        self._btn_edit = text_button("Editar destinatario", variant="ghost", icon="edit_document")
+        self._btn_edit.setObjectName("receiverEditButton")
+        self._btn_edit.clicked.connect(self._request_edit)
+        ficha_layout.addWidget(self._btn_edit, 0, Qt.AlignmentFlag.AlignLeft)
+
         self._name = QLabel("")
         self._name.setProperty("role", "cardTitle")
         self._name.setWordWrap(True)
@@ -243,10 +248,14 @@ class ReceiverPicker(QWidget):
         self._contacts.setSpacing(SPACE["xs"])
         ficha_layout.addLayout(self._contacts)
 
-        self._btn_edit = text_button("Editar destinatario", variant="ghost", icon="edit_document")
-        self._btn_edit.setObjectName("receiverEditButton")
-        self._btn_edit.clicked.connect(self._request_edit)
-        ficha_layout.addWidget(self._btn_edit, 0, Qt.AlignmentFlag.AlignLeft)
+        ficha_layout.addWidget(subtitle("Volantes registrados"))
+        self._volantes = QVBoxLayout()
+        self._volantes.setSpacing(SPACE["xs"])
+        ficha_layout.addLayout(self._volantes)
+        self._btn_add_volante = text_button("Añadir nuevo volante", variant="ghost", icon="add")
+        self._btn_add_volante.setObjectName("addVolanteButton")
+        self._btn_add_volante.clicked.connect(self._open_volante)
+        ficha_layout.addWidget(self._btn_add_volante, 0, Qt.AlignmentFlag.AlignLeft)
 
         ficha_layout.addWidget(subtitle("Domicilios registrados"))
         self._btn_add_address = text_button("Registrar domicilio", variant="ghost", icon="add")
@@ -381,6 +390,7 @@ class ReceiverPicker(QWidget):
         position = receiver_position_line(receiver)
         self._meta.setText(position or receiver.type_entity)
         self._rebuild_contacts(receiver, preferred_contact_id)
+        self._rebuild_volantes(receiver)
         self._rebuild_addresses(receiver, preferred_address_id)
         if not receiver.addresses:
             self._set_status("Este destinatario no tiene domicilios. Registre uno.")
@@ -456,6 +466,44 @@ class ReceiverPicker(QWidget):
         phone = contact_display_line(selected)
         bits = [bit for bit in (email, phone) if bit]
         self._contact_summary.setText(" · ".join(bits) if bits else "Sin correo ni teléfono")
+
+    def _rebuild_volantes(self, receiver: ReceiverDto) -> None:
+        while self._volantes.count():
+            item = self._volantes.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+        if not receiver.volantes:
+            empty = subtitle("Sin volantes")
+            empty.setObjectName("receiverVolanteEmpty")
+            self._volantes.addWidget(empty)
+            return
+        for volante in receiver.volantes:
+            line = subtitle(volante.name)
+            line.setObjectName("receiverVolanteItem")
+            self._volantes.addWidget(line)
+
+    def _open_volante(self) -> None:
+        if self._receiver is None:
+            return
+        from app.views.volante_dialog import VolanteDialog
+
+        dialog = VolanteDialog(self._receiver.id, parent=self.window())
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        created = dialog.created_volante
+        if created is None:
+            return
+        volantes = [item for item in self._receiver.volantes if item.id != created.id]
+        volantes.append(created)
+        address_id = self._address_group.checkedId()
+        contact_id = self._selected_contact.id if self._selected_contact is not None else None
+        self._receiver = self._receiver.model_copy(update={"volantes": volantes})
+        self.show_receiver(
+            self._receiver,
+            address_id if address_id >= 0 else None,
+            contact_id,
+        )
 
     def _on_contact_toggled(self, contact_id: int, checked: bool) -> None:
         if not checked or self._receiver is None:
