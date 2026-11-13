@@ -44,7 +44,8 @@ ORG_ABBREVIATIONS = {
     "AUTONOMA": "AUT.",
     "ADMINISTRACION": "ADMON.",
     "SECRETARIA": "SECRET.A",
-    "ESTADO": "EDO",
+    "ESTADO": "EDO.",
+    "MUNICIPIO":"MPIO."
 }
 
 ROLE_ABBREVIATIONS = {
@@ -77,6 +78,7 @@ ROLE_ABBREVIATIONS = {
     "TITULAR": "TIT.",
     "GENERAL": "GRAL.",
     "ESTADO": "EDO",
+    "MUNICIPAL":"MPAL."
 }
 
 TITLE_ABBREVIATIONS = {
@@ -113,6 +115,8 @@ STREET_ABBREVIATIONS = {
     "AVENIDA": "AV.",
     "NUMERO": "NUM.",
     "CALLE": "C.",
+    "MUNICIPAL":"MPAL.",
+    "CIRCUITO":"CTO."
 }
 
 _PHONE_JUNK = ("TELEFONO", "NUMERO", "NUM", "NOM", "TEL", "NO")
