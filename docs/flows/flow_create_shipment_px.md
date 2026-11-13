@@ -22,7 +22,7 @@ Que el destinatario exista no implica un envío PX anterior. Destinatario y env�
 ## Pasos
 
 1. El usuario carga la foto y recorta la zona del sobre (Workspace). El destinatario se ve en la foto. Todavía no hay OCR.
-2. Busca destinatario con lo que lee en la foto. `GET /receivers/` arranca en página 1, 10 por página, `order_by=id`, `direction=asc`. Página, tamaño, orden y dirección se pueden cambiar. `search`, `type_entity` y `state` son opcionales.
+2. Busca destinatario con lo que lee en la foto, o solo con tipo y estado. `GET /receivers/` arranca en página 1, 10 por página, `order_by=id`, `direction=asc`. Página, orden y dirección se pueden cambiar. `query`, `type_entity` y `state` son opcionales. El texto se envía como `query`; `search` da error. Si el cuadro va vacío, no se manda `query`.
 3. El backend responde destinatarios paginados (`ReceiverDto` con `addresses` y `contacts`).
 4. Si hay resultados, elige destinatario y un domicilio de `addresses`. Si solo hay uno, se usa ese.
 5. Se abre la pantalla de creación. La referencia es la imagen del recorte.
@@ -132,7 +132,7 @@ sequenceDiagram
   U->>WS: 1. Carga la foto y recorta la zona
   U->>WS: 2. Busca destinatario viendo la foto
   WS->>R: GET /receivers/ page=1, page_size=10, order_by=id, direction=asc
-  Note over R: search, type_entity y state opcionales<br/>Coincide contra full_name<br/>y organization.name<br/>Cambiar pagina, tamano u orden repite el GET
+  Note over R: query, type_entity y state opcionales<br/>Sin texto no se envia query<br/>Coincide contra full_name<br/>y organization.name<br/>Cambiar pagina, orden o filtros repite el GET
   R-->>WS: 3. PaginatedReceiver
 
   alt Hay items
@@ -211,7 +211,7 @@ La primera consulta del flujo manda:
 
 Si se omite `page_size`, el contrato usa 50. Este flujo lo manda en 10. Cambiar página, tamaño u orden vuelve a llamar `GET /receivers/` con los mismos filtros. Si la página pedida pasa de la última, la respuesta trae la última que existe.
 
-- `search` es opcional. Si viene, el texto recortado debe quedar en al menos 3 caracteres; si no, 422 `Search debe tener al menos 3 caracteres`. Máximo 40. Letras (con acentos y Ñ), dígitos, espacio, punto y guion.
+- `query` es opcional y es el nombre que acepta el API. `search` responde error. Si el cuadro está vacío, no se envía. Si viene, el texto recortado debe quedar en al menos 3 caracteres; si no, 422 `Search debe tener al menos 3 caracteres`. Máximo 40. Letras (con acentos y Ñ), dígitos, espacio, punto y guion. Este flujo siempre manda `page_size=10`.
 - El servidor busca en mayúsculas, coincidencia parcial, contra:
   - `full_name` (PERSONA)
   - `position.organization.name` (GOBIERNO o PRIVADA)
@@ -273,7 +273,7 @@ Estos campos **no** se toman del domicilio del destinatario ni del OCR.
 
 | Campo envío | Origen `ReceiverDto` | Notas |
 |-------------|----------------------|-------|
-| `name_receiver` | PERSONA: `title.abbreviation` + `full_name` + ` / ` + `job_role.abbreviation` + ` EN ` + `organization.name`. Cargo y organización son opcionales; `EN` solo va si hay ambos. GOBIERNO/PRIVADA: `position.organization.name` | PX: 4–80, obligatorio. Se recorta a 80. |
+| `name_receiver` | PERSONA: `title.abbreviation` + `full_name` + ` / ` + `job_role.abbreviation` + ` EN ` + `organization.name`. Cargo y organización son opcionales; `EN` solo va si hay ambos. GOBIERNO/PRIVADA: `job_role.abbreviation` + `organization.name` + `organization.state` | PX: 4–80, obligatorio. Se recorta a 80. |
 | `country` | `addresses[i].country` | 3–50. |
 | `street` | `addresses[i].street` | 3–80. El receiver ya abrevia (`AVENIDA` → `AV.`). El alta PX no vuelve a abreviar. |
 | `num_street` | `addresses[i].num_street` | 1–15. |
@@ -316,7 +316,7 @@ En la rama del destinatario existente la referencia de la pantalla es la imagen 
 | Cobertura, destinatario ya elegido (paso 6) | 404 | No se crea el envío. Se vuelve a Workspace. No hay registro OCR. |
 | Cobertura, tras el OCR (paso 5b) | 404 | No se abre creación ni se crea destinatario. Se guarda el registro OCR. |
 | Cobertura | 422 | `cp` ausente, de menos de 4 o de más de 5 caracteres. |
-| Receivers búsqueda | 422 | `search` corto o con caracteres no permitidos. Página, tamaño u orden fuera de los literales del contrato. |
+| Receivers búsqueda | 422 | `query` corto o con caracteres no permitidos. Página, tamaño u orden fuera de los literales del contrato. |
 | Receivers alta | 409 | Destinatario duplicado; usar el `receiver_id` devuelto y seguir al envío. |
 | Receivers alta | 422 | Reglas PERSONA / GOBIERNO / PRIVADA o formato. |
 | Envío alta | 422 | Validación acumulativa de `ShippingRequest` (longitud, CP, decimales, `comments`, etc.). |

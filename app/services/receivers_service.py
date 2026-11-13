@@ -226,13 +226,13 @@ def search_receivers(
     order_by: str = "id",
     direction: str = "asc",
 ) -> Paginated[ReceiverDto]:
-    """Busca por nombre de persona o por organización del puesto."""
+    """Busca por nombre o por los filtros. Sin texto no se envía ``query``."""
     query = _clean(text)
-    if len(query) < 3:
+    if query and len(query) < 3:
         raise ReceiverValidationError(
             [{"campo": "Búsqueda", "error": "Escriba al menos 3 caracteres."}]
         )
-    if len(query) > 40 or _SEARCH_PATTERN.fullmatch(query) is None:
+    if query and (len(query) > 40 or _SEARCH_PATTERN.fullmatch(query) is None):
         raise ReceiverValidationError(
             [{
                 "campo": "Búsqueda",
@@ -243,7 +243,7 @@ def search_receivers(
     try:
         return receivers_api.search_receivers(
             token,
-            search=query,
+            search=query or None,
             type_entity=type_entity,
             state=state,
             page=page,

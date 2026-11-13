@@ -118,7 +118,7 @@ El flujo completo está documentado en [`docs/flows/flow_create_shipment_px.md`]
 
 ### Rama A: el destinatario ya existe
 
-1. En **Destinatario**, buscar por nombre de la persona o de la organización. La consulta arranca en página 1, 10 por página, ordenada por `id` ascendente; se pueden cambiar tipo, estado, orden y dirección, y paginar los resultados.
+1. En **Destinatario**, buscar por nombre de la persona o de la organización, o dejar el cuadro vacío y usar solo tipo, estado y orden. La consulta arranca en página 1, 10 por página, ordenada por `id` ascendente, y se puede paginar.
 2. Elegir el destinatario y uno de sus domicilios. Si solo tiene uno, queda elegido. **Añadir nuevo volante** solo le enlaza otro número: un destinatario puede tener varios.
 3. Pulsar **Crear envío con este destinatario**: se abre **Crear envío Paquetexpress** con la **imagen del recorte** como referencia, sin campos OCR.
 4. La ventana consulta `COVERTURAS_ENDPOINT` con el **código postal del domicilio**. Si no hay cobertura, avisa, se cierra y no queda registro OCR.

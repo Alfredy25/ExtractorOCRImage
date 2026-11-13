@@ -262,7 +262,7 @@ Sin body.
 
 Query:
 
-- `search`: string, opcional. Máximo 40. Letras (con acentos y Ñ), dígitos, espacio, punto y guion. Ejemplo: `S.A. de C.V.`
+- `query`: string, opcional. Máximo 40. Letras (con acentos y Ñ), dígitos, espacio, punto y guion. Ejemplo: `S.A. de C.V.`. El nombre del parámetro es `query`. Enviarlo como `search` responde error. Si no hay texto, se omite.
 - `page`: int, default 1, mínimo 1
 - `page_size`: int, default 50, mínimo 5, máximo 100. El texto de la ruta dice «5-50»; el límite que aplica es 100.
 - `order_by`: `id` | `full_name` | `name_org` | `created_at`, default `id`
@@ -278,7 +278,7 @@ Header:
 
 | Campo | Tipo | Requerido | Default | Notas |
 |-------|------|-----------|---------|-------|
-| search | string | no | null | query. Línea de texto, máximo 40. |
+| query | string | no | null | query string. Línea de texto, máximo 40. No usar el nombre `search`. |
 | page | int | no | 1 | query. Spin, mínimo 1. |
 | page_size | int | no | 50 | query. Spin, 5–100. |
 | order_by | string | no | `id` | query. Combo: `id`, `full_name`, `name_org`, `created_at`. |
@@ -288,13 +288,13 @@ Header:
 
 ### Validaciones
 
-- `search`, si viene: debe cumplir el patrón antes de recortar. Después se recortan los extremos y deben quedar al menos 3 caracteres. Si no, 422 con mensaje `Search debe tener al menos 3 caracteres`. La búsqueda usa ese texto en mayúsculas y hace coincidencia parcial contra `full_name` y contra el nombre de la organización del puesto.
+- `query`, si viene: debe cumplir el patrón antes de recortar. Después se recortan los extremos y deben quedar al menos 3 caracteres. Si no, 422 con mensaje `Search debe tener al menos 3 caracteres`. La búsqueda usa ese texto en mayúsculas y hace coincidencia parcial contra `full_name` y contra el nombre de la organización del puesto. Si se omite, lista con los demás filtros.
 - `page` ≥ 1. `page_size` de 5 a 100.
 - `order_by` y `direction` solo los literales de arriba. `name_org` ordena por el nombre de la organización del puesto. Si el orden no es `id`, el `id` se usa como desempate en la misma dirección.
 - `type_entity`, si viene, solo `PERSONA`, `GOBIERNO` o `PRIVADA`.
 - `state`, si viene, se recorta y pasa a mayúsculas. No se le quitan acentos. Se compara igual al `state` guardado en alguna dirección. Esos estados están sin acento (`MICHOACAN`, `QUERETARO`, `NUEVO LEON`, `CIUDAD DE MEXICO`, …). Enviar `Michoacán` queda `MICHOACÁN` y no coincide.
 - Si la página pedida pasa de la última, la respuesta devuelve la última página existente. Con cero resultados, `page` es 1, `total_pages` es 0, `has_prev` y `has_next` son false.
-- `search` en la respuesta es el texto ya recortado y en mayúsculas, o `null` si no se buscó.
+- En la respuesta el texto queda en `search`: ya recortado y en mayúsculas, o `null` si no se envió `query`.
 
 ### Respuesta
 
@@ -324,7 +324,7 @@ Cada elemento de `items` es un `ReceiverDto` con la misma forma que la respuesta
 | 401 | sin header Authorization | `{"detail": "Not authenticated"}` |
 | 401 | token inválido o expirado | `{"detail": "Token inválido o expirado"}` |
 | 401 | usuario inexistente o inactivo | `{"detail": "Usuario no válido o inactivo"}` |
-| 422 | query inválido | `{"errors": [{"message": "Search debe tener al menos 3 caracteres", "field": "search", "type": "value_error"}]}` |
+| 422 | `query` inválido | `{"errors": [{"message": "Search debe tener al menos 3 caracteres", "field": "query", "type": "value_error"}]}` |
 
 ## POST /receivers/{receiver_id}/volantes
 

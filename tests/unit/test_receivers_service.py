@@ -157,6 +157,24 @@ def test_create_receiver_wraps_duplicate(monkeypatch):
     assert exc.value.receiver_id == 9
 
 
+def test_search_without_text_omits_query_and_keeps_page_size(monkeypatch):
+    monkeypatch.setattr(rs, "get_access_token", lambda: "token-ok")
+    monkeypatch.setattr(rs.receivers_api, "search_receivers", _empty_page)
+
+    rs.search_receivers(
+        "   ",
+        type_entity="GOBIERNO",
+        state="JALISCO",
+        order_by="name_org",
+        direction="asc",
+    )
+
+    assert _empty_page.kwargs["search"] is None
+    assert _empty_page.kwargs["page_size"] == 10
+    assert _empty_page.kwargs["type_entity"] == "GOBIERNO"
+    assert _empty_page.kwargs["state"] == "JALISCO"
+
+
 def test_search_rejects_short_text_without_http(monkeypatch):
     def _fail(*_args, **_kwargs):
         raise AssertionError("no debía llamar a la API")
