@@ -224,6 +224,50 @@ def persona_shipment_name(
     return text[:NAME_RECEIVER_LIMIT]
 
 
+def institution_shipment_name(
+    role_abbreviation: str | None = None,
+    organization_name: str | None = None,
+    organization_state: str | None = None,
+) -> str:
+    """Abreviatura del cargo, organización y su estado. Límite de ``name_receiver``.
+
+    Forma: ``PDTE. MPAL. MPIO. DE EL GRULLO JALISCO``. Sirve para GOBIERNO y PRIVADA.
+    """
+    organization = " ".join(
+        part.strip()
+        for part in (organization_name or "", organization_state or "")
+        if part and part.strip()
+    )
+    role = (role_abbreviation or "").strip()
+    if role and organization:
+        text = f"{role} {organization}"
+    else:
+        text = role or organization
+    return text[:NAME_RECEIVER_LIMIT]
+
+
+def shipment_receiver_name(receiver: ReceiverDto) -> str:
+    """Texto de ``name_receiver`` según el tipo de destinatario."""
+    if receiver.type_entity == "PERSONA":
+        role = ""
+        organization = ""
+        if receiver.position is not None:
+            organization = receiver.position.organization.name
+            if receiver.position.job_role is not None:
+                role = receiver.position.job_role.abbreviation
+        title = receiver.title.abbreviation if receiver.title else ""
+        return persona_shipment_name(title, receiver.full_name, role, organization)
+    role = ""
+    organization = ""
+    state = ""
+    if receiver.position is not None:
+        organization = receiver.position.organization.name
+        state = receiver.position.organization.state
+        if receiver.position.job_role is not None:
+            role = receiver.position.job_role.abbreviation
+    return institution_shipment_name(role, organization, state)
+
+
 class TitleInput(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 

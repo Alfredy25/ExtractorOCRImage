@@ -476,6 +476,110 @@ def test_build_shipment_payload_gobierno_truncates_name_and_skips_short_phone():
     assert payload["content"] == "DOCUMENTOS LEGALES"
 
 
+def test_build_shipment_payload_gobierno_joins_role_organization_and_state():
+    receiver = _receiver(
+        type_entity="GOBIERNO",
+        title=None,
+        full_name=None,
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 2,
+                "abbreviation": "PDTE. MPAL.",
+                "meaning": "Presidente Municipal",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "MPIO. DE EL GRULLO",
+                "state": "JALISCO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {"rfc": "XAXX-010101-000"}
+    )
+
+    assert payload["name_receiver"] == "PDTE. MPAL. MPIO. DE EL GRULLO JALISCO"
+
+
+def test_record_from_existing_shipment_uses_coverage_and_leaves_volante_empty():
+    from app.models.receiver import ContactDto
+
+    receiver = _receiver(
+        type_entity="GOBIERNO",
+        title=None,
+        full_name=None,
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 2,
+                "abbreviation": "PDTE. MPAL.",
+                "meaning": "Presidente Municipal",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "MPIO. DE EL GRULLO",
+                "state": "JALISCO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+        volantes=[{"id": 5, "name": "VCS-26-131000-00167", **_audit()}],
+    )
+    contact = ContactDto.model_validate({
+        "id": 6,
+        "phone": "3312345678",
+        "ext": "12",
+        "id_destinatario": 1,
+        **_audit(),
+    })
+
+    record = px.record_from_existing_shipment(receiver, _address(), _coverage(), contact)
+
+    assert record["campos"]["nombre_titulo"] == "Presidente Municipal en MPIO. DE EL GRULLO"
+    assert record["campos"]["cargo_dependencia"] == ""
+    assert record["campos"]["colonia"] == "FLORIDA"
+    assert record["campos"]["estado"] == "CIUDAD DE MEXICO"
+    assert record["campos"]["codigo_postal"] == "01030"
+    assert record["campos"]["municipio_alcaldia"] == "GUADALAJARA"
+    assert record["campos"]["direccion"] == "AV. REFORMA 120"
+    assert record["campos"]["contacto"] == "3312345678 ext. 12"
+    assert record["campos"]["numero_volante"] == ""
+    assert record["observaciones_ia"] == ""
+    assert len(record["destinatario_raw"]) >= 40
+
+
+def test_record_from_existing_shipment_persona_splits_title_and_role():
+    receiver = _receiver(
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 2,
+                "abbreviation": "DIR.",
+                "meaning": "Director",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "CONGRESO",
+                "state": "TABASCO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    record = px.record_from_existing_shipment(receiver, _address(), _coverage(), None)
+
+    assert record["campos"]["nombre_titulo"] == "DR. JUAN PEREZ LOPEZ"
+    assert record["campos"]["cargo_dependencia"] == "DIR. CONGRESO TABASCO"
+
+
 def test_build_shipment_payload_uses_form_email_not_receiver_email():
     payload = px.build_shipment_payload_from_receiver(
         _receiver(),

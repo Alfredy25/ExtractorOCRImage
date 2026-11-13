@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.components.autocomplete_combo import AutocompleteComboBox
 from app.components.receiver_picker import ReceiverPicker
 from app.components.theme import SPACE
 from app.components.widgets import (
@@ -40,6 +41,9 @@ from app.components.widgets import (
 )
 from app.config import SEDES
 from app.models.field_schema import FIELD_KEYS
+from app.services import catalogs_service
+
+_VOLANTE_FIELDS = (("name", "Nombre del volante", "upper", 35),)
 
 # Etiquetas legibles para las claves del esquema OCR.
 FIELD_LABELS = {
@@ -76,7 +80,7 @@ SECTIONS: list[tuple[str, str, list[list[str]]]] = [
         [["direccion"], ["colonia"], ["municipio_alcaldia", "estado"], ["codigo_postal"]],
     ),
     ("Contacto y notas", "mail", [["contacto"], ["indicaciones"]]),
-    ("Control interno", "numbers", [["numero_volante", "extras"]]),
+    ("Control interno", "numbers", [["numero_volante"], ["extras"]]),
 ]
 
 
@@ -246,12 +250,35 @@ class RightPanel(Card):
         return box
 
     def _build_field(self, key: str) -> QWidget:
+        label = FIELD_LABELS.get(key, key.replace("_", " ").capitalize())
+        if key == "numero_volante":
+            return self._build_volante_field(label)
         line = QLineEdit()
         line.setPlaceholderText("—")
         line.textChanged.connect(lambda _text: self.form_changed.emit())
         self._fields[key] = line
-        label = FIELD_LABELS.get(key, key.replace("_", " ").capitalize())
         return labeled_field(label, line, mono=key in MONO_FIELDS)
+
+    def _build_volante_field(self, label: str) -> QWidget:
+        """Busca o crea el volante suelto. El texto escrito también se guarda."""
+        combo = AutocompleteComboBox(
+            catalogs_service.search_volantes,
+            lambda item: item.name,
+            create_fn=lambda data: catalogs_service.create_volante(data["name"]),
+            create_title="Nuevo volante",
+            create_fields=list(_VOLANTE_FIELDS),
+            placeholder="Buscar o escribir volante",
+        )
+        combo.selection_changed.connect(self.form_changed.emit)
+        combo._combo.lineEdit().textChanged.connect(lambda _text: self.form_changed.emit())
+        self._fields["numero_volante"] = combo
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(SPACE["xs"])
+        layout.addWidget(labeled_field(label, combo, mono=True))
+        layout.addWidget(combo.status_widget())
+        return box
 
     def _build_raw_section(self) -> QFrame:
         box, layout = self._section_box("Texto OCR", "description")
@@ -366,6 +393,17 @@ class RightPanel(Card):
 
     # --- Datos ---------------------------------------------------------
 
+    @staticmethod
+    def _read_field(widget: QWidget) -> str:
+        return widget.text().strip()
+
+    @staticmethod
+    def _write_field(widget: QWidget, value: str) -> None:
+        if hasattr(widget, "set_text"):
+            widget.set_text(value)
+            return
+        widget.setText(value)
+
     def sede(self) -> str | None:
         return self._sede_combo.currentData()
 
@@ -383,7 +421,7 @@ class RightPanel(Card):
         self._destinatario_raw.setPlainText(data.get("destinatario_raw", "") or "")
         campos = data.get("campos") or {}
         for key, line in self._fields.items():
-            line.setText(campos.get(key, "") or "")
+            self._write_field(line, campos.get(key, "") or "")
         self._observaciones.setPlainText(data.get("observaciones_ia", "") or "")
         if any(campos.values()) or data.get("destinatario_raw"):
             self._set_status("DATOS OCR", "primary")
@@ -393,7 +431,7 @@ class RightPanel(Card):
         """Devuelve los datos del formulario para guardar."""
         return {
             "destinatario_raw": self._destinatario_raw.toPlainText().strip(),
-            "campos": {key: line.text().strip() for key, line in self._fields.items()},
+            "campos": {key: self._read_field(line) for key, line in self._fields.items()},
             "observaciones_ia": self._observaciones.toPlainText().strip(),
         }
 
@@ -409,6 +447,6 @@ class RightPanel(Card):
     def clear_form(self) -> None:
         self._destinatario_raw.clear()
         for line in self._fields.values():
-            line.clear()
+            self._write_field(line, "")
         self._observaciones.clear()
         self._set_status("SIN DATOS", "neutral")

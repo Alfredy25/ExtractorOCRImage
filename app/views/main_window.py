@@ -32,6 +32,7 @@ from app.services.paquetexpress_service import (
     PaquetexpressServiceError,
     PaquetexpressSessionExpiredError,
     get_coverages_for_postal_code,
+    record_from_existing_shipment,
 )
 from app.services.registros_service import (
     RepositorySessionExpiredError,
@@ -434,7 +435,7 @@ class MainWindow(QMainWindow):
     # --- Cobertura y envíos --------------------------------------------
 
     def _on_create_shipment_for_receiver(self):
-        """Rama con destinatario existente (pasos 4-10): no hay OCR ni registro."""
+        """Rama con destinatario existente. Si no hubo extracción, copia el envío al registro."""
         receiver = self._right.selected_receiver()
         address = self._right.selected_address()
         if receiver is None or address is None:
@@ -461,7 +462,14 @@ class MainWindow(QMainWindow):
         )
         # La cobertura se consulta al abrir con el CP del domicilio; si el CP no
         # tiene cobertura, el diálogo se rechaza solo y se vuelve a Workspace.
-        dialog.exec()
+        had_extraction = self._right.has_ocr_data()
+        if dialog.exec() != QDialog.DialogCode.Accepted or had_extraction:
+            return
+        chosen = dialog.chosen_for_record()
+        if chosen is None:
+            return
+        self._right.set_form_data(record_from_existing_shipment(*chosen))
+        self._update_actions_enabled()
 
     def _on_edit_receiver(self, receiver) -> None:
         """Abre el diálogo de alta en modo edición, con el recorte del sobre."""

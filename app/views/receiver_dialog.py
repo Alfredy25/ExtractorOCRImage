@@ -34,6 +34,7 @@ from app.models.receiver import (
     AddressDto,
     ReceiverDto,
     contact_display_line,
+    institution_shipment_name,
     persona_shipment_name,
 )
 from app.services import catalogs_service, receivers_service
@@ -300,19 +301,6 @@ class ReceiverDialog(QDialog):
         persona_layout.addWidget(labeled_field("Nombre completo", self._name))
         card.body.addWidget(self._persona)
 
-        self._org = AutocompleteComboBox(
-            catalogs_service.search_organizations,
-            lambda item: f"{item.name} · {item.state}",
-            create_fn=lambda data: catalogs_service.create_organization(data["name"], data["state"]),
-            create_title="Nueva organización",
-            create_fields=list(_ORG_FIELDS),
-            field_normalizers={"name": normalize_organization},
-            placeholder="Buscar organización",
-        )
-        self._org.selection_changed.connect(self._refresh_preview)
-        card.body.addWidget(labeled_field("Organización", self._org))
-        card.body.addWidget(self._org.status_widget())
-
         self._role = AutocompleteComboBox(
             catalogs_service.search_job_roles,
             lambda item: f"{item.abbreviation} — {item.meaning}",
@@ -329,6 +317,19 @@ class ReceiverDialog(QDialog):
         self._role.selection_changed.connect(self._refresh_preview)
         card.body.addWidget(labeled_field("Cargo", self._role))
         card.body.addWidget(self._role.status_widget())
+
+        self._org = AutocompleteComboBox(
+            catalogs_service.search_organizations,
+            lambda item: f"{item.name} · {item.state}",
+            create_fn=lambda data: catalogs_service.create_organization(data["name"], data["state"]),
+            create_title="Nueva organización",
+            create_fields=list(_ORG_FIELDS),
+            field_normalizers={"name": normalize_organization},
+            placeholder="Buscar organización",
+        )
+        self._org.selection_changed.connect(self._refresh_preview)
+        card.body.addWidget(labeled_field("Organización", self._org))
+        card.body.addWidget(self._org.status_widget())
 
         self._preview = subtitle("")
         card.body.addWidget(self._preview)
@@ -454,7 +455,6 @@ class ReceiverDialog(QDialog):
         role = self._role.selected()
         title = self._title.selected()
         org_name = org.name if org is not None else ""
-        role_name = role.meaning if role is not None else ""
         if self._type == "PERSONA":
             text = persona_shipment_name(
                 title.abbreviation if title is not None else "",
@@ -463,10 +463,11 @@ class ReceiverDialog(QDialog):
                 org_name,
             ) or "Sin datos de identidad"
         else:
-            if org_name and role_name:
-                text = f"{org_name} [{role_name}]"
-            else:
-                text = org_name or "Seleccione una organización"
+            text = institution_shipment_name(
+                role.abbreviation if role is not None else "",
+                org_name,
+                org.state if org is not None else "",
+            ) or "Seleccione una organización"
         self._preview.setText(text)
 
     def _apply_ocr(self) -> None:

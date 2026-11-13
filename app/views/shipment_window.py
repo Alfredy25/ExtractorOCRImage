@@ -18,7 +18,7 @@ from app.components.widgets import (
 )
 from app.models.receiver import (
     AddressDto, ContactDto, ReceiverDto, contact_display_line,
-    receiver_display_name, receiver_position_line,
+    receiver_display_name, receiver_position_line, shipment_receiver_name,
 )
 from app.models.shipping import CoverageItem, ShippingDto
 from app.services.paquetexpress_service import (
@@ -942,6 +942,7 @@ class ShipmentWindow(QDialog):
         self._selected_receiver = receiver
         self._selected_address = address
         self._selected_contact = receiver.contacts[0] if receiver.contacts else None
+        self._write_receiver_name()
         self._sync_submit()
 
     def _sync_submit(self) -> None:
@@ -972,8 +973,34 @@ class ShipmentWindow(QDialog):
             for key, widget in self._shipment_fields.items():
                 self._set_field_value(widget, draft.get(key, ""))
             self._draft_initialized = True
+            self._write_receiver_name()
 
     # --- Envío ---------------------------------------------------------
+
+    def _write_receiver_name(self) -> None:
+        """Deja en el formulario el mismo texto que se envía en ``name_receiver``."""
+        if self._selected_receiver is None:
+            return
+        widget = self._shipment_fields.get("name_receiver")
+        if widget is None:
+            return
+        self._set_field_value(widget, shipment_receiver_name(self._selected_receiver))
+
+    def chosen_for_record(self):
+        """Destinatario, domicilio, cobertura y contacto usados al crear el envío."""
+        coverage = self._selected_coverage()
+        if (
+            self._selected_receiver is None
+            or self._selected_address is None
+            or coverage is None
+        ):
+            return None
+        return (
+            self._selected_receiver,
+            self._selected_address,
+            coverage,
+            self._selected_contact,
+        )
 
     def _payload_from_receiver(self) -> dict[str, Any]:
         """Mezcla destinatario, domicilio elegido, cobertura y datos del paquete."""

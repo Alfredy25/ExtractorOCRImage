@@ -20,7 +20,15 @@ from app.api.shipments_api import (
     update_shipment as api_update_shipment,
 )
 from datetime import datetime
-from app.models.receiver import AddressDto, ContactDto, ReceiverDto, persona_shipment_name
+from app.models.receiver import (
+    AddressDto,
+    ContactDto,
+    ReceiverDto,
+    contact_display_line,
+    receiver_display_name,
+    receiver_position_line,
+    shipment_receiver_name,
+)
 from app.models.shipping import (
     CoverageItem,
     ShippingDto,
@@ -163,20 +171,7 @@ def build_shipment_payload_from_receiver(
     elegido. El teléfono es el del contacto seleccionado, sin extensión. El
     correo del destinatario no se usa: va el del formulario de envío.
     """
-    if receiver.type_entity == "PERSONA":
-        role = ""
-        organization = ""
-        if receiver.position is not None:
-            organization = receiver.position.organization.name
-            if receiver.position.job_role is not None:
-                role = receiver.position.job_role.abbreviation
-        title = receiver.title.abbreviation if receiver.title else ""
-        name = persona_shipment_name(title, receiver.full_name, role, organization)
-    else:
-        name = ""
-        if receiver.position is not None:
-            name = receiver.position.organization.name
-    name = name.strip()[:80]
+    name = shipment_receiver_name(receiver).strip()[:80]
 
     chosen = contact
     if chosen is None and receiver.contacts:
@@ -203,6 +198,88 @@ def build_shipment_payload_from_receiver(
     if not str(payload.get("email") or "").strip():
         payload["email"] = DEFAULT_SHIPMENT_EMAIL
     return payload
+
+
+def _persona_cargo_line(receiver: ReceiverDto) -> str:
+    """Abreviatura del cargo, nombre de la dependencia y su estado."""
+    if receiver.position is None:
+        return ""
+    role = ""
+    if receiver.position.job_role is not None:
+        role = receiver.position.job_role.abbreviation.strip()
+    organization = receiver.position.organization
+    return " ".join(
+        part
+        for part in (
+            role,
+            organization.name.strip(),
+            organization.state.strip(),
+        )
+        if part
+    )
+
+
+def record_from_existing_shipment(
+    receiver: ReceiverDto,
+    address: AddressDto,
+    coverage: CoverageItem,
+    contact: ContactDto | None = None,
+) -> dict[str, Any]:
+    """Campos de registro a partir de lo elegido para el envío.
+
+    ``numero_volante`` queda vacío: no se sabe cuál volante corresponde.
+    """
+    cargo = receiver_position_line(receiver).strip()
+    if receiver.type_entity == "PERSONA":
+        name = receiver_display_name(receiver).strip()
+        cargo_field = _persona_cargo_line(receiver)
+    elif receiver.type_entity == "GOBIERNO":
+        name = cargo
+        cargo_field = ""
+    else:
+        name = shipment_receiver_name(receiver).strip()
+        cargo_field = cargo
+    street = " ".join(
+        part.strip()
+        for part in (address.street or "", address.num_street or "")
+        if part and part.strip()
+    )
+    phone = contact_display_line(contact).strip() if contact is not None else ""
+    if phone == "Sin teléfono":
+        phone = ""
+    reference = str(address.address_reference or "").strip()
+    campos = {
+        "nombre_titulo": name,
+        "cargo_dependencia": cargo_field,
+        "direccion": street,
+        "colonia": str(coverage.colony or "").strip(),
+        "municipio_alcaldia": str(address.municipality or "").strip(),
+        "estado": str(coverage.state or "").strip(),
+        "codigo_postal": str(coverage.postal_code or "").strip(),
+        "numero_volante": "",
+        "extras": "",
+        "contacto": phone,
+        "indicaciones": reference,
+    }
+    lines = [
+        name,
+        cargo_field,
+        street,
+        campos["colonia"],
+        campos["municipio_alcaldia"],
+        campos["estado"],
+        campos["codigo_postal"],
+        phone,
+        reference,
+    ]
+    raw = "\n".join(line for line in lines if line)
+    if len(raw) < 40:
+        raw = f"{raw}\nRegistro del envío con destinatario existente.".strip()
+    return {
+        "destinatario_raw": raw[:660],
+        "campos": campos,
+        "observaciones_ia": "",
+    }
 
 
 def _normalize_shipment_form(data: dict[str, Any]) -> dict[str, Any]:
