@@ -1,4 +1,4 @@
-"""Diálogo corto para registrar un teléfono nuevo en un destinatario."""
+"""Diálogo corto para registrar o editar un teléfono de un destinatario."""
 
 from __future__ import annotations
 
@@ -13,21 +13,23 @@ from app.views.session_relogin import prompt_relogin_after_session_expired
 
 
 class ContactDialog(QDialog):
-    """Alta de contacto. Un 409 avisa y deja corregir el teléfono."""
+    """Alta o edición de contacto. Un 409 avisa y deja corregir el teléfono."""
 
-    def __init__(self, receiver_id: int, parent=None):
+    def __init__(self, receiver_id: int, parent=None, contact: ContactDto | None = None):
         super().__init__(parent)
         self.setObjectName("ContactDialog")
-        self.setWindowTitle("Agregar contacto")
-        self.resize(420, 220)
         self._receiver_id = receiver_id
+        self._contact = contact
         self._busy = False
         self.created_contact: ContactDto | None = None
+        editing = contact is not None
+        self.setWindowTitle("Editar contacto" if editing else "Agregar contacto")
+        self.resize(420, 220)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(SPACE["lg"], SPACE["md"], SPACE["lg"], SPACE["md"])
         root.setSpacing(SPACE["md"])
-        title = QLabel("Nuevo teléfono")
+        title = QLabel("Editar teléfono" if editing else "Nuevo teléfono")
         title.setProperty("role", "headline")
         root.addWidget(title)
 
@@ -38,6 +40,9 @@ class ContactDialog(QDialog):
         self._ext = QLineEdit()
         self._ext.setMaxLength(5)
         self._ext.setPlaceholderText("Ext.")
+        if contact is not None:
+            self._phone.setText(contact.phone or "")
+            self._ext.setText(contact.ext or "")
         row = QHBoxLayout()
         row.setSpacing(SPACE["sm"])
         row.addWidget(labeled_field("Teléfono", self._phone), 2)
@@ -61,6 +66,15 @@ class ContactDialog(QDialog):
         self._busy = True
         self._save.setEnabled(False)
         payload = {"phone": self._phone.text().strip(), "ext": self._ext.text().strip()}
+        if self._contact is not None:
+            contact = self._contact
+            run_worker(
+                self,
+                lambda: contacts_service.update_contact(contact.id, payload, contact),
+                self._on_created,
+                self._on_failed,
+            )
+            return
         run_worker(
             self,
             lambda: contacts_service.create_contact(self._receiver_id, payload),

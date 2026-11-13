@@ -1,4 +1,4 @@
-"""Alta de un contacto para un destinatario que ya existe."""
+"""Alta y edición de un contacto para un destinatario que ya existe."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from app.services.auth_service import get_access_token
 
 
 class ContactServiceError(Exception):
-    """Error de dominio al crear un contacto."""
+    """Error de dominio al crear o editar un contacto."""
 
 
 class ContactSessionExpiredError(ContactServiceError):
@@ -51,6 +51,22 @@ def build_contact_payload(form_data: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
+def build_contact_update_payload(
+    form_data: dict[str, Any],
+    original: ContactDto,
+) -> dict[str, Any]:
+    """Solo las claves que cambiaron. ``ext: null`` borra la extensión."""
+    current = build_contact_payload(form_data)
+    changed: dict[str, Any] = {}
+    if current["phone"] != _digits(original.phone):
+        changed["phone"] = current["phone"]
+    new_ext = current.get("ext") or None
+    old_ext = _digits(original.ext) or None
+    if new_ext != old_ext:
+        changed["ext"] = new_ext
+    return changed
+
+
 def create_contact(receiver_id: int, form_data: dict[str, Any]) -> ContactDto:
     """Valida y crea el contacto del destinatario indicado."""
     payload = build_contact_payload(form_data)
@@ -64,6 +80,32 @@ def create_contact(receiver_id: int, form_data: dict[str, Any]) -> ContactDto:
             model.model_dump(mode="json", exclude_none=True),
             token,
         )
+    except contacts_api.ContactDuplicateError as exc:
+        raise ContactDuplicateError(str(exc)) from exc
+    except contacts_api.ContactsSessionExpiredError as exc:
+        raise ContactSessionExpiredError(str(exc)) from exc
+    except contacts_api.ContactsValidationError as exc:
+        raise ContactValidationError(present_api_errors(exc.errors)) from exc
+    except contacts_api.ContactsApiError as exc:
+        raise ContactServiceError(str(exc)) from exc
+
+
+def update_contact(
+    contact_id: int,
+    form_data: dict[str, Any],
+    original: ContactDto,
+) -> ContactDto:
+    """Valida el formulario y envía solo el teléfono o la extensión que cambiaron."""
+    payload = build_contact_payload(form_data)
+    model, errors = validate_contact(payload)
+    if errors or model is None:
+        raise ContactValidationError(errors)
+    body = build_contact_update_payload(form_data, original)
+    if not body:
+        return original
+    token = _required_token()
+    try:
+        return contacts_api.patch_contact(contact_id, body, token)
     except contacts_api.ContactDuplicateError as exc:
         raise ContactDuplicateError(str(exc)) from exc
     except contacts_api.ContactsSessionExpiredError as exc:

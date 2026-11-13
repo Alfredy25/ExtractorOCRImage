@@ -194,6 +194,21 @@ def receiver_position_line(receiver: ReceiverDto) -> str:
 
 NAME_RECEIVER_LIMIT = 80
 
+# El servidor asigna uno de estos cuando el destinatario no tiene un cargo real.
+_PLACEHOLDER_ROLE_ABBREVIATIONS = frozenset({
+    "SIN CARGO",
+    "INSTITUCIONAL GOBIERNO",
+    "INSTITUCIONAL PRIVADO",
+})
+
+
+def _shipment_role(abbreviation: str | None) -> str:
+    """Abreviatura de cargo que sí se manda en ``name_receiver``."""
+    role = (abbreviation or "").strip()
+    if role.upper() in _PLACEHOLDER_ROLE_ABBREVIATIONS:
+        return ""
+    return role
+
 
 def persona_shipment_name(
     title_abbreviation: str | None = None,
@@ -205,13 +220,15 @@ def persona_shipment_name(
 
     Forma: ``M. EN A.P. SONIA ISELA DÍAZ / CONT. GRAL. GUB. EN SECRETARÍA``.
     ``EN`` solo aparece cuando hay abreviatura de cargo y nombre de organización.
+    ``SIN CARGO``, ``INSTITUCIONAL GOBIERNO`` e ``INSTITUCIONAL PRIVADO`` no se
+    concatenan: queda la organización sola después de la diagonal.
     """
     identity = " ".join(
         part.strip()
         for part in (title_abbreviation or "", full_name or "")
         if part and part.strip()
     )
-    role = (role_abbreviation or "").strip()
+    role = _shipment_role(role_abbreviation)
     organization = (organization_name or "").strip()
     if role and organization:
         position = f"{role} EN {organization}"
@@ -232,13 +249,15 @@ def institution_shipment_name(
     """Abreviatura del cargo, organización y su estado. Límite de ``name_receiver``.
 
     Forma: ``PDTE. MPAL. MPIO. DE EL GRULLO JALISCO``. Sirve para GOBIERNO y PRIVADA.
+    Los cargos fijos ``SIN CARGO``, ``INSTITUCIONAL GOBIERNO`` e
+    ``INSTITUCIONAL PRIVADO`` no se concatenan.
     """
     organization = " ".join(
         part.strip()
         for part in (organization_name or "", organization_state or "")
         if part and part.strip()
     )
-    role = (role_abbreviation or "").strip()
+    role = _shipment_role(role_abbreviation)
     if role and organization:
         text = f"{role} {organization}"
     else:

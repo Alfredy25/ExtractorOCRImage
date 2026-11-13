@@ -273,7 +273,7 @@ Estos campos **no** se toman del domicilio del destinatario ni del OCR.
 
 | Campo envío | Origen `ReceiverDto` | Notas |
 |-------------|----------------------|-------|
-| `name_receiver` | PERSONA: `title.abbreviation` + `full_name` + ` / ` + `job_role.abbreviation` + ` EN ` + `organization.name`. Cargo y organización son opcionales; `EN` solo va si hay ambos. GOBIERNO/PRIVADA: `job_role.abbreviation` + `organization.name` + `organization.state` | PX: 4–80, obligatorio. Se recorta a 80. |
+| `name_receiver` | PERSONA: `title.abbreviation` + `full_name` + ` / ` + `job_role.abbreviation` + ` EN ` + `organization.name`. Cargo y organización son opcionales; `EN` solo va si hay ambos. GOBIERNO/PRIVADA: `job_role.abbreviation` + `organization.name` + `organization.state`. Las abreviaturas `SIN CARGO`, `INSTITUCIONAL GOBIERNO` e `INSTITUCIONAL PRIVADO` no se concatenan. | PX: 4–80, obligatorio. Se recorta a 80. |
 | `country` | `addresses[i].country` | 3–50. |
 | `street` | `addresses[i].street` | 3–80. El receiver ya abrevia (`AVENIDA` → `AV.`). El alta PX no vuelve a abreviar. |
 | `num_street` | `addresses[i].num_street` | 1–15. |

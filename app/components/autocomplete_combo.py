@@ -117,7 +117,7 @@ class _QuickCreateDialog(QDialog):
         actions.addWidget(cancel)
         actions.addWidget(save)
         root.addLayout(actions)
-        self.resize(420, 220 + 48 * len(fields))
+        self.resize(600, 220 + 48 * len(fields))
 
     def values(self) -> dict[str, str]:
         return dict(self._values)

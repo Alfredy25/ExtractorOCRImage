@@ -61,3 +61,44 @@ def test_create_contact_duplicate_is_not_hard_error_shape(monkeypatch):
         contacts_api.create_contact(4, {"phone": "5512345678"}, "token-ok")
 
     assert "teléfono" in str(exc.value)
+
+
+def test_patch_contact_sends_only_changed_ext(monkeypatch):
+    captured = _install(monkeypatch, 200, _contact(9))
+
+    updated = contacts_api.patch_contact(9, {"ext": "15"}, "token-ok")
+
+    assert updated.id == 9
+    assert captured["method"] == "PATCH"
+    assert captured["url"].endswith("/contacts/9")
+    assert captured["json"] == {"ext": "15"}
+    assert captured["headers"]["Authorization"] == "Bearer token-ok"
+
+
+def test_patch_contact_can_clear_ext(monkeypatch):
+    captured = _install(monkeypatch, 200, {**_contact(9), "ext": None})
+
+    updated = contacts_api.patch_contact(9, {"ext": None}, "token-ok")
+
+    assert updated.ext is None
+    assert captured["json"] == {"ext": None}
+
+
+def test_patch_contact_duplicate(monkeypatch):
+    _install(
+        monkeypatch,
+        409,
+        {"detail": "El destinatario ya tiene un contacto con ese teléfono y extensión"},
+    )
+
+    with pytest.raises(contacts_api.ContactDuplicateError):
+        contacts_api.patch_contact(9, {"phone": "5512345678"}, "token-ok")
+
+
+def test_patch_contact_missing(monkeypatch):
+    _install(monkeypatch, 404, {"detail": "Contacto con id 9 no existe"})
+
+    with pytest.raises(contacts_api.ContactsApiError) as exc:
+        contacts_api.patch_contact(9, {"ext": "1"}, "token-ok")
+
+    assert "404" in str(exc.value)

@@ -1,4 +1,4 @@
-"""Transporte HTTP para crear un contacto de un destinatario existente."""
+"""Transporte HTTP para crear y editar un contacto de un destinatario."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from app.models.receiver import ContactDto
 
 
 class ContactsApiError(Exception):
-    """Fallo HTTP al crear un contacto."""
+    """Fallo HTTP al crear o editar un contacto."""
 
 
 class ContactsSessionExpiredError(ContactsApiError):
@@ -73,6 +73,22 @@ def create_contact(receiver_id: int, payload: dict[str, Any], token: str) -> Con
     if response.status_code >= 400:
         raise ContactsApiError(
             f"No se pudo crear el contacto (código {response.status_code}): "
+            f"{error_detail(response)}"
+        )
+    return _parse_contact(json_body(response))
+
+
+def patch_contact(contact_id: int, payload: dict[str, Any], token: str) -> ContactDto:
+    """``PATCH /contacts/{contact_id}``. Solo aplica las claves enviadas."""
+    url = api_abs_url(f"{CONTACTS_ENDPOINT.rstrip('/')}/{contact_id}")
+    response = _call("PATCH", url, token, json_body=payload)
+    if response.status_code == 409:
+        raise ContactDuplicateError(error_detail(response))
+    if response.status_code == 422:
+        raise ContactsValidationError(validation_errors(response))
+    if response.status_code >= 400:
+        raise ContactsApiError(
+            f"No se pudo actualizar el contacto (código {response.status_code}): "
             f"{error_detail(response)}"
         )
     return _parse_contact(json_body(response))

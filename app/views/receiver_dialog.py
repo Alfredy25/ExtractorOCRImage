@@ -32,6 +32,7 @@ from app.components.widgets import (
 )
 from app.models.receiver import (
     AddressDto,
+    ContactDto,
     ReceiverDto,
     contact_display_line,
     institution_shipment_name,
@@ -438,6 +439,7 @@ class ReceiverDialog(QDialog):
         self._phone.setText(normalize_phone(self._phone.text()))
         self._ext.setText(normalize_phone(self._ext.text()))
         self._address.normalize_street_and_number()
+        self._address.uppercase_reference()
         self._refresh_preview()
 
     def _upper_name(self, text: str) -> None:
@@ -717,6 +719,24 @@ class ReceiverDialog(QDialog):
         self.preferred_contact_id = created.id
         self._refresh_contacts_list()
 
+    def _edit_contact(self, contact: ContactDto) -> None:
+        if self._receiver is None:
+            return
+        from app.views.contact_dialog import ContactDialog
+
+        dialog = ContactDialog(self._receiver.id, parent=self, contact=contact)
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.created_contact is None:
+            return
+        updated = dialog.created_contact
+        contacts = [
+            updated if item.id == contact.id else item
+            for item in self._receiver.contacts
+        ]
+        self._receiver = self._receiver.model_copy(update={"contacts": contacts})
+        self.created_receiver = self._receiver
+        self.preferred_contact_id = updated.id
+        self._refresh_contacts_list()
+
     def _refresh_contacts_list(self) -> None:
         while self._contacts_layout.count():
             item = self._contacts_layout.takeAt(0)
@@ -730,9 +750,18 @@ class ReceiverDialog(QDialog):
             self._contacts_layout.addWidget(empty)
             return
         for contact in contacts:
+            row = QWidget()
+            row.setObjectName("receiverContactItem")
+            row_layout = QHBoxLayout(row)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+            row_layout.setSpacing(SPACE["sm"])
             line = subtitle(contact_display_line(contact))
-            line.setObjectName("receiverContactItem")
-            self._contacts_layout.addWidget(line)
+            edit = text_button("Editar", variant="ghost", icon="edit_document")
+            edit.setObjectName("editContactButton")
+            edit.clicked.connect(lambda _checked=False, item=contact: self._edit_contact(item))
+            row_layout.addWidget(line, 1)
+            row_layout.addWidget(edit)
+            self._contacts_layout.addWidget(row)
 
     def _on_failed(self, exc: Exception) -> None:
         self._busy = False

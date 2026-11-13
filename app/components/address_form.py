@@ -108,6 +108,12 @@ class AddressFormWidget(QWidget):
         self._street.setText(normalize_street(self._street.text()))
         self._num.setText(normalize_street(self._num.text()))
 
+    def uppercase_reference(self) -> None:
+        """Pasa la referencia a mayúsculas cuando tiene texto."""
+        text = self._reference.text().strip()
+        if text:
+            self._reference.setText(text.upper())
+
     def set_from_address(self, address) -> None:
         """Precarga un domicilio ya guardado y, si hay C.P., consulta SEPOMEX."""
         self._street.setText(address.street)

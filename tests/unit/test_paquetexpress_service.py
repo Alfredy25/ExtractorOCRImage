@@ -400,6 +400,130 @@ def test_build_shipment_payload_persona_joins_title_role_and_organization():
     )
 
 
+def test_build_shipment_payload_persona_omits_placeholder_role():
+    """SIN CARGO no viaja: queda título, nombre y organización."""
+    receiver = _receiver(
+        title={"id": 1, "abbreviation": "LIC.", "meaning": "Licenciada", **_audit()},
+        full_name="BEATRIZ HERNANDEZ GARCIA",
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 9,
+                "abbreviation": "SIN CARGO",
+                "meaning": "SIN CARGO ESPECIFICADO",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "INSTITUTO DE EDUCACION",
+                "state": "MEXICO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {}
+    )
+
+    assert payload["name_receiver"] == (
+        "LIC. BEATRIZ HERNANDEZ GARCIA / INSTITUTO DE EDUCACION"
+    )
+    assert "SIN CARGO" not in payload["name_receiver"]
+
+
+def test_build_shipment_payload_persona_placeholder_role_without_organization():
+    receiver = _receiver(
+        title={"id": 1, "abbreviation": "LIC.", "meaning": "Licenciada", **_audit()},
+        full_name="BEATRIZ HERNANDEZ GARCIA",
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 9,
+                "abbreviation": "sin cargo",
+                "meaning": "SIN CARGO ESPECIFICADO",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "   ",
+                "state": "MEXICO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {}
+    )
+
+    assert payload["name_receiver"] == "LIC. BEATRIZ HERNANDEZ GARCIA"
+
+
+def test_build_shipment_payload_gobierno_omits_institutional_role():
+    receiver = _receiver(
+        type_entity="GOBIERNO",
+        title=None,
+        full_name=None,
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 9,
+                "abbreviation": "INSTITUCIONAL GOBIERNO",
+                "meaning": "DESTINATARIO DIRIGIDO A INSTITUCION GUBERNAMENTAL",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "SECRETARIA DE FINANZAS",
+                "state": "MEXICO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {}
+    )
+
+    assert payload["name_receiver"] == "SECRETARIA DE FINANZAS MEXICO"
+    assert "INSTITUCIONAL" not in payload["name_receiver"]
+
+
+def test_build_shipment_payload_privada_omits_institutional_role():
+    receiver = _receiver(
+        type_entity="PRIVADA",
+        title=None,
+        full_name=None,
+        position={
+            "id": 8,
+            "job_role": {
+                "id": 9,
+                "abbreviation": "INSTITUCIONAL PRIVADO",
+                "meaning": "DESTINATARIO DIRIGIDO A INSTITUCION PRIVADA",
+                **_audit(),
+            },
+            "organization": {
+                "id": 4,
+                "name": "EMPRESA SA",
+                "state": "JALISCO",
+                **_audit(),
+            },
+            **_audit(),
+        },
+    )
+
+    payload = px.build_shipment_payload_from_receiver(
+        receiver, _address(), _coverage(), {}
+    )
+
+    assert payload["name_receiver"] == "EMPRESA SA JALISCO"
+    assert "INSTITUCIONAL" not in payload["name_receiver"]
+
+
 def test_build_shipment_payload_persona_name_stops_at_80_characters():
     receiver = _receiver(
         title={"id": 3, "abbreviation": "M. EN A.P.", "meaning": "Maestro", **_audit()},
