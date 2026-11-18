@@ -56,10 +56,10 @@ _TYPE_OPTIONS = (
 )
 
 _ORDER_OPTIONS = (
-    ("Ordenar por ID", "id"),
-    ("Ordenar por nombre", "full_name"),
-    ("Ordenar por organización", "name_org"),
-    ("Ordenar por alta", "created_at"),
+    ("ID", "id"),
+    ("Nombre", "full_name"),
+    ("Organización", "name_org"),
+    ("Fecha creacion", "created_at"),
 )
 
 _DIRECTION_OPTIONS = (
@@ -548,7 +548,7 @@ class ReceiverPicker(QWidget):
         )
         ficha_layout.addWidget(hint_row)
 
-        self._btn_change = text_button("Cambiar destinatario", variant="ghost")
+        self._btn_change = text_button("Volver a buscar", variant="ghost")
         self._btn_change.setIcon(_left_arrow_icon())
         self._btn_change.setIconSize(QSize(18, 18))
         self._btn_change.clicked.connect(self._back_to_search)

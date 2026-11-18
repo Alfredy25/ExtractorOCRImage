@@ -100,6 +100,46 @@ def create_item(
         raise api_error(f"El registro tiene formato inválido. {exc}") from exc
 
 
+def patch_item(
+    token: str,
+    endpoint: str,
+    item_id: int,
+    item_type: type[T],
+    payload: dict[str, Any],
+    *,
+    api_error: type[Exception],
+    session_error: type[Exception],
+    conflict_error: type[Exception],
+    validation_error: type[Exception],
+) -> T:
+    """``PATCH {endpoint}/{id}``. Devuelve el mismo DTO que el alta."""
+    url = api_abs_url(f"{endpoint.rstrip('/')}/{item_id}")
+    response = _call(
+        "PATCH",
+        url,
+        token,
+        api_error=api_error,
+        session_error=session_error,
+        json_body=payload,
+    )
+    if response.status_code == 409:
+        raise conflict_error(error_detail(response))
+    if response.status_code == 422:
+        raise validation_error(validation_errors(response))
+    if response.status_code >= 400:
+        raise api_error(
+            f"No se pudo actualizar el registro (código {response.status_code}): "
+            f"{error_detail(response)}"
+        )
+    body = json_body(response)
+    if not isinstance(body, dict):
+        raise api_error("La API devolvió un formato inesperado: se esperaba un objeto.")
+    try:
+        return item_type.model_validate(body)
+    except ValidationError as exc:
+        raise api_error(f"El registro tiene formato inválido. {exc}") from exc
+
+
 def _call(method: str, url: str, token: str, *, api_error: type[Exception], session_error: type[Exception], **kwargs: Any):
     try:
         return request(method, url, token, **kwargs)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.api.catalog_http import create_item, list_items
+from app.api.catalog_http import create_item, list_items, patch_item
 from app.config import TITLES_ENDPOINT
 from app.models.receiver import Paginated, TitleDto
 
@@ -53,6 +53,20 @@ def create_title(payload: dict[str, Any], token: str) -> TitleDto:
     return create_item(
         token,
         TITLES_ENDPOINT,
+        TitleDto,
+        payload,
+        api_error=TitlesApiError,
+        session_error=TitlesSessionExpiredError,
+        conflict_error=TitlesConflictError,
+        validation_error=TitlesValidationError,
+    )
+
+
+def update_title(title_id: int, payload: dict[str, Any], token: str) -> TitleDto:
+    return patch_item(
+        token,
+        TITLES_ENDPOINT,
+        title_id,
         TitleDto,
         payload,
         api_error=TitlesApiError,

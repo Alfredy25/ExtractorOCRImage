@@ -11,13 +11,14 @@ from PySide6.QtWidgets import (
     QComboBox,
     QGridLayout,
     QHBoxLayout,
+    QLabel,
     QLineEdit,
     QVBoxLayout,
     QWidget,
 )
 
-from app.components.theme import SPACE
-from app.components.widgets import labeled_field, subtitle, text_button
+from app.components.theme import FONT_SIZE, SPACE, mono_font
+from app.components.widgets import labeled_field, set_property, subtitle, text_button
 from app.models.receiver import ESTADOS_MX, match_estado
 from app.models.sepomex import SepomexDto
 from app.services import sepomex_service
@@ -29,6 +30,10 @@ from app.views.session_relogin import prompt_relogin_after_session_expired
 class _NoWheelComboBox(QComboBox):
     def wheelEvent(self, event: QWheelEvent) -> None:
         event.ignore()
+
+
+# El envío rechaza calles de más de 80. El campo no recorta: solo avisa.
+_STREET_LIMIT = 80
 
 
 class AddressFormWidget(QWidget):
@@ -44,14 +49,28 @@ class AddressFormWidget(QWidget):
         root.setSpacing(SPACE["sm"])
 
         self._street = QLineEdit()
+        self._street.setObjectName("addressStreet")
         self._street.setPlaceholderText("Av. Hidalgo")
+        self._street_count = QLabel(f"0 / {_STREET_LIMIT}")
+        self._street_count.setObjectName("addressStreetLength")
+        self._street_count.setProperty("role", "fieldLength")
+        self._street_count.setFont(mono_font(FONT_SIZE["label_sm"]))
+        self._street_count.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        self._street_count.setFixedWidth(self._street_count.fontMetrics().horizontalAdvance("888 / 80"))
+        self._street.textChanged.connect(self._refresh_street_count)
+        street_line = QWidget()
+        street_line_layout = QHBoxLayout(street_line)
+        street_line_layout.setContentsMargins(0, 0, 0, 0)
+        street_line_layout.setSpacing(SPACE["xs"])
+        street_line_layout.addWidget(self._street, 1)
+        street_line_layout.addWidget(self._street_count, 0, Qt.AlignmentFlag.AlignVCenter)
         self._num = QLineEdit()
         self._num.setPlaceholderText("123 o SN")
         self._num.setMaxLength(15)
 
         street_row = QHBoxLayout()
         street_row.setSpacing(SPACE["sm"])
-        street_row.addWidget(labeled_field("Calle", self._street), 3)
+        street_row.addWidget(labeled_field("Calle", street_line), 3)
         street_row.addWidget(labeled_field("Número", self._num), 1)
         root.addLayout(street_row)
 
@@ -102,6 +121,13 @@ class AddressFormWidget(QWidget):
         self._reference.setPlaceholderText("Edificio, piso, ventanilla…")
         self._reference.setMaxLength(50)
         root.addWidget(labeled_field("Referencia de entrega", self._reference))
+
+    def _refresh_street_count(self, _text: str = "") -> None:
+        length = len(self._street.text())
+        self._street_count.setText(f"{length} / {_STREET_LIMIT}")
+        over = length > _STREET_LIMIT
+        set_property(self._street_count, "role", "errorText" if over else "fieldLength")
+        self._street_count.setFont(mono_font(FONT_SIZE["label_sm"]))
 
     def normalize_street_and_number(self) -> None:
         """Abrevia calle y número con la misma regla."""

@@ -635,6 +635,66 @@ check(
     receiver_dialog._volante.text(),
 )
 shot(receiver_dialog, "11_crear_destinatario", 1280, 860)
+street = receiver_dialog._address._street
+street.setText("A" * 90)
+check("calle: permite mas de 80", street.maxLength() > 80, f"max={street.maxLength()}")
+check(
+    "calle: conteo sobre el maximo",
+    receiver_dialog._address._street_count.text() == "90 / 80",
+    receiver_dialog._address._street_count.text(),
+)
+check(
+    "calle: el exceso se marca",
+    receiver_dialog._address._street_count.property("role") == "errorText",
+)
+saved_phone = receiver_dialog._phone.text()
+receiver_dialog._phone.clear()
+check(
+    "alta: sin telefono usa el default",
+    receiver_dialog._collect()["contact"]["phone"] == "5575868462",
+)
+receiver_dialog._phone.setText("5512345678")
+check(
+    "alta: conserva el telefono capturado",
+    receiver_dialog._collect()["contact"]["phone"] == "5512345678",
+)
+receiver_dialog._phone.setText(saved_phone)
+check(
+    "catalogo: editar apagado sin seleccion",
+    not receiver_dialog._org._edit_button.isEnabled()
+    and not receiver_dialog._role._edit_button.isEnabled()
+    and not receiver_dialog._title._edit_button.isEnabled(),
+)
+check("catalogo: el volante no se edita", not receiver_dialog._volante._edit_button.isVisible())
+from app.models.receiver import OrganizationDto  # noqa: E402
+
+_org_audit = {
+    "created_at": "2026-11-10T16:00:00",
+    "updated_at": "2026-11-10T16:00:00",
+    "created_by": 1,
+    "updated_by": None,
+}
+receiver_dialog._org.set_selected(OrganizationDto.model_validate({
+    "id": 9,
+    "name": "RECAUDACION DE PUEBLA 1 DEL S.A.T.",
+    "state": "PUEBLA",
+    **_org_audit,
+}))
+check("catalogo: editar encendido con organizacion", receiver_dialog._org._edit_button.isEnabled())
+app.processEvents()
+check(
+    "catalogo: el campo ocupa mas que los botones",
+    receiver_dialog._org._combo.width() > receiver_dialog._org._catalog_actions.width(),
+    f"campo={receiver_dialog._org._combo.width()} botones={receiver_dialog._org._catalog_actions.width()}",
+)
+receiver_dialog._org.clear_selection()
+check("catalogo: editar se apaga al quitar la seleccion", not receiver_dialog._org._edit_button.isEnabled())
+street.setText("AV. HIDALGO")
+check(
+    "calle: conteo dentro del maximo",
+    receiver_dialog._address._street_count.text() == f"{len('AV. HIDALGO')} / 80",
+    receiver_dialog._address._street_count.text(),
+)
 receiver_dialog.close()
 
 address_dialog = AddressDialog(4)
@@ -656,6 +716,106 @@ shot(volante_dialog, "12c_nuevo_volante", 560, 320)
 check("volante: buscador presente", volante_dialog._volante is not None)
 check("volante: boton crear", volante_dialog._volante._create_button.isVisible())
 volante_dialog.close()
+
+from app.models.receiver import AddressDto, ReceiverDto  # noqa: E402
+
+_created_audit = {
+    "created_at": "2026-11-10T16:00:00",
+    "updated_at": "2026-11-10T16:00:00",
+    "created_by": 1,
+    "updated_by": None,
+}
+_created_address = AddressDto.model_validate({
+    "id": 7,
+    "street": "AV. INSURGENTES SUR",
+    "num_street": "1234",
+    "colony": "FLORIDA",
+    "municipality": "ALVARO OBREGON",
+    "city": "CIUDAD DE MEXICO",
+    "state": "CIUDAD DE MEXICO",
+    "postal_code": "01030",
+    "country": "MEXICO",
+    "address_reference": "Edificio G",
+    "receiver_id": 4,
+    **_created_audit,
+})
+_created_receiver = ReceiverDto.model_validate({
+    "id": 4,
+    "type_entity": "PERSONA",
+    "title": {"id": 1, "abbreviation": "LIC.", "meaning": "Licenciada", **_created_audit},
+    "full_name": "MARIA FERNANDA GARCIA LOPEZ",
+    "email": "maria.garcia@example.com",
+    "position": {
+        "id": 2,
+        "job_role": {
+            "id": 9,
+            "abbreviation": "DIR.",
+            "meaning": "Directora de Administracion",
+            **_created_audit,
+        },
+        "organization": {
+            "id": 6,
+            "name": "SECRETARIA DE ADMINISTRACION",
+            "state": "CIUDAD DE MEXICO",
+            **_created_audit,
+        },
+        **_created_audit,
+    },
+    "addresses": [_created_address.model_dump()],
+    "contacts": [
+        {"id": 3, "phone": "5512345678", "ext": "12", "id_destinatario": 4, **_created_audit},
+    ],
+    "volantes": [],
+    **_created_audit,
+})
+shipment._remember_created(_created_receiver, _created_address)
+app.processEvents()
+check("alta: ficha visible", shipment._created_box.isVisible())
+check("alta: el aviso inicial se oculta", not shipment._alta_intro.isVisible())
+check(
+    "alta: nombre en la ficha",
+    shipment._created_name.text() == "LIC. MARIA FERNANDA GARCIA LOPEZ",
+    shipment._created_name.text(),
+)
+check(
+    "alta: cargo y organizacion",
+    "Directora de Administracion" in shipment._created_position.text(),
+    shipment._created_position.text(),
+)
+check(
+    "alta: telefono con extension",
+    shipment._created_phone.text() == "5512345678 ext. 12",
+    shipment._created_phone.text(),
+)
+check("alta: boton editar destinatario", shipment._btn_alta.text() == "Editar destinatario")
+_updated_address = _created_address.model_copy(update={"street": "CALLE CORTA"})
+_updated_receiver = _created_receiver.model_copy(
+    update={"email": "nuevo@ejemplo.com", "addresses": [_updated_address]}
+)
+shipment._remember_created(_updated_receiver, _updated_address)
+app.processEvents()
+_updated_payload = shipment._payload_from_receiver()
+check(
+    "alta editada: la ficha muestra la calle nueva",
+    "CALLE CORTA" in shipment._created_address.text(),
+    shipment._created_address.text(),
+)
+check(
+    "alta editada: la ficha muestra el correo del patch",
+    shipment._created_email.text() == "nuevo@ejemplo.com",
+    shipment._created_email.text(),
+)
+check(
+    "alta editada: el envio manda la calle nueva",
+    _updated_payload.get("street") == "CALLE CORTA",
+    str(_updated_payload.get("street")),
+)
+check(
+    "alta editada: el envio manda el correo del destinatario",
+    _updated_payload.get("email") == "nuevo@ejemplo.com",
+    str(_updated_payload.get("email")),
+)
+shot(shipment, "07b_envio_alta_creada", 1500, 940)
 shipment.close()
 
 # --- 3b. Envio con destinatario existente -------------------------------

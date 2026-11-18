@@ -357,6 +357,9 @@ QPushButton[variant="ghost"] {{
     color: {c["on_surface_variant"]};
     border: 1px solid {c["outline_variant"]};
 }}
+QPushButton[variant="ghost"][compact="true"] {{
+    padding: 4px 3px;
+}}
 QPushButton[variant="ghost"]:hover {{
     background-color: {c["surface_variant"]};
     color: {c["on_surface"]};

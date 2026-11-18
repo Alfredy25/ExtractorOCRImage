@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.api.catalog_http import create_item, list_items
+from app.api.catalog_http import create_item, list_items, patch_item
 from app.config import JOB_ROLES_ENDPOINT
 from app.models.receiver import JobRoleDto, Paginated
 
@@ -53,6 +53,20 @@ def create_job_role(payload: dict[str, Any], token: str) -> JobRoleDto:
     return create_item(
         token,
         JOB_ROLES_ENDPOINT,
+        JobRoleDto,
+        payload,
+        api_error=JobRolesApiError,
+        session_error=JobRolesSessionExpiredError,
+        conflict_error=JobRolesConflictError,
+        validation_error=JobRolesValidationError,
+    )
+
+
+def update_job_role(job_id: int, payload: dict[str, Any], token: str) -> JobRoleDto:
+    return patch_item(
+        token,
+        JOB_ROLES_ENDPOINT,
+        job_id,
         JobRoleDto,
         payload,
         api_error=JobRolesApiError,

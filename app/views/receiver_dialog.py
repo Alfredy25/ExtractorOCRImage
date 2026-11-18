@@ -38,7 +38,7 @@ from app.models.receiver import (
     institution_shipment_name,
     persona_shipment_name,
 )
-from app.services import catalogs_service, receivers_service
+from app.services import addresses_service, catalogs_service, receivers_service
 from app.utils.image_io import np_to_qpixmap
 from app.states.workers.callable_worker import run_worker
 from app.utils.normalizers import (
@@ -78,6 +78,8 @@ _ORG_FIELDS = (
     ("state", "Estado", "state", 0),
 )
 _VOLANTE_FIELDS = (("name", "Nombre del volante", "upper", 35),)
+# 55 7586 8462. El campo solo guarda dígitos.
+_DEFAULT_PHONE = "5575868462"
 
 
 def _digits(value: str) -> str:
@@ -289,6 +291,10 @@ class ReceiverDialog(QDialog):
             create_fn=lambda data: catalogs_service.create_title(data["abbreviation"], data["meaning"]),
             create_title="Nuevo título",
             create_fields=list(_TITLE_FIELDS),
+            update_fn=lambda item, data: catalogs_service.update_title(
+                item.id, data["abbreviation"], data["meaning"]
+            ),
+            edit_title="Editar título",
             field_normalizers={"abbreviation": normalize_title},
             placeholder="Buscar título (LIC., DR.)",
         )
@@ -308,6 +314,10 @@ class ReceiverDialog(QDialog):
             create_fn=lambda data: catalogs_service.create_job_role(data["abbreviation"], data["meaning"]),
             create_title="Nuevo cargo",
             create_fields=list(_ROLE_FIELDS),
+            update_fn=lambda item, data: catalogs_service.update_job_role(
+                item.id, data["abbreviation"], data["meaning"]
+            ),
+            edit_title="Editar cargo",
             field_normalizers={
                 "abbreviation": normalize_job_role,
                 "meaning": clean_base_text,
@@ -325,6 +335,10 @@ class ReceiverDialog(QDialog):
             create_fn=lambda data: catalogs_service.create_organization(data["name"], data["state"]),
             create_title="Nueva organización",
             create_fields=list(_ORG_FIELDS),
+            update_fn=lambda item, data: catalogs_service.update_organization(
+                item.id, data["name"], data["state"]
+            ),
+            edit_title="Editar organización",
             field_normalizers={"name": normalize_organization},
             placeholder="Buscar organización",
         )
@@ -474,7 +488,8 @@ class ReceiverDialog(QDialog):
 
     def _apply_ocr(self) -> None:
         self._name.setText(str(self._campos.get("nombre_titulo") or "").strip().upper())
-        self._phone.setText(_digits(str(self._campos.get("contacto") or "")))
+        phone = _digits(str(self._campos.get("contacto") or ""))
+        self._phone.setText(phone or _DEFAULT_PHONE)
         self._address.set_initial_from_ocr(self._campos)
         self._volante.set_text(str(self._campos.get("numero_volante") or "").strip().upper())
         self._refresh_preview()
@@ -507,9 +522,13 @@ class ReceiverDialog(QDialog):
         payload = self._collect()
         if self._is_edit and self._receiver is not None:
             receiver = self._receiver
+            current = self._current_address()
+            address_payload = payload.get("address") or {}
             run_worker(
                 self,
-                lambda: receivers_service.update_receiver(receiver.id, payload, receiver),
+                lambda: self._update_receiver_and_address(
+                    receiver, payload, current, address_payload
+                ),
                 self._on_updated,
                 self._on_failed,
             )
@@ -529,6 +548,8 @@ class ReceiverDialog(QDialog):
             "volante_name": "",
         }
         phone = self._phone.text().strip()
+        if not phone and not self._is_edit:
+            phone = _DEFAULT_PHONE
         if phone:
             data["contact"] = {"phone": phone, "ext": self._ext.text().strip()}
         volante = self._volante.selected()
@@ -554,6 +575,49 @@ class ReceiverDialog(QDialog):
                 "meaning": role.meaning,
             }
         return data
+
+    def _update_receiver_and_address(
+        self,
+        receiver: ReceiverDto,
+        payload: dict[str, Any],
+        current: AddressDto | None,
+        address_payload: dict[str, Any],
+    ) -> ReceiverDto:
+        """Guarda la calle si cambió y deja el destinatario que devuelve el PATCH."""
+        updated_address = None
+        if current is not None and self._address_payload_changed(current, address_payload):
+            updated_address = addresses_service.update_address(
+                current.id, address_payload, current
+            )
+        saved = receivers_service.update_receiver(receiver.id, payload, receiver)
+        if updated_address is None:
+            return saved
+        others = [item for item in saved.addresses if item.id != updated_address.id]
+        if not saved.addresses:
+            others = [
+                item for item in receiver.addresses if item.id != updated_address.id
+            ]
+        return saved.model_copy(update={"addresses": [*others, updated_address]})
+
+    @staticmethod
+    def _address_payload_changed(current: AddressDto, payload: dict[str, Any]) -> bool:
+        keys = (
+            "street",
+            "num_street",
+            "colony",
+            "municipality",
+            "city",
+            "state",
+            "postal_code",
+            "country",
+            "address_reference",
+        )
+        for key in keys:
+            left = str(getattr(current, key) or "").strip()
+            right = str(payload.get(key) or "").strip()
+            if left.upper() != right.upper():
+                return True
+        return False
 
     def _on_created(self, receiver: ReceiverDto) -> None:
         self._busy = False
@@ -782,6 +846,13 @@ class ReceiverDialog(QDialog):
         if isinstance(exc, receivers_service.ReceiverValidationError):
             details = "\n".join(f"• {item['campo']}: {item['error']}." for item in exc.errors)
             QMessageBox.critical(self, "Errores de validación", details or str(exc))
+            return
+        if isinstance(exc, addresses_service.AddressValidationError):
+            details = "\n".join(f"• {item['campo']}: {item['error']}." for item in exc.errors)
+            QMessageBox.critical(self, "Errores de validación", details or str(exc))
+            return
+        if isinstance(exc, addresses_service.AddressSessionExpiredError):
+            prompt_relogin_after_session_expired(self, str(exc))
             return
         QMessageBox.critical(self, "Error", str(exc))
 

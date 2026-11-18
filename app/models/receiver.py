@@ -235,7 +235,7 @@ def persona_shipment_name(
     else:
         position = role or organization
     if identity and position:
-        text = f"{identity} / {position}"
+        text = f"{identity} {position}"
     else:
         text = identity or position
     return text[:NAME_RECEIVER_LIMIT]

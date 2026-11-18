@@ -79,6 +79,17 @@ def search_titles(text: str) -> list[TitleDto]:
         raise CatalogServiceError(str(exc)) from exc
 
 
+def update_title(title_id: int, abbreviation: str, meaning: str) -> TitleDto:
+    return _create(
+        {"abbreviation": abbreviation.strip(), "meaning": meaning.strip()},
+        lambda payload, token: titles_api.update_title(title_id, payload, token),
+        titles_api.TitlesSessionExpiredError,
+        titles_api.TitlesConflictError,
+        titles_api.TitlesValidationError,
+        titles_api.TitlesApiError,
+    )
+
+
 def create_title(abbreviation: str, meaning: str) -> TitleDto:
     return _create(
         {"abbreviation": abbreviation.strip(), "meaning": meaning.strip()},
@@ -120,6 +131,21 @@ def create_job_role(abbreviation: str, meaning: str) -> JobRoleDto:
     )
 
 
+def update_job_role(job_id: int, abbreviation: str, meaning: str) -> JobRoleDto:
+    model, errors = validate_job_role_create(abbreviation, meaning)
+    if errors:
+        raise CatalogValidationError(errors)
+    assert model is not None
+    return _create(
+        model.model_dump(),
+        lambda payload, token: job_roles_api.update_job_role(job_id, payload, token),
+        job_roles_api.JobRolesSessionExpiredError,
+        job_roles_api.JobRolesConflictError,
+        job_roles_api.JobRolesValidationError,
+        job_roles_api.JobRolesApiError,
+    )
+
+
 def search_organizations(text: str, state: str | None = None) -> list[OrganizationDto]:
     query = _query(normalize_organization(text))
     if query is None:
@@ -139,6 +165,19 @@ def create_organization(name: str, state: str) -> OrganizationDto:
     return _create(
         {"name": name.strip(), "state": state.strip()},
         organizations_api.create_organization,
+        organizations_api.OrganizationsSessionExpiredError,
+        organizations_api.OrganizationsConflictError,
+        organizations_api.OrganizationsValidationError,
+        organizations_api.OrganizationsApiError,
+    )
+
+
+def update_organization(organization_id: int, name: str, state: str) -> OrganizationDto:
+    return _create(
+        {"name": name.strip(), "state": state.strip()},
+        lambda payload, token: organizations_api.update_organization(
+            organization_id, payload, token
+        ),
         organizations_api.OrganizationsSessionExpiredError,
         organizations_api.OrganizationsConflictError,
         organizations_api.OrganizationsValidationError,

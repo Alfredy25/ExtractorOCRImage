@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMessageBox,
+    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -48,6 +49,7 @@ class _QuickCreateDialog(QDialog):
         parent: QWidget | None = None,
         field_normalizers: dict[str, Callable[[str], str]] | None = None,
         normalize_together: bool = False,
+        initial: dict[str, str] | None = None,
     ):
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -55,6 +57,7 @@ class _QuickCreateDialog(QDialog):
         self._inputs: list[tuple[str, str, QWidget]] = []
         self._normalizers = field_normalizers or {}
         self._normalize_together = normalize_together and bool(self._normalizers)
+        self._initial = initial or {}
 
         root = QVBoxLayout(self)
         root.setContentsMargins(SPACE["lg"], SPACE["md"], SPACE["lg"], SPACE["md"])
@@ -94,6 +97,7 @@ class _QuickCreateDialog(QDialog):
                 row.addWidget(button, 0, Qt.AlignmentFlag.AlignVCenter)
                 root.addLayout(row)
             self._inputs.append((key, kind, widget))
+            self._apply_initial(key, kind, widget)
 
         if self._normalize_together:
             together = QHBoxLayout()
@@ -121,6 +125,19 @@ class _QuickCreateDialog(QDialog):
 
     def values(self) -> dict[str, str]:
         return dict(self._values)
+
+    def _apply_initial(self, key: str, kind: str, widget: QWidget) -> None:
+        value = str(self._initial.get(key) or "")
+        if not value:
+            return
+        if kind == "state" and isinstance(widget, QComboBox):
+            for index in range(widget.count()):
+                if widget.itemData(index) == value:
+                    widget.setCurrentIndex(index)
+                    return
+            return
+        if isinstance(widget, QLineEdit):
+            widget.setText(value)
 
     def _normalize_all(self) -> None:
         for key, kind, widget in self._inputs:
@@ -166,6 +183,8 @@ class AutocompleteComboBox(QWidget):
         create_fn: Callable[[dict[str, str]], Any] | None = None,
         create_title: str = "Nuevo registro",
         create_fields: list[tuple[str, str, str, int]] | None = None,
+        update_fn: Callable[[Any, dict[str, str]], Any] | None = None,
+        edit_title: str = "Editar registro",
         field_normalizers: dict[str, Callable[[str], str]] | None = None,
         normalize_together: bool = False,
         placeholder: str = "",
@@ -177,6 +196,8 @@ class AutocompleteComboBox(QWidget):
         self._create_fn = create_fn
         self._create_title = create_title
         self._create_fields = create_fields or []
+        self._update_fn = update_fn
+        self._edit_title = edit_title
         self._field_normalizers = field_normalizers or {}
         self._normalize_together = normalize_together
         self._results: list[Any] = []
@@ -193,12 +214,31 @@ class AutocompleteComboBox(QWidget):
         self._combo.lineEdit().setPlaceholderText(placeholder)
         self._combo.activated.connect(self._on_activated)
         self._combo.lineEdit().textEdited.connect(self._on_edited)
-        row.addWidget(self._combo, 1)
+        row.addWidget(self._combo, 2)
 
+        self._catalog_actions = QWidget()
+        self._catalog_actions.setObjectName("catalogActions")
+        self._catalog_actions.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        actions = QHBoxLayout(self._catalog_actions)
+        actions.setContentsMargins(0, 0, 0, 0)
+        actions.setSpacing(SPACE["xs"])
         self._create_button = text_button("Crear", variant="ghost", icon="add")
         self._create_button.setVisible(create_fn is not None)
         self._create_button.clicked.connect(self._on_create)
-        row.addWidget(self._create_button)
+        self._edit_button = text_button("Editar", variant="ghost", icon="edit_document")
+        self._edit_button.setObjectName("catalogEditButton")
+        self._edit_button.setVisible(update_fn is not None)
+        self._edit_button.setEnabled(False)
+        self._edit_button.clicked.connect(self._on_edit)
+        self.selection_changed.connect(self._sync_edit_button)
+        for button in (self._create_button, self._edit_button):
+            button.setProperty("compact", True)
+            button.setMinimumWidth(0)
+            button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            actions.addWidget(button, 1)
+        row.addWidget(self._catalog_actions, 1)
 
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
@@ -336,3 +376,46 @@ class AutocompleteComboBox(QWidget):
             QMessageBox.information(self, "Ya existe", str(exc))
             return
         QMessageBox.critical(self, "No se pudo crear", str(exc))
+
+    def _sync_edit_button(self) -> None:
+        self._edit_button.setEnabled(self._update_fn is not None and self._selected is not None)
+
+    def _on_edit(self) -> None:
+        if self._update_fn is None or self._selected is None:
+            return
+        initial = {
+            key: str(getattr(self._selected, key, "") or "")
+            for key, _label, _kind, _limit in self._create_fields
+        }
+        dialog = _QuickCreateDialog(
+            self._edit_title,
+            self._create_fields,
+            self.window(),
+            field_normalizers=self._field_normalizers,
+            normalize_together=self._normalize_together,
+            initial=initial,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        values = dialog.values()
+        item = self._selected
+        self._edit_button.setEnabled(False)
+        run_worker(
+            self,
+            lambda: self._update_fn(item, values),
+            self._on_updated,
+            self._on_update_failed,
+        )
+
+    def _on_updated(self, item: Any) -> None:
+        self.set_selected(item)
+
+    def _on_update_failed(self, exc: Exception) -> None:
+        self._sync_edit_button()
+        if isinstance(exc, CatalogSessionExpiredError):
+            prompt_relogin_after_session_expired(self, str(exc))
+            return
+        if isinstance(exc, CatalogConflictError):
+            QMessageBox.information(self, "Ya existe", str(exc))
+            return
+        QMessageBox.critical(self, "No se pudo editar", str(exc))

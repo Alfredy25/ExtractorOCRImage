@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QMessageBox, QScrollArea, QSizePolicy, QSpinBox, QTextEdit, QVBoxLayout, QWidget,
 )
 
-from app.components.theme import FONT_SIZE, SPACE, mono_font
+from app.components.theme import COLOR, FONT_SIZE, SPACE, mono_font, qicon
 from app.components.widgets import (
     Banner, Card, divider, icon_label,
     labeled_field, section_label, subtitle, text_button,
@@ -499,23 +499,61 @@ class ShipmentWindow(QDialog):
     def _build_receiver_alta_card(self) -> Card:
         """Paso 8b: alta precargada con el OCR. Esta pantalla ya no busca."""
         card = Card("Alta de destinatario", "person")
-        card.body.addWidget(
-            subtitle(
-                "La búsqueda no encontró al destinatario, así que se da de alta "
-                "con los datos del OCR y su domicilio en la misma petición."
-            )
+        self._alta_intro = subtitle(
+            "La búsqueda no encontró al destinatario, así que se da de alta "
+            "con los datos del OCR y su domicilio en la misma petición."
         )
+        card.body.addWidget(self._alta_intro)
 
         self._alta_summary = subtitle("Todavía no se ha dado de alta al destinatario.")
         card.body.addWidget(self._alta_summary)
 
+        self._created_box = QWidget()
+        created = QVBoxLayout(self._created_box)
+        created.setContentsMargins(0, 0, 0, 0)
+        created.setSpacing(SPACE["xs"])
+        self._created_name = QLabel("")
+        self._created_name.setObjectName("createdReceiverName")
+        self._created_name.setProperty("role", "cardTitle")
+        self._created_name.setWordWrap(True)
+        self._created_position = subtitle("")
+        self._created_position.setObjectName("createdReceiverPosition")
+        self._created_phone = subtitle("")
+        self._created_phone.setObjectName("createdReceiverPhone")
+        self._created_email = subtitle("")
+        self._created_email.setObjectName("createdReceiverEmail")
+        self._created_address = subtitle("")
+        self._created_address.setObjectName("createdReceiverAddress")
+        created.addWidget(self._created_name)
+        created.addWidget(self._created_position)
+        created.addWidget(self._created_phone)
+        created.addWidget(self._created_email)
+        created.addWidget(divider(soft=True))
+        created.addWidget(section_label("Domicilio elegido"))
+        created.addWidget(self._created_address)
+        created.addWidget(
+            subtitle(
+                "La colonia, el código postal, la ciudad y el estado del envío "
+                "salen de la cobertura, no de este domicilio."
+            )
+        )
+        self._created_box.setVisible(False)
+        card.body.addWidget(self._created_box)
+
         self._btn_alta = text_button("Dar de alta destinatario", variant="primary", icon="add")
         self._btn_alta.setObjectName("receiverCreateButton")
         self._btn_alta.setMinimumHeight(38)
-        self._btn_alta.clicked.connect(self._open_receiver_alta)
+        self._btn_alta.clicked.connect(self._on_alta_button)
+        self._alta_card = card
         card.body.addWidget(self._btn_alta)
         card.body.addStretch(1)
         return card
+
+    def _on_alta_button(self) -> None:
+        if self._selected_receiver is None:
+            self._open_receiver_alta()
+            return
+        self._open_receiver_edit()
 
     def _open_receiver_alta(self) -> None:
         from app.views.receiver_dialog import ReceiverDialog
@@ -533,12 +571,80 @@ class ShipmentWindow(QDialog):
                 "el envío. Regístrele uno desde el Workspace.",
             )
             return
-        self._on_receiver_selected(receiver, address)
-        self._alta_summary.setText(
-            f"{receiver_display_name(receiver)} · {_address_summary(address)}"
-        )
-        self._btn_alta.setText("Dar de alta otro destinatario")
+        self._remember_created(receiver, address)
         self._refresh_coverage_from_address(address)
+
+    def _open_receiver_edit(self) -> None:
+        from app.views.receiver_dialog import ReceiverDialog
+
+        if self._selected_receiver is None:
+            return
+        previous_cp = self._selected_address.postal_code if self._selected_address else ""
+        dialog = ReceiverDialog.for_edit(
+            self._selected_receiver,
+            address=self._selected_address,
+            parent=self,
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted or dialog.created_receiver is None:
+            return
+        receiver = dialog.created_receiver
+        address = self._address_after_edit(receiver, dialog.preferred_address_id)
+        if address is None:
+            QMessageBox.warning(
+                self,
+                "Sin domicilio",
+                "El destinatario quedó sin domicilio, así que no se puede armar el envío.",
+            )
+            return
+        self._remember_created(receiver, address, dialog.preferred_contact_id)
+        if address.postal_code != previous_cp:
+            self._refresh_coverage_from_address(address)
+
+    def _address_after_edit(
+        self, receiver: ReceiverDto, preferred_address_id: int | None
+    ) -> AddressDto | None:
+        if preferred_address_id is not None:
+            match = next(
+                (item for item in receiver.addresses if item.id == preferred_address_id),
+                None,
+            )
+            if match is not None:
+                return match
+        return receiver.addresses[0] if receiver.addresses else None
+
+    def _remember_created(
+        self,
+        receiver: ReceiverDto,
+        address: AddressDto,
+        contact_id: int | None = None,
+    ) -> None:
+        self._on_receiver_selected(receiver, address)
+        if contact_id is not None:
+            match = next((item for item in receiver.contacts if item.id == contact_id), None)
+            if match is not None:
+                self._selected_contact = match
+        self._present_created_receiver(receiver, address)
+
+    def _present_created_receiver(self, receiver: ReceiverDto, address: AddressDto) -> None:
+        """Muestra la ficha del alta y deja el botón para corregir ese destinatario."""
+        self._alta_intro.setVisible(False)
+        self._alta_summary.setVisible(False)
+        self._created_box.setVisible(True)
+        self._alta_card._title_label.setText("Destinatario")
+        self._created_name.setText(receiver_display_name(receiver))
+        self._created_position.setText(receiver_position_line(receiver) or receiver.type_entity)
+        contact = self._selected_contact
+        phone = contact_display_line(contact) if contact is not None else ""
+        self._created_phone.setText(phone or "Sin teléfono")
+        email = (receiver.email or "").strip()
+        self._created_email.setText(email or "Sin correo")
+        email_field = self._shipment_fields.get("email")
+        if email_field is not None and email:
+            self._set_field_value(email_field, email)
+        self._created_address.setText(_address_summary(address))
+        self._btn_alta.setText("Editar destinatario")
+        self._btn_alta.setIcon(qicon("edit_document", 18, COLOR["on_primary_container"], gap=6))
+        self._btn_alta.setIconSize(QSize(24, 18))
 
     def _build_package_card(self) -> Card:
         """RFC y paquete. El destinatario y la calle salen del directorio."""

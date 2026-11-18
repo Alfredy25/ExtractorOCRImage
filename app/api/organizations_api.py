@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.api.catalog_http import create_item, list_items
+from app.api.catalog_http import create_item, list_items, patch_item
 from app.config import ORGANIZATIONS_ENDPOINT
 from app.models.receiver import OrganizationDto, Paginated
 
@@ -55,6 +55,22 @@ def create_organization(payload: dict[str, Any], token: str) -> OrganizationDto:
     return create_item(
         token,
         ORGANIZATIONS_ENDPOINT,
+        OrganizationDto,
+        payload,
+        api_error=OrganizationsApiError,
+        session_error=OrganizationsSessionExpiredError,
+        conflict_error=OrganizationsConflictError,
+        validation_error=OrganizationsValidationError,
+    )
+
+
+def update_organization(
+    organization_id: int, payload: dict[str, Any], token: str
+) -> OrganizationDto:
+    return patch_item(
+        token,
+        ORGANIZATIONS_ENDPOINT,
+        organization_id,
         OrganizationDto,
         payload,
         api_error=OrganizationsApiError,
