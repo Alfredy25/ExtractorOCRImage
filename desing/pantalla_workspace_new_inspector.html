@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-[#0a0a0c]" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Extractor OCR - Terminal de Captura y Verificación</title>
+<!-- Fonts: Inter & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef8ff',
+              100: '#d9efff',
+              400: '#38bdf8',
+              500: '#0085ff',
+              600: '#006ed6',
+              700: '#0055a8',
+            },
+            surface: {
+              deep: '#0a0a0c',
+              base: '#111215',
+              card: '#16171b',
+              elevated: '#1e2026',
+              border: '#272a33',
+              borderLight: '#353945',
+            }
+          },
+          fontFamily: {
+            sans: ['"Hanken Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: CustomStyles -->
+<style data-purpose="custom-scrollbars">
+    /* Custom sleek dark scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f1013;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #272a33;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3b3f4d;
+    }
+  </style>
+<style data-purpose="crop-grid-effect">
+    .crop-canvas-grid {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+    .selection-box {
+      border: 1.5px dashed #0085ff;
+      background-color: rgba(0, 133, 255, 0.08);
+      box-shadow: 0 0 0 9999px rgba(8, 9, 12, 0.65);
+    }
+  </style>
+<!-- END: CustomStyles -->
+</head>
+<body class="h-full bg-surface-deep text-zinc-200 font-sans antialiased overflow-hidden flex flex-col select-none">
+<!-- BEGIN: ApplicationWindowHeader -->
+<header class="h-9 bg-[#0b0c0e] border-b border-surface-border flex items-center justify-between px-3 text-xs text-zinc-400 select-none z-50">
+<div class="flex items-center space-x-2">
+<span class="inline-flex items-center justify-center w-4 h-4 text-brand-500 font-mono font-bold text-[10px] border border-brand-500/40 rounded bg-brand-500/10">OCR</span>
+<span class="text-zinc-300 font-medium text-[11px] tracking-wide">Extractor OCR — Terminal de Captura y Catalogación Postal</span>
+<span class="text-[10px] bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono">v3.4.2-rel</span>
+</div>
+<!-- Window controls dummy -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 pr-2 border-r border-surface-border text-[11px] text-zinc-400 font-mono">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>MOTOR IA: ACTIVO</span>
+</div>
+<button class="hover:text-zinc-200 transition-colors p-1"><i class="w-3.5 h-3.5" data-lucide="minus"></i></button>
+<button class="hover:text-zinc-200 transition-colors p-1"><i class="w-3 h-3" data-lucide="square"></i></button>
+<button class="hover:text-red-400 transition-colors p-1"><i class="w-3.5 h-3.5" data-lucide="x"></i></button>
+</div>
+</header>
+<!-- END: ApplicationWindowHeader -->
+<!-- BEGIN: MainContentShell -->
+<div class="flex-1 flex overflow-hidden">
+<!-- BEGIN: LeftSidebar -->
+<aside class="w-64 bg-surface-base border-r border-surface-border flex flex-col justify-between shrink-0">
+<div class="flex flex-col">
+<!-- Brand & Context -->
+<div class="p-4 border-b border-surface-border/60">
+<div class="flex items-center space-x-3 mb-3">
+<div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500/20 to-brand-500/5 border border-brand-500/30 flex items-center justify-center text-brand-500 shadow-inner">
+<i class="w-5 h-5" data-lucide="scan-line"></i>
+</div>
+<div>
+<h1 class="text-sm font-semibold text-zinc-100 tracking-tight flex items-center gap-1.5">
+                Extractor OCR
+              </h1>
+<p class="text-[11px] text-zinc-400 font-mono">Terminal de captura</p>
+</div>
+</div>
+<button class="w-full py-2 px-3 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded-md text-xs font-semibold flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20 transition-all">
+<i class="w-3.5 h-3.5" data-lucide="folder-open"></i>
+<span>Abrir imágenes</span>
+</button>
+</div>
+<!-- Navigation Links -->
+<nav aria-label="Navegación principal" class="p-2 space-y-1">
+<a class="flex items-center space-x-3 px-3 py-2.5 rounded-md bg-brand-500/15 border border-brand-500/30 text-brand-400 font-medium text-xs group transition-colors" href="#">
+<i class="w-4 h-4 text-brand-400" data-lucide="layout-grid"></i>
+<span class="flex-1 text-zinc-100">Workspace</span>
+<span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 text-xs transition-colors group" href="#">
+<i class="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" data-lucide="file-output"></i>
+<span>Exportar registros</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 text-xs transition-colors group" href="#">
+<i class="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" data-lucide="truck"></i>
+<span>Ver envíos</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 text-xs transition-colors group" href="#">
+<i class="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" data-lucide="terminal"></i>
+<span>Ver logs de auditoría</span>
+</a>
+</nav>
+<!-- Queue Section -->
+<div class="mt-4 px-3 py-2">
+<div class="px-2 py-1.5 flex items-center justify-between text-[11px] font-mono tracking-wider text-zinc-500 uppercase font-semibold">
+<span>Cola de trabajo</span>
+<span class="px-1.5 py-0.5 rounded text-[10px] bg-surface-elevated border border-surface-border text-zinc-300">0 ítems</span>
+</div>
+<div class="mt-2 p-3 rounded border border-dashed border-surface-border text-center bg-surface-deep/40">
+<p class="text-[11px] text-zinc-500">No hay documentos pendientes de procesar</p>
+</div>
+</div>
+</div>
+<!-- Bottom Nav Settings -->
+<div class="p-3 border-t border-surface-border space-y-1 text-xs">
+<a class="flex items-center space-x-2.5 px-3 py-2 rounded hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 transition-colors" href="#">
+<i class="w-4 h-4 text-zinc-500" data-lucide="info"></i>
+<span>Acerca de la versión</span>
+</a>
+<a class="flex items-center space-x-2.5 px-3 py-2 rounded hover:bg-red-500/10 hover:text-red-400 text-zinc-400 transition-colors" href="#">
+<i class="w-4 h-4 text-zinc-500 hover:text-red-400" data-lucide="log-out"></i>
+<span>Salir de la sesión</span>
+</a>
+</div>
+</aside>
+<!-- END: LeftSidebar -->
+<!-- BEGIN: CentralAndRightWorkspace -->
+<div class="flex-1 flex flex-col overflow-hidden bg-surface-deep">
+<!-- Top Action & Status Bar -->
+<div class="h-14 border-b border-surface-border bg-surface-base/80 backdrop-blur px-5 flex items-center justify-between shrink-0">
+<div>
+<h2 class="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+<span>Captura y Normalización de Destinatarios</span>
+<span class="text-zinc-600">/</span>
+<span class="text-xs text-zinc-400 font-normal">Oficialía de Partes y Envíos Institucionales</span>
+</h2>
+<p class="text-xs text-zinc-400">Recorta la zona del destinatario en la imagen para enviar al analizador o selecciona de la base unificada.</p>
+</div>
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-2 bg-surface-card border border-surface-border px-2.5 py-1 rounded text-xs">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+<span class="text-zinc-400 font-mono text-[11px]">IMAGEN:</span>
+<span class="text-zinc-200 font-medium text-[11px]">OFICIO_2024_089.JPG</span>
+</div>
+<div class="flex items-center space-x-1.5 bg-surface-card border border-surface-border px-2.5 py-1 rounded text-xs text-zinc-300 font-mono">
+<i class="w-3.5 h-3.5 text-zinc-400" data-lucide="layers"></i>
+<span>Cola: <strong class="text-brand-400">0</strong></span>
+</div>
+<button class="p-1.5 rounded bg-surface-card hover:bg-surface-elevated border border-surface-border text-zinc-300 transition-colors" title="Descargar registro">
+<i class="w-4 h-4" data-lucide="download"></i>
+</button>
+</div>
+</div>
+<!-- Main Dual-Panel View -->
+<main class="flex-1 flex overflow-hidden p-3 gap-3">
+<!-- BEGIN: LeftDocumentCanvasArea -->
+<section aria-label="Área de Documento" class="flex-1 flex flex-col bg-surface-card rounded-lg border border-surface-border overflow-hidden shadow-sm">
+<!-- Canvas Top Toolbar -->
+<div class="h-10 px-3 bg-surface-base border-b border-surface-border flex items-center justify-between text-xs text-zinc-300">
+<div class="flex items-center space-x-2 font-medium">
+<i class="w-4 h-4 text-brand-400" data-lucide="file-text"></i>
+<span>Vista de Documento</span>
+<span class="text-[11px] text-zinc-500 font-mono">(1920 × 1080 px • 300 DPI)</span>
+</div>
+<!-- Zoom & Pan Controls -->
+<div class="flex items-center bg-surface-card border border-surface-border rounded p-0.5 space-x-0.5">
+<button class="p-1 hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 rounded" title="Acercar">
+<i class="w-3.5 h-3.5" data-lucide="zoom-in"></i>
+</button>
+<button class="p-1 hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 rounded" title="Alejar">
+<i class="w-3.5 h-3.5" data-lucide="zoom-out"></i>
+</button>
+<div class="w-px h-3.5 bg-surface-border mx-1"></div>
+<button class="p-1 hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 rounded" title="Ajustar al marco">
+<i class="w-3.5 h-3.5" data-lucide="maximize-2"></i>
+</button>
+<button class="p-1 hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 rounded" title="Girar 90°">
+<i class="w-3.5 h-3.5" data-lucide="rotate-cw"></i>
+</button>
+<button class="p-1 hover:bg-surface-elevated text-zinc-400 hover:text-zinc-200 rounded" title="Restablecer recorte">
+<i class="w-3.5 h-3.5 text-brand-400" data-lucide="crop"></i>
+</button>
+</div>
+</div>
+<!-- The Canvas Workspace with Document Simulation -->
+<div class="flex-1 bg-[#090a0d] relative overflow-hidden flex items-center justify-center p-6 crop-canvas-grid">
+<!-- Simulated Document Sheet on Canvas -->
+<div class="relative w-[520px] h-[680px] bg-[#f8fafc] text-zinc-900 rounded-sm shadow-2xl p-8 flex flex-col justify-between border border-zinc-300">
+<!-- Letterhead Header -->
+<div class="border-b-2 border-zinc-800 pb-4">
+<div class="flex items-center justify-between">
+<div class="text-[11px] font-bold tracking-wider text-zinc-800 uppercase font-mono">GOBIERNO DEL ESTADO DE JALISCO</div>
+<div class="text-[10px] font-mono text-zinc-500">OFICIO N° ASEJ-2024-9981-D</div>
+</div>
+<div class="text-xs font-serif text-zinc-600 mt-1 italic">Auditoría Superior del Estado • Dirección General de Enlace Institucional</div>
+</div>
+<!-- TARGET RECIPIENT ZONE WITH ACTIVE SELECTION RECTANGLE -->
+<div class="relative my-4 p-4 rounded bg-amber-50/40 border border-amber-200">
+<!-- Bounding Box Overlay for OCR Zone -->
+<div class="absolute -inset-1 border-2 border-dashed border-brand-500 bg-brand-500/10 rounded pointer-events-none">
+<span class="absolute -top-3 left-2 bg-brand-500 text-white font-mono text-[9px] uppercase px-1.5 py-0.5 rounded font-bold shadow">
+                    Área Seleccionada [OCR Target]
+                  </span>
+<!-- Corner Handles -->
+<div class="w-2 h-2 bg-brand-500 border border-white absolute -top-1 -left-1"></div>
+<div class="w-2 h-2 bg-brand-500 border border-white absolute -top-1 -right-1"></div>
+<div class="w-2 h-2 bg-brand-500 border border-white absolute -bottom-1 -left-1"></div>
+<div class="w-2 h-2 bg-brand-500 border border-white absolute -bottom-1 -right-1"></div>
+</div>
+<!-- Text inside recipient block -->
+<div class="font-serif leading-relaxed text-zinc-900">
+<p class="font-bold text-xs uppercase tracking-tight">DR. HÉCTOR MANUEL CORDERO LUNA</p>
+<p class="text-[11px] font-medium text-zinc-700">DIRECTOR GENERAL EN AUDITORÍA SUPERIOR DEL ESTADO DE JALISCO</p>
+<p class="text-[10px] text-zinc-600">EDIFICIO CORPORATIVO AV. NIÑOS HÉROES 2409, COL. JARDINES DEL BOSQUE</p>
+<p class="text-[10px] font-mono text-zinc-500">GUADALAJARA, JALISCO. C.P. 44520</p>
+</div>
+</div>
+<!-- Body placeholder text -->
+<div class="space-y-2 text-[10px] text-zinc-600 leading-normal font-serif">
+<p>Por medio de la presente, se hace de su formal conocimiento el requerimiento de información correspondiente al ejercicio fiscal segundo trimestre 2024.</p>
+<p>Agradecemos remitir los anexos certificados a la brevedad conforme a la normativa vigente del Sistema Nacional de Fiscalización.</p>
+<div class="pt-8">
+<div class="w-32 border-b border-zinc-400 mb-1"></div>
+<p class="font-sans font-bold text-[9px]">DIRECCIÓN GENERAL DE ENLACE</p>
+</div>
+</div>
+<!-- Barcode footer -->
+<div class="pt-4 border-t border-zinc-200 flex justify-between items-center text-[9px] text-zinc-500 font-mono">
+<span>DOC-ID: 8812903-MX</span>
+<span>PÁGINA 1 DE 1</span>
+</div>
+</div>
+<!-- Floating hint indicator -->
+<div class="absolute bottom-4 left-4 bg-surface-card/90 backdrop-blur border border-surface-border px-3 py-1.5 rounded-full text-xs text-zinc-400 flex items-center space-x-2 shadow-lg">
+<i class="w-3.5 h-3.5 text-brand-400" data-lucide="mouse-pointer"></i>
+<span>Arrastra sobre la imagen para seleccionar o reajustar la zona del destinatario</span>
+</div>
+</div>
+<!-- Bottom Actions for Canvas -->
+<div class="h-14 px-4 bg-surface-base border-t border-surface-border flex items-center justify-between">
+<div class="text-xs text-zinc-400 flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+<span>Zona seleccionada: <strong class="text-zinc-200 font-mono">420 × 115 px</strong></span>
+</div>
+<div class="flex items-center space-x-2">
+<button class="px-3 py-1.5 rounded bg-surface-elevated hover:bg-surface-border text-zinc-300 text-xs font-medium flex items-center gap-1.5 transition-colors border border-surface-border">
+<i class="w-3.5 h-3.5" data-lucide="rotate-ccw"></i>
+<span>Reintentar recorte</span>
+</button>
+<button class="px-4 py-1.5 rounded bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-brand-500/25 transition-all">
+<i class="w-3.5 h-3.5" data-lucide="sparkles"></i>
+<span>Aplicar recorte con IA</span>
+</button>
+</div>
+</div>
+</section>
+<!-- END: LeftDocumentCanvasArea -->
+<!-- BEGIN: RightInspectorArea -->
+<aside aria-label="Panel de Inspector" class="w-[580px] flex flex-col bg-surface-card rounded-lg border border-surface-border overflow-hidden shrink-0 shadow-sm">
+<!-- Inspector Header -->
+<div class="h-10 px-3 bg-surface-base border-b border-surface-border flex items-center justify-between">
+<div class="flex items-center space-x-2 font-medium text-xs text-zinc-200">
+<i class="w-4 h-4 text-brand-400" data-lucide="scan"></i>
+<span class="font-semibold tracking-wide uppercase text-[11px]">Inspector de Coincidencias</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="px-2 py-0.5 text-[10px] font-mono rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                BASE SINCRONIZADA
+              </span>
+</div>
+</div>
+<!-- Inspector Content Scrollable Container -->
+<div class="flex-1 flex flex-col overflow-y-auto">
+<!-- SECTION: DESTINATARIO (ACCORDION - EXPANDED) -->
+<div class="border-b border-surface-border">
+<!-- Section Title Bar -->
+<div class="p-3 bg-surface-card flex items-center justify-between cursor-pointer border-b border-surface-border/50">
+<div class="flex items-center space-x-2 text-xs font-semibold text-zinc-100">
+<i class="w-4 h-4 text-brand-400" data-lucide="user-check"></i>
+<span class="uppercase tracking-wider text-[11px]">Búsqueda y Catálogo de Destinatarios</span>
+</div>
+<i class="w-4 h-4 text-zinc-400" data-lucide="chevron-up"></i>
+</div>
+<!-- Search Guidance -->
+<div class="p-3 space-y-3 bg-[#131418]">
+<p class="text-xs text-zinc-400 leading-normal">
+                  Busque al destinatario con lo que lee en la foto. Si aparece en el padrón, elija el registro y cree el envío directo sin re-extraer.
+                </p>
+<!-- Search Bar with Big Button -->
+<div class="flex gap-2">
+<div class="relative flex-1">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+<i class="w-4 h-4" data-lucide="search"></i>
+</div>
+<input class="w-full pl-9 pr-3 py-2 bg-surface-deep border border-surface-border focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded text-xs text-zinc-100 placeholder-zinc-500 outline-none font-sans" placeholder="Nombre de la persona, funcionario o dependencia..." type="text" value="Héctor Manuel Cordero Luna"/>
+</div>
+<button class="px-4 py-2 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded text-xs font-semibold flex items-center space-x-1.5 transition-colors shadow-sm shrink-0">
+<i class="w-3.5 h-3.5" data-lucide="search"></i>
+<span>Buscar</span>
+</button>
+</div>
+<!-- Filters Grid: 4 Select Dropdowns -->
+<div class="grid grid-cols-2 gap-2 text-xs">
+<!-- Filter: Type -->
+<div>
+<label class="block text-[10px] font-mono text-zinc-400 mb-1 uppercase">Tipo de entidad</label>
+<select class="w-full bg-surface-deep border border-surface-border text-zinc-300 rounded px-2.5 py-1.5 text-xs focus:border-brand-500 focus:ring-0">
+<option>Todos los tipos</option>
+<option selected="">Persona Física / Funcionario</option>
+<option>Gobierno / Ayuntamiento</option>
+<option>Privada / Empresa</option>
+</select>
+</div>
+<!-- Filter: State -->
+<div>
+<label class="block text-[10px] font-mono text-zinc-400 mb-1 uppercase">Entidad Federativa</label>
+<select class="w-full bg-surface-deep border border-surface-border text-zinc-300 rounded px-2.5 py-1.5 text-xs focus:border-brand-500 focus:ring-0">
+<option>Todos los estados</option>
+<option selected="">Jalisco</option>
+<option>Ciudad de México</option>
+<option>Chiapas</option>
+<option>Sonora</option>
+<option>Estado de México</option>
+</select>
+</div>
+<!-- Filter: Order By -->
+<div>
+<label class="block text-[10px] font-mono text-zinc-400 mb-1 uppercase">Ordenar por</label>
+<select class="w-full bg-surface-deep border border-surface-border text-zinc-300 rounded px-2.5 py-1.5 text-xs focus:border-brand-500 focus:ring-0">
+<option>Relevancia OCR</option>
+<option selected="">Nombre del destinatario</option>
+<option>Identificador (ID)</option>
+<option>Fecha de registro</option>
+</select>
+</div>
+<!-- Filter: Sort Direction -->
+<div>
+<label class="block text-[10px] font-mono text-zinc-400 mb-1 uppercase">Sentido</label>
+<select class="w-full bg-surface-deep border border-surface-border text-zinc-300 rounded px-2.5 py-1.5 text-xs focus:border-brand-500 focus:ring-0">
+<option selected="">Ascendente (A-Z)</option>
+<option>Descendente (Z-A)</option>
+</select>
+</div>
+</div>
+<!-- Match Count Bar -->
+<div class="flex items-center justify-between pt-1 border-t border-surface-border/40 text-[11px] text-zinc-400 font-mono">
+<span><strong class="text-brand-400 font-semibold">13</strong> coincidencias localizadas en padrón</span>
+<span class="text-zinc-500 text-[10px]">Tolerancia fonética: 92%</span>
+</div>
+<!-- MODERN RECIPIENT TABLE / CARD LIST -->
+<div class="space-y-2 mt-2" data-purpose="recipient-results-list">
+<!-- Result Item 1 (Selected Active Match) -->
+<div class="relative p-2.5 rounded-md border border-brand-500 bg-brand-500/10 transition-all cursor-pointer shadow-sm group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start space-x-2.5">
+<input checked="" class="mt-1 w-3.5 h-3.5 text-brand-500 bg-surface-deep border-zinc-600 focus:ring-0" name="selected_destinatario" type="radio"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.2 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] font-mono font-bold rounded uppercase">
+                              PERSONA
+                            </span>
+<h4 class="text-xs font-bold text-white group-hover:text-brand-300 transition-colors">
+                              DR. HÉCTOR MANUEL CORDERO LUNA
+                            </h4>
+</div>
+<p class="text-[11px] text-zinc-300 mt-0.5 font-medium">Director General en Auditoría Superior del Estado de Jalisco</p>
+<div class="flex items-center gap-3 text-[10px] text-zinc-400 font-mono mt-1">
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="building"></i>ASEJ • GOBIERNO DE JALISCO</span>
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="map-pin"></i>Guadalajara, JAL (CP 44520)</span>
+</div>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold shrink-0">
+                        99% COINCIDENCIA
+                      </span>
+</div>
+</div>
+<!-- Result Item 2 -->
+<div class="relative p-2.5 rounded-md border border-surface-border hover:border-zinc-500 bg-surface-deep/60 hover:bg-surface-elevated/40 transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start space-x-2.5">
+<input class="mt-1 w-3.5 h-3.5 text-brand-500 bg-surface-deep border-zinc-600 focus:ring-0" name="selected_destinatario" type="radio"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-bold rounded uppercase">
+                              GOBIERNO
+                            </span>
+<h4 class="text-xs font-semibold text-zinc-200 group-hover:text-white transition-colors">
+                              H. AYUNTAMIENTO DE PALENQUE
+                            </h4>
+</div>
+<p class="text-[11px] text-zinc-400 mt-0.5">Presidente Municipal Constitucional o Titular de Enlace</p>
+<div class="flex items-center gap-3 text-[10px] text-zinc-500 font-mono mt-1">
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="building"></i>MUNICIPIO DE PALENQUE</span>
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="map-pin"></i>Palenque, Chis (CP 29960)</span>
+</div>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold shrink-0">
+                        ID: #1042
+                      </span>
+</div>
+</div>
+<!-- Result Item 3 -->
+<div class="relative p-2.5 rounded-md border border-surface-border hover:border-zinc-500 bg-surface-deep/60 hover:bg-surface-elevated/40 transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start space-x-2.5">
+<input class="mt-1 w-3.5 h-3.5 text-brand-500 bg-surface-deep border-zinc-600 focus:ring-0" name="selected_destinatario" type="radio"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.2 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] font-mono font-bold rounded uppercase">
+                              PERSONA
+                            </span>
+<h4 class="text-xs font-semibold text-zinc-200 group-hover:text-white transition-colors">
+                              GOB. ROCÍO GUADALUPE NAVARRETE CAMPOS
+                            </h4>
+</div>
+<p class="text-[11px] text-zinc-400 mt-0.5">Secretaria en SECRETARÍA DE LA CONTRALORÍA</p>
+<div class="flex items-center gap-3 text-[10px] text-zinc-500 font-mono mt-1">
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="building"></i>CONTRALORÍA GENERAL</span>
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="map-pin"></i>Chetumal, QROO</span>
+</div>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold shrink-0">
+                        ID: #2910
+                      </span>
+</div>
+</div>
+<!-- Result Item 4 -->
+<div class="relative p-2.5 rounded-md border border-surface-border hover:border-zinc-500 bg-surface-deep/60 hover:bg-surface-elevated/40 transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start space-x-2.5">
+<input class="mt-1 w-3.5 h-3.5 text-brand-500 bg-surface-deep border-zinc-600 focus:ring-0" name="selected_destinatario" type="radio"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[9px] font-mono font-bold rounded uppercase">
+                              GOBIERNO
+                            </span>
+<h4 class="text-xs font-semibold text-zinc-200 group-hover:text-white transition-colors">
+                              H. AYUNTAMIENTO DE TEQUILA
+                            </h4>
+</div>
+<p class="text-[11px] text-zinc-400 mt-0.5">Presidente Municipal Constitucional</p>
+<div class="flex items-center gap-3 text-[10px] text-zinc-500 font-mono mt-1">
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="building"></i>PALACIO MUNICIPAL</span>
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="map-pin"></i>Tequila, JAL (CP 46400)</span>
+</div>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold shrink-0">
+                        ID: #0819
+                      </span>
+</div>
+</div>
+<!-- Result Item 5 -->
+<div class="relative p-2.5 rounded-md border border-surface-border hover:border-zinc-500 bg-surface-deep/60 hover:bg-surface-elevated/40 transition-all cursor-pointer group">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-start space-x-2.5">
+<input class="mt-1 w-3.5 h-3.5 text-brand-500 bg-surface-deep border-zinc-600 focus:ring-0" name="selected_destinatario" type="radio"/>
+<div>
+<div class="flex items-center gap-2">
+<span class="px-1.5 py-0.2 bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] font-mono font-bold rounded uppercase">
+                              PERSONA
+                            </span>
+<h4 class="text-xs font-semibold text-zinc-200 group-hover:text-white transition-colors">
+                              MTRO. RAÚL IGNACIO BELTRÁN SOSA
+                            </h4>
+</div>
+<p class="text-[11px] text-zinc-400 mt-0.5">Titular Del Órgano Interno De Control en H. AYUNTAMIENTO DE HERMOSILLO</p>
+<div class="flex items-center gap-3 text-[10px] text-zinc-500 font-mono mt-1">
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="building"></i>ÓRGANO INTERNO</span>
+<span><i class="w-3 h-3 inline mr-1 text-zinc-500" data-lucide="map-pin"></i>Hermosillo, SON</span>
+</div>
+</div>
+</div>
+<span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold shrink-0">
+                        ID: #3340
+                      </span>
+</div>
+</div>
+</div>
+<!-- Modern Clean Pagination Toolbar -->
+<div class="flex items-center justify-between pt-2 border-t border-surface-border text-xs text-zinc-400">
+<button class="px-2.5 py-1 rounded bg-surface-deep hover:bg-surface-elevated border border-surface-border text-zinc-300 disabled:opacity-40 flex items-center space-x-1" disabled="">
+<i class="w-3.5 h-3.5" data-lucide="chevron-left"></i>
+<span>Anterior</span>
+</button>
+<span class="text-[11px] font-mono text-zinc-400">
+                    Página <strong class="text-zinc-200">1</strong> de 2 • (13 resultados)
+                  </span>
+<button class="px-2.5 py-1 rounded bg-surface-deep hover:bg-surface-elevated border border-surface-border text-zinc-300 flex items-center space-x-1">
+<span>Siguiente</span>
+<i class="w-3.5 h-3.5" data-lucide="chevron-right"></i>
+</button>
+</div>
+<!-- Primary Destination Link Action -->
+<div class="pt-2">
+<button class="w-full py-2.5 px-4 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white rounded font-medium text-xs flex items-center justify-center space-x-2 shadow-md shadow-brand-500/20 transition-all">
+<i class="w-4 h-4" data-lucide="package-check"></i>
+<span>Crear envío con el destinatario seleccionado</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SECTION: DATOS EXTRAÍDOS (ACCORDION - FOLDED / COLLAPSED BY DEFAULT) -->
+<div class="border-b border-surface-border bg-surface-base">
+<!-- Accordion Header: Folded -->
+<div class="p-3 flex items-center justify-between cursor-pointer hover:bg-surface-elevated/40 transition-colors">
+<div class="flex items-center space-x-2 text-xs font-semibold text-zinc-300">
+<i class="w-4 h-4 text-zinc-400" data-lucide="binary"></i>
+<span class="uppercase tracking-wider text-[11px]">DATOS EXTRAÍDOS (PARSER OCR)</span>
+<span class="px-1.5 py-0.5 rounded text-[9px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700">PLEGADO</span>
+</div>
+<div class="flex items-center space-x-2 text-zinc-500">
+<span class="text-[11px] font-mono">Confianza global: 94%</span>
+<i class="w-4 h-4" data-lucide="chevron-down"></i>
+</div>
+</div>
+</div>
+</div>
+<!-- Inspector Fixed Bottom Action -->
+<div class="h-14 px-4 bg-surface-base border-t border-surface-border flex items-center justify-between shrink-0">
+<span class="text-[11px] font-mono text-zinc-500">Autoguardado local: Activo</span>
+<div class="flex space-x-2">
+<button class="px-4 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium flex items-center space-x-1.5 transition-colors border border-zinc-700">
+<i class="w-3.5 h-3.5" data-lucide="save"></i>
+<span>Guardar registro temporal</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- END: RightInspectorArea -->
+</main>
+<!-- Footer Status Line -->
+<footer class="h-6 bg-[#09090b] border-t border-surface-border px-3 flex items-center justify-between text-[10px] font-mono text-zinc-500">
+<div class="flex items-center space-x-4">
+<span>LATENCIA: 124ms</span>
+<span>MOTOR: VISION-DEEP-OCR v2</span>
+<span>ENTORNO: PRODUCCIÓN MÉXICO</span>
+</div>
+<div class="flex items-center space-x-3 text-zinc-400">
+<span>MEMORIA: 412 MB</span>
+<span class="text-emerald-400">● EN LÍNEA</span>
+</div>
+</footer>
+</div>
+<!-- END: CentralAndRightWorkspace -->
+</div>
+<!-- END: MainContentShell -->
+<!-- BEGIN: ScriptSetup -->
+<script data-purpose="icon-initialization">
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+<!-- END: ScriptSetup -->
+</body></html>

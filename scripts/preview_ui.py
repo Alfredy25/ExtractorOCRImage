@@ -101,6 +101,21 @@ def click(widget: QWidget) -> None:
     app.processEvents()
 
 
+def double_click(widget: QWidget) -> None:
+    """Doble clic en el centro del widget."""
+    center = QPoint(max(widget.width() // 2, 1), max(widget.height() // 2, 1))
+    event = QMouseEvent(
+        QEvent.Type.MouseButtonDblClick,
+        QPointF(center),
+        QPointF(widget.mapToGlobal(center)),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    QApplication.sendEvent(widget, event)
+    app.processEvents()
+
+
 def receives_mouse(widget: QWidget) -> bool:
     """Comprueba que el ratón llega al widget en su posición en pantalla.
 
@@ -204,7 +219,170 @@ check(
     "workspace: el segundo clic la vuelve a desplegar",
     window._right._receiver_section.is_expanded(),
 )
+
+from app.models.receiver import Paginated, ReceiverDto  # noqa: E402
+
+_card_audit = {
+    "created_at": "2026-11-10T16:00:00",
+    "updated_at": "2026-11-10T16:00:00",
+    "created_by": 1,
+    "updated_by": None,
+}
+_persona_card = ReceiverDto.model_validate({
+    "id": 4,
+    "type_entity": "PERSONA",
+    "title": {"id": 1, "abbreviation": "LIC.", "meaning": "Licenciada", **_card_audit},
+    "full_name": "MARIA FERNANDA GARCIA LOPEZ",
+    "email": "maria.garcia@example.com",
+    "position": {
+        "id": 2,
+        "job_role": {
+            "id": 9,
+            "abbreviation": "DIR.",
+            "meaning": "Directora de Administracion",
+            **_card_audit,
+        },
+        "organization": {
+            "id": 6,
+            "name": "SECRETARIA DE ADMINISTRACION",
+            "state": "CIUDAD DE MEXICO",
+            **_card_audit,
+        },
+        **_card_audit,
+    },
+    "addresses": [{
+        "id": 7,
+        "street": "AV. INSURGENTES SUR",
+        "num_street": "1234",
+        "colony": "FLORIDA",
+        "municipality": "ALVARO OBREGON",
+        "city": "CIUDAD DE MEXICO",
+        "state": "CIUDAD DE MEXICO",
+        "postal_code": "01030",
+        "country": "MEXICO",
+        "receiver_id": 4,
+        **_card_audit,
+    }, {
+        "id": 8,
+        "street": "AV. REFORMA",
+        "num_street": "50",
+        "colony": "JUAREZ",
+        "municipality": "CUAUHTEMOC",
+        "city": "CIUDAD DE MEXICO",
+        "state": "CIUDAD DE MEXICO",
+        "postal_code": "06600",
+        "country": "MEXICO",
+        "receiver_id": 4,
+        **_card_audit,
+    }],
+    "contacts": [],
+    "volantes": [],
+    **_card_audit,
+})
+_gobierno_card = ReceiverDto.model_validate({
+    "id": 12,
+    "type_entity": "GOBIERNO",
+    "title": None,
+    "full_name": None,
+    "email": None,
+    "position": {
+        "id": 3,
+        "job_role": {
+            "id": 10,
+            "abbreviation": "PDTE. MPAL.",
+            "meaning": "Presidente Municipal",
+            **_card_audit,
+        },
+        "organization": {
+            "id": 8,
+            "name": "H. AYUNTAMIENTO DE TEQUILA",
+            "state": "JALISCO",
+            **_card_audit,
+        },
+        **_card_audit,
+    },
+    "addresses": [{
+        "id": 15,
+        "street": "PORTAL HIDALGO",
+        "num_street": "1",
+        "colony": "CENTRO",
+        "municipality": "TEQUILA",
+        "city": "TEQUILA",
+        "state": "JALISCO",
+        "postal_code": "46400",
+        "country": "MEXICO",
+        "receiver_id": 12,
+        **_card_audit,
+    }],
+    "contacts": [],
+    "volantes": [],
+    **_card_audit,
+})
+window._right._picker._on_results(Paginated[ReceiverDto](
+    page=1,
+    page_size=10,
+    total=2,
+    total_pages=1,
+    items=[_persona_card, _gobierno_card],
+))
+app.processEvents()
+picker = window._right._picker
+filter_labels = {label.text() for label in picker.findChildren(QWidget) if isinstance(label, type(picker._status))}
+for caption in ("TIPO ENTIDAD", "ESTADO", "ORDENAR POR", "ORDEN"):
+    check(f"busqueda: etiqueta {caption}", caption in filter_labels)
+cards = picker._list.findChildren(QWidget, "receiverResultCard")
+check("busqueda: dos tarjetas", len(cards) == 2, f"n={len(cards)}")
+persona_card, gobierno_card = cards[0], cards[1]
+persona_role = persona_card.findChild(QWidget, "receiverResultRole")
+persona_org = persona_card.findChild(QWidget, "receiverResultOrg")
+persona_address = persona_card.findChild(QWidget, "receiverResultAddress")
+check(
+    "tarjeta persona: cargo en significado",
+    persona_role is not None and persona_role.text() == "Directora de Administracion",
+)
+check(
+    "tarjeta persona: sin abreviatura de cargo",
+    "DIR." not in {label.text() for label in persona_card.findChildren(QWidget) if hasattr(label, "text")},
+)
+check(
+    "tarjeta persona: dependencia",
+    persona_org is not None and persona_org.text() == "SECRETARIA DE ADMINISTRACION",
+)
+check(
+    "tarjeta persona: domicilio en su fila",
+    persona_address is not None
+    and persona_address.text() == "AV. INSURGENTES SUR 1234, FLORIDA, CIUDAD DE MEXICO (01030)",
+)
+persona_count = persona_card.findChild(QWidget, "receiverAddressCountText")
+check(
+    "tarjeta persona: recuadro de domicilios",
+    persona_count is not None and persona_count.text() == "2 domicilios",
+)
+check(
+    "tarjeta gobierno: titulo es la dependencia",
+    gobierno_card.findChild(QWidget, "receiverResultTitle").text() == "H. AYUNTAMIENTO DE TEQUILA",
+)
+check(
+    "tarjeta gobierno: sin fila de dependencia",
+    gobierno_card.findChild(QWidget, "receiverResultOrg") is None,
+)
+gobierno_address = gobierno_card.findChild(QWidget, "receiverResultAddress")
+check(
+    "tarjeta gobierno: domicilio con codigo postal",
+    gobierno_address is not None
+    and gobierno_address.text() == "PORTAL HIDALGO 1, CENTRO, JALISCO (46400)",
+)
+gobierno_count = gobierno_card.findChild(QWidget, "receiverAddressCountText")
+check(
+    "tarjeta gobierno: un domicilio",
+    gobierno_count is not None and gobierno_count.text() == "1 domicilio",
+)
 shot(window, "04b_workspace_destinatario", 1500, 940)
+click(persona_card)
+check("busqueda: un clic no abre la ficha", not picker._ficha.isVisible())
+double_click(persona_card)
+check("busqueda: doble clic abre la ficha", picker._ficha.isVisible())
+check("busqueda: doble clic oculta el listado", not picker._list.isVisible())
 window._right.set_form_data(ocr_sample)
 app.processEvents()
 
@@ -537,6 +715,27 @@ check("ficha: lista el volante del destinatario", len(volante_lines) == 1, f"n={
 check("ficha: el boton editar recibe el raton", receives_mouse(edit_button))
 contact_choices = window.findChildren(QWidget, "receiverContactChoice")
 check("ficha: elegir contacto si hay varios", len(contact_choices) == 2, f"n={len(contact_choices)}")
+picker = window._right._picker
+check(
+    "ficha: tipo e identificador junto a editar",
+    picker._type_chip.text() == "PERSONA"
+    and picker._id_chip.text() == "ID 4"
+    and picker._btn_edit.text() == "Editar",
+)
+check(
+    "ficha: correo en su fila",
+    picker._email.text() == "maria.garcia@example.com",
+)
+check(
+    "ficha: cantidad de telefonos",
+    picker._contacts_heading.text() == "TELÉFONOS REGISTRADOS (2)",
+)
+check(
+    "ficha: volver usa flecha y oculta la busqueda",
+    picker._btn_change.text() == "Cambiar destinatario"
+    and not picker._btn_change.icon().isNull()
+    and not picker._search_bar.isVisible(),
+)
 shot(window, "13b_ficha_editar", 1500, 940)
 
 edit_dialog = ReceiverDialog.for_edit(

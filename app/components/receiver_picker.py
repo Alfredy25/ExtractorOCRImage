@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEvent, Qt, Signal
-from PySide6.QtGui import QWheelEvent
+from PySide6.QtCore import QEvent, QSize, Qt, Signal
+from PySide6.QtGui import QIcon, QPainter, QPixmap, QWheelEvent
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QButtonGroup,
     QComboBox,
     QDialog,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -20,8 +22,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from app.components.theme import SPACE
-from app.components.widgets import subtitle, text_button
+from app.components.theme import COLOR, SPACE, icon_pixmap
+from app.components.widgets import (
+    chip,
+    field_label,
+    icon_label,
+    section_label,
+    set_property,
+    subtitle,
+    text_button,
+)
 from app.models.receiver import (
     ESTADOS_MX,
     AddressDto,
@@ -57,6 +67,13 @@ _DIRECTION_OPTIONS = (
     ("Descendente", "desc"),
 )
 
+# El servidor asigna uno de estos cuando el destinatario no tiene un cargo real.
+_PLACEHOLDER_ROLE_ABBREVIATIONS = frozenset({
+    "SIN CARGO",
+    "INSTITUCIONAL GOBIERNO",
+    "INSTITUCIONAL PRIVADO",
+})
+
 
 class _NoWheelComboBox(QComboBox):
     """La rueda del ratón no cambia el valor; el padre puede seguir haciendo scroll."""
@@ -88,6 +105,243 @@ class _WrappingRadio(QWidget):
             self.button.click()
             return True
         return super().eventFilter(watched, event)
+
+
+def _role_meaning(receiver: ReceiverDto) -> str:
+    """Significado del cargo. Los marcadores del servidor no se muestran."""
+    position = receiver.position
+    if position is None or position.job_role is None:
+        return ""
+    abbreviation = position.job_role.abbreviation.strip().upper()
+    if abbreviation in _PLACEHOLDER_ROLE_ABBREVIATIONS:
+        return ""
+    return position.job_role.meaning.strip()
+
+
+def _organization_name(receiver: ReceiverDto) -> str:
+    if receiver.position is None:
+        return ""
+    return receiver.position.organization.name.strip()
+
+
+def _first_address_line(receiver: ReceiverDto) -> str:
+    """Calle, número, colonia, estado y el código postal entre paréntesis."""
+    if not receiver.addresses:
+        return ""
+    address = receiver.addresses[0]
+    street = " ".join(
+        part.strip()
+        for part in (address.street, address.num_street)
+        if part and part.strip()
+    )
+    parts = [
+        part.strip()
+        for part in (street, address.colony, address.state)
+        if part and part.strip()
+    ]
+    line = ", ".join(parts)
+    postal = (address.postal_code or "").strip()
+    if postal:
+        return f"{line} ({postal})" if line else f"({postal})"
+    return line
+
+
+def _type_tone(type_entity: str) -> str:
+    if type_entity == "GOBIERNO":
+        return "warning"
+    if type_entity == "PRIVADA":
+        return "neutral"
+    return "primary"
+
+
+def _address_count_text(count: int) -> str:
+    noun = "domicilio" if count == 1 else "domicilios"
+    return f"{count} {noun}"
+
+
+def _address_count_badge(count: int) -> QFrame:
+    """Recuadro con el icono y la cantidad de domicilios, sin el texto de alternos."""
+    box = QFrame()
+    box.setObjectName("receiverAddressCount")
+    box.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+    box.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+    layout = QHBoxLayout(box)
+    layout.setContentsMargins(6, 2, 6, 2)
+    layout.setSpacing(4)
+    layout.addWidget(icon_label("apartment", size=12, role="mutedIcon"))
+    label = QLabel(_address_count_text(count))
+    label.setObjectName("receiverAddressCountText")
+    layout.addWidget(label)
+    return box
+
+
+def _left_arrow_icon(size: int = 18) -> QIcon:
+    """Flecha a la izquierda. La fuente solo trae la flecha hacia adelante."""
+    source = icon_pixmap("arrow_forward", size, COLOR["on_surface_variant"])
+    flipped = QPixmap(source.size())
+    flipped.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(flipped)
+    painter.translate(flipped.width(), 0)
+    painter.scale(-1, 1)
+    painter.drawPixmap(0, 0, source)
+    painter.end()
+    return QIcon(flipped)
+
+
+def _icon_text_row(icon: str) -> tuple[QWidget, QLabel]:
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(SPACE["xs"])
+    layout.addWidget(icon_label(icon, size=14, role="mutedIcon"), 0, Qt.AlignmentFlag.AlignTop)
+    label = subtitle("")
+    label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+    layout.addWidget(label, 1)
+    return row, label
+
+
+def _heading(icon: str, text: str, trailing: QWidget | None = None) -> tuple[QWidget, QLabel]:
+    label = section_label(text)
+    label.setWordWrap(True)
+    label.setMinimumWidth(0)
+    label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, SPACE["sm"], 0, 0)
+    layout.setSpacing(SPACE["xs"])
+    layout.addWidget(icon_label(icon, size=14, role="mutedIcon"), 0, Qt.AlignmentFlag.AlignVCenter)
+    layout.addWidget(label, 1, Qt.AlignmentFlag.AlignVCenter)
+    if trailing is not None:
+        trailing.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        layout.addWidget(trailing, 0, Qt.AlignmentFlag.AlignVCenter)
+    return row, label
+
+
+def _icon_line(icon: str, text: str, object_name: str) -> QWidget:
+    row = QWidget()
+    layout = QHBoxLayout(row)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(SPACE["xs"])
+    layout.addWidget(icon_label(icon, size=14, role="mutedIcon"), 0, Qt.AlignmentFlag.AlignTop)
+    label = subtitle(text)
+    label.setObjectName(object_name)
+    label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+    layout.addWidget(label, 1)
+    return row
+
+
+class _ReceiverResultCard(QFrame):
+    """Tarjeta de un destinatario encontrado. El doble clic abre la ficha."""
+
+    activated = Signal(int)
+
+    def __init__(self, receiver: ReceiverDto, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setObjectName("receiverResultCard")
+        self._receiver_id = receiver.id
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
+        root = QVBoxLayout(self)
+        root.setContentsMargins(SPACE["sm"], SPACE["xs"], SPACE["sm"], SPACE["xs"])
+        root.setSpacing(SPACE["xs"])
+
+        header = QHBoxLayout()
+        header.setSpacing(SPACE["xs"])
+        kind = chip(receiver.type_entity, _type_tone(receiver.type_entity))
+        kind.setObjectName("receiverResultType")
+        kind.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        title = QLabel(receiver_display_name(receiver))
+        title.setObjectName("receiverResultTitle")
+        title.setProperty("role", "cardTitle")
+        title.setWordWrap(True)
+        title.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        ident = chip(f"ID {receiver.id}", "neutral")
+        ident.setObjectName("receiverResultId")
+        ident.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        header.addWidget(kind, 0, Qt.AlignmentFlag.AlignTop)
+        header.addWidget(title, 1, Qt.AlignmentFlag.AlignTop)
+        header.addWidget(ident, 0, Qt.AlignmentFlag.AlignTop)
+        root.addLayout(header)
+
+        meaning = _role_meaning(receiver)
+        if meaning:
+            role = subtitle(meaning)
+            role.setObjectName("receiverResultRole")
+            root.addWidget(role)
+
+        # En gobierno y privada el título ya es la organización.
+        if receiver.type_entity == "PERSONA":
+            organization = _organization_name(receiver)
+            if organization:
+                root.addWidget(_icon_line("apartment", organization, "receiverResultOrg"))
+
+        footer = QHBoxLayout()
+        footer.setSpacing(SPACE["xs"])
+        address = _first_address_line(receiver)
+        if address:
+            footer.addWidget(_icon_line("place", address, "receiverResultAddress"), 1)
+        else:
+            footer.addStretch(1)
+        footer.addWidget(_address_count_badge(len(receiver.addresses)), 0, Qt.AlignmentFlag.AlignTop)
+        root.addLayout(footer)
+
+    def mouseDoubleClickEvent(self, event) -> None:
+        self.activated.emit(self._receiver_id)
+        event.accept()
+
+
+class _ReceiverResultList(QListWidget):
+    """Lista de tarjetas. La altura de cada ítem sigue el ancho disponible."""
+
+    def __init__(self, parent: QWidget | None = None):
+        super().__init__(parent)
+        self.setObjectName("receiverResults")
+        self._fitting = False
+        self.setMinimumHeight(120)
+        self.setMaximumHeight(320)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.setSpacing(4)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+
+    def clear(self) -> None:
+        super().clear()
+        self.setMinimumHeight(120)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.fit_cards()
+
+    def fit_cards(self) -> None:
+        if self._fitting:
+            return
+        width = self.viewport().width()
+        if width < 40 or self.count() == 0:
+            return
+        self._fitting = True
+        try:
+            total = 0
+            for row in range(self.count()):
+                item = self.item(row)
+                card = self.itemWidget(item)
+                if item is None or card is None:
+                    continue
+                height = card.heightForWidth(width)
+                if height < 1:
+                    height = card.sizeHint().height()
+                total += height
+                hint = QSize(width, height)
+                if item.sizeHint() != hint:
+                    item.setSizeHint(hint)
+            gaps = self.spacing() * max(self.count() - 1, 0)
+            frame = self.frameWidth() * 2 + 8
+            wanted = min(self.maximumHeight(), max(120, total + gaps + frame))
+            if self.minimumHeight() != wanted:
+                self.setMinimumHeight(wanted)
+        finally:
+            self._fitting = False
 
 
 def _address_label(address: AddressDto) -> str:
@@ -127,6 +381,10 @@ class ReceiverPicker(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(SPACE["sm"])
 
+        self._search_bar = QWidget()
+        query_row = QHBoxLayout(self._search_bar)
+        query_row.setContentsMargins(0, 0, 0, 0)
+        query_row.setSpacing(SPACE["sm"])
         self._query = QLineEdit()
         self._query.setObjectName("receiverSearchInput")
         self._query.setPlaceholderText("Nombre de la persona o de la organización")
@@ -134,26 +392,18 @@ class ReceiverPicker(QWidget):
         self._query.returnPressed.connect(self._on_search_clicked)
         self._btn_search = text_button("Buscar", variant="primary", icon="search")
         self._btn_search.clicked.connect(self._on_search_clicked)
-        query_row = QHBoxLayout()
-        query_row.setSpacing(SPACE["sm"])
         query_row.addWidget(self._query, 1)
         query_row.addWidget(self._btn_search)
-        root.addLayout(query_row)
+        root.addWidget(self._search_bar)
 
-        root.addWidget(self._build_filters())
+        self._filters = self._build_filters()
+        root.addWidget(self._filters)
 
         self._status = subtitle("")
         self._status.setVisible(False)
         root.addWidget(self._status)
 
-        self._list = QListWidget()
-        self._list.setObjectName("receiverResults")
-        self._list.setMinimumHeight(120)
-        self._list.setMaximumHeight(200)
-        self._list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._list.setTextElideMode(Qt.TextElideMode.ElideRight)
-        self._list.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
-        self._list.itemClicked.connect(self._on_result_clicked)
+        self._list = _ReceiverResultList()
         root.addWidget(self._list)
 
         root.addWidget(self._build_pagination())
@@ -176,8 +426,10 @@ class ReceiverPicker(QWidget):
         self._direction_combo = self._combo(_DIRECTION_OPTIONS)
 
         for left, right in (
-            (self._type_combo, self._state_combo),
-            (self._order_combo, self._direction_combo),
+            (self._labeled_combo("TIPO ENTIDAD", self._type_combo),
+             self._labeled_combo("ESTADO", self._state_combo)),
+            (self._labeled_combo("ORDENAR POR", self._order_combo),
+             self._labeled_combo("ORDEN", self._direction_combo)),
         ):
             row = QHBoxLayout()
             row.setContentsMargins(0, 0, 0, 0)
@@ -185,6 +437,15 @@ class ReceiverPicker(QWidget):
             row.addWidget(left, 1)
             row.addWidget(right, 1)
             layout.addLayout(row)
+        return box
+
+    def _labeled_combo(self, caption: str, combo: QComboBox) -> QWidget:
+        box = QWidget()
+        layout = QVBoxLayout(box)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        layout.addWidget(field_label(caption))
+        layout.addWidget(combo)
         return box
 
     def _combo(self, options) -> QComboBox:
@@ -225,30 +486,44 @@ class ReceiverPicker(QWidget):
     def _build_ficha(self) -> QWidget:
         self._ficha = QWidget()
         ficha_layout = QVBoxLayout(self._ficha)
-        ficha_layout.setContentsMargins(0, SPACE["sm"], 0, 0)
+        ficha_layout.setContentsMargins(0, 0, 0, 0)
         ficha_layout.setSpacing(SPACE["xs"])
-        self._btn_edit = text_button("Editar destinatario", variant="ghost", icon="edit_document")
+
+        header = QHBoxLayout()
+        header.setSpacing(SPACE["xs"])
+        self._type_chip = chip("", "primary")
+        self._type_chip.setObjectName("receiverFichaType")
+        self._type_chip.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self._id_chip = chip("", "neutral")
+        self._id_chip.setObjectName("receiverFichaId")
+        self._id_chip.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self._btn_edit = text_button("Editar", variant="ghost", icon="edit_document")
         self._btn_edit.setObjectName("receiverEditButton")
         self._btn_edit.clicked.connect(self._request_edit)
-        ficha_layout.addWidget(self._btn_edit, 0, Qt.AlignmentFlag.AlignLeft)
+        header.addWidget(self._type_chip, 0, Qt.AlignmentFlag.AlignVCenter)
+        header.addWidget(self._id_chip, 0, Qt.AlignmentFlag.AlignVCenter)
+        header.addStretch(1)
+        header.addWidget(self._btn_edit, 0, Qt.AlignmentFlag.AlignVCenter)
+        ficha_layout.addLayout(header)
 
         self._name = QLabel("")
         self._name.setProperty("role", "cardTitle")
         self._name.setWordWrap(True)
         self._meta = subtitle("")
-        self._contact_summary = subtitle("")
+        email_row, self._email = _icon_text_row("mail")
+        self._email.setObjectName("receiverFichaEmail")
         ficha_layout.addWidget(self._name)
         ficha_layout.addWidget(self._meta)
-        ficha_layout.addWidget(self._contact_summary)
+        ficha_layout.addWidget(email_row)
 
-        self._contacts_heading = subtitle("Teléfonos registrados")
-        self._contacts_heading.setVisible(False)
-        ficha_layout.addWidget(self._contacts_heading)
+        phones, self._contacts_heading = _heading("phone", "Teléfonos registrados")
+        ficha_layout.addWidget(phones)
         self._contacts = QVBoxLayout()
         self._contacts.setSpacing(SPACE["xs"])
         ficha_layout.addLayout(self._contacts)
 
-        ficha_layout.addWidget(subtitle("Volantes registrados"))
+        volantes, _volantes_label = _heading("description", "Volantes")
+        ficha_layout.addWidget(volantes)
         self._volantes = QVBoxLayout()
         self._volantes.setSpacing(SPACE["xs"])
         ficha_layout.addLayout(self._volantes)
@@ -257,27 +532,33 @@ class ReceiverPicker(QWidget):
         self._btn_add_volante.clicked.connect(self._open_volante)
         ficha_layout.addWidget(self._btn_add_volante, 0, Qt.AlignmentFlag.AlignLeft)
 
-        ficha_layout.addWidget(subtitle("Domicilios registrados"))
         self._btn_add_address = text_button("Registrar domicilio", variant="ghost", icon="add")
         self._btn_add_address.clicked.connect(self._open_address)
-        ficha_layout.addWidget(self._btn_add_address, 0, Qt.AlignmentFlag.AlignLeft)
-
+        addresses, _addresses_label = _heading("place", "Domicilios registrados", self._btn_add_address)
+        ficha_layout.addWidget(addresses)
         self._addresses = QVBoxLayout()
         self._addresses.setSpacing(SPACE["xs"])
         ficha_layout.addLayout(self._addresses)
 
-        self._hint = subtitle(
+        hint_row, self._hint = _icon_text_row("info")
+        self._hint.setText(
             "La colonia, el código postal, la ciudad y el estado del archivo "
             "de Paquetexpress salen de la cobertura. Este domicilio queda "
             "guardado en el destinatario."
         )
-        ficha_layout.addWidget(self._hint)
+        ficha_layout.addWidget(hint_row)
 
-        self._btn_change = text_button("Cambiar destinatario", variant="ghost", icon="search")
+        self._btn_change = text_button("Cambiar destinatario", variant="ghost")
+        self._btn_change.setIcon(_left_arrow_icon())
+        self._btn_change.setIconSize(QSize(18, 18))
         self._btn_change.clicked.connect(self._back_to_search)
         ficha_layout.addWidget(self._btn_change, 0, Qt.AlignmentFlag.AlignLeft)
         self._ficha.setVisible(False)
         return self._ficha
+
+    def _set_search_visible(self, visible: bool) -> None:
+        self._search_bar.setVisible(visible)
+        self._filters.setVisible(visible)
 
     # --- Búsqueda ------------------------------------------------------
 
@@ -291,6 +572,7 @@ class ReceiverPicker(QWidget):
     def _search(self, page: int) -> None:
         text = self._query.text().strip()
         self._receiver = None
+        self._set_search_visible(True)
         self._ficha.setVisible(False)
         self._list.setVisible(True)
         self.selection_cleared.emit()
@@ -328,19 +610,17 @@ class ReceiverPicker(QWidget):
             )
             self.empty_results.emit()
             return
-        self._set_status(f"{page.total} coincidencia(s).")
+        self._set_status(f"{page.total} coincidencia(s). Doble clic abre la ficha.")
         for receiver in items:
             self._results[receiver.id] = receiver
-            label = receiver_display_name(receiver)
-            position = receiver_position_line(receiver)
-            kind = receiver.type_entity
-            text = f"{kind} · {label}"
-            if position and position != label:
-                text = f"{text} · {position}"
-            item = QListWidgetItem(text)
+            item = QListWidgetItem()
             item.setData(Qt.ItemDataRole.UserRole, receiver.id)
-            item.setToolTip(receiver.email or "")
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            card = _ReceiverResultCard(receiver)
+            card.activated.connect(self._open_result)
             self._list.addItem(item)
+            self._list.setItemWidget(item, card)
+        self._list.fit_cards()
 
     def _update_pager(self, page) -> None:
         total_pages = max(page.total_pages, 1)
@@ -362,8 +642,7 @@ class ReceiverPicker(QWidget):
             return
         self._set_status(str(exc))
 
-    def _on_result_clicked(self, item: QListWidgetItem) -> None:
-        receiver_id = item.data(Qt.ItemDataRole.UserRole)
+    def _open_result(self, receiver_id: int) -> None:
         receiver = self._results.get(int(receiver_id))
         if receiver is None:
             return
@@ -383,12 +662,18 @@ class ReceiverPicker(QWidget):
         if preferred_contact_id is None and same and self._selected_contact is not None:
             preferred_contact_id = self._selected_contact.id
         self._receiver = receiver
+        self._set_search_visible(False)
         self._list.setVisible(False)
         self._pager.setVisible(False)
         self._ficha.setVisible(True)
+        set_property(self._type_chip, "tone", _type_tone(receiver.type_entity))
+        self._type_chip.setText(receiver.type_entity)
+        self._id_chip.setText(f"ID {receiver.id}")
         self._name.setText(receiver_display_name(receiver))
         position = receiver_position_line(receiver)
-        self._meta.setText(position or receiver.type_entity)
+        self._meta.setText(position)
+        self._meta.setVisible(bool(position))
+        self._email.setText(receiver.email or "Sin correo")
         self._rebuild_contacts(receiver, preferred_contact_id)
         self._rebuild_volantes(receiver)
         self._rebuild_addresses(receiver, preferred_address_id)
@@ -434,13 +719,13 @@ class ReceiverPicker(QWidget):
                 widget.deleteLater()
 
         contacts = list(receiver.contacts)
-        many = len(contacts) > 1
-        self._contacts_heading.setVisible(many)
+        self._contacts_heading.setText(f"TELÉFONOS REGISTRADOS ({len(contacts)})")
 
         if not contacts:
             self._selected_contact = None
-            bits = [receiver.email or ""]
-            self._contact_summary.setText(bits[0] if bits[0] else "Sin correo ni teléfono")
+            empty = subtitle("Sin teléfonos")
+            empty.setObjectName("receiverContactEmpty")
+            self._contacts.addWidget(empty)
             return
 
         chosen = preferred_contact_id
@@ -449,9 +734,7 @@ class ReceiverPicker(QWidget):
         selected = next((item for item in contacts if item.id == chosen), contacts[0])
         self._selected_contact = selected
 
-        email = receiver.email or ""
-        if many:
-            self._contact_summary.setText(email or "Sin correo")
+        if len(contacts) > 1:
             self._contact_group.blockSignals(True)
             for item in contacts:
                 choice = _WrappingRadio(contact_display_line(item))
@@ -463,9 +746,9 @@ class ReceiverPicker(QWidget):
             self._contact_group.blockSignals(False)
             return
 
-        phone = contact_display_line(selected)
-        bits = [bit for bit in (email, phone) if bit]
-        self._contact_summary.setText(" · ".join(bits) if bits else "Sin correo ni teléfono")
+        line = subtitle(contact_display_line(selected))
+        line.setObjectName("receiverContactLine")
+        self._contacts.addWidget(line)
 
     def _rebuild_volantes(self, receiver: ReceiverDto) -> None:
         while self._volantes.count():
@@ -479,9 +762,7 @@ class ReceiverPicker(QWidget):
             self._volantes.addWidget(empty)
             return
         for volante in receiver.volantes:
-            line = subtitle(volante.name)
-            line.setObjectName("receiverVolanteItem")
-            self._volantes.addWidget(line)
+            self._volantes.addWidget(_icon_line("description", volante.name, "receiverVolanteItem"))
 
     def _open_volante(self) -> None:
         if self._receiver is None:
@@ -530,6 +811,7 @@ class ReceiverPicker(QWidget):
         self._receiver = None
         self._selected_contact = None
         self._ficha.setVisible(False)
+        self._set_search_visible(True)
         self._list.setVisible(True)
         self._pager.setVisible(self._total_pages > 1)
         self.selection_cleared.emit()
@@ -544,6 +826,7 @@ class ReceiverPicker(QWidget):
         self._total_pages = 0
         self._query.clear()
         self._list.clear()
+        self._set_search_visible(True)
         self._list.setVisible(True)
         self._ficha.setVisible(False)
         self._pager.setVisible(False)

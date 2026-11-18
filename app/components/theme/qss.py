@@ -565,6 +565,36 @@ QListWidget::item:selected {{
     background-color: {rgba("primary_container", 0.22)};
     color: {c["primary_fixed"]};
 }}
+QListWidget#receiverResults::item {{
+    padding: 0px;
+    margin: 0px;
+    background: transparent;
+    border: none;
+}}
+QListWidget#receiverResults::item:hover,
+QListWidget#receiverResults::item:selected {{
+    background: transparent;
+    color: {c["on_surface"]};
+}}
+QFrame#receiverResultCard {{
+    background-color: {c["surface_container"]};
+    border: 1px solid {c["outline_variant"]};
+    border-radius: {r["card"]}px;
+}}
+QFrame#receiverResultCard:hover {{
+    border: 1px solid {c["primary"]};
+    background-color: {c["surface_container_high"]};
+}}
+QFrame#receiverAddressCount {{
+    background-color: {rgba("tertiary", 0.12)};
+    border: 1px solid {rgba("tertiary", 0.45)};
+    border-radius: {r["control"]}px;
+}}
+QFrame#receiverAddressCount QLabel {{
+    color: {c["tertiary"]};
+    background-color: transparent;
+    font-size: {FONT_SIZE["label_sm"]}px;
+}}
 
 /* ---------- Agrupadores --------------------------------------------- */
 QGroupBox {{
