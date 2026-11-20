@@ -257,11 +257,15 @@ El script del instalador está en:
 installer\ExtractorOCR.iss
 ```
 
-Abre **Inno Setup Compiler**, carga ese archivo y ejecuta **Build > Compile**. El instalador resultan~~t~~e se genera en:
+En `installer\ExtractorOCR.iss`, define `MyAppVersion` con la misma versión que el release de GitHub (por ejemplo `2.1.0`). El `AppId` (GUID) **no** debe cambiar entre versiones; solo sube `MyAppVersion` en cada release.
+
+Abre **Inno Setup Compiler**, carga ese archivo y ejecuta **Build > Compile**. El instalador resultante se genera en:
 
 ```text
-installer_output\Instalador_ExtractorOCR.exe
+installer_output\Instalador_ExtractorOCR_<versión>.exe
 ```
+
+Ejemplo: `installer_output\Instalador_ExtractorOCR_2.1.0.exe`
 
 Con la configuración actual, la app se instala para el usuario actual en:
 
@@ -275,7 +279,22 @@ Los logs no se guardan dentro de la carpeta instalada; la app los crea automáti
 %LOCALAPPDATA%\ExtractorOCR\logs\extractor_ocr.log
 ```
 
-### 3. Variables de entorno
+Esa carpeta (`%LOCALAPPDATA%\ExtractorOCR`) **no** forma parte de lo que Inno copia en `{app}`. Al **actualizar** instalando encima, los logs y la caché local **se conservan**. Al **desinstalar** desde Windows, se quita la carpeta del programa en `Programs\ExtractorOCR`, pero **no** se borra automáticamente `%LOCALAPPDATA%\ExtractorOCR` (los logs siguen ahí salvo que los elimines manualmente).
+
+### 3. Actualizar a una versión nueva
+
+A partir del release empaquetado con el `AppId` fijo del instalador Inno, **no hace falta desinstalar** la versión anterior para pasar a una más nueva:
+
+1. Descarga desde **GitHub Releases** del repositorio el `Instalador_ExtractorOCR_<versión>.exe` del release que corresponda.
+2. **Cierra** Extractor OCR si está abierto (el instalador también intentará cerrarlo si quedó en ejecución).
+3. Ejecuta el instalador y acepta la **misma carpeta** de instalación si el asistente lo pregunta.
+4. Al terminar, **abre la app de nuevo** desde el menú Inicio (no marques “Abrir al terminar” si acabas de instalar y aún no has reiniciado sesión; ver el apartado de variables de entorno).
+
+El instalador reconoce la instalación previa por el `AppId` y sustituye los binarios en `%LOCALAPPDATA%\Programs\ExtractorOCR`. Vuelve a escribir las variables de entorno definidas en `installer\ExtractorOCR.iss`.
+
+**Migración única (versiones antiguas sin este instalador):** si aún tienes un paquete instalado **antes** del `AppId` actual, una vez conviene desinstalar manualmente y/o limpiar las variables viejas (sección más abajo). A partir de **2.1.0** con este `.iss`, las siguientes versiones son solo “instalar encima”.
+
+### 4. Variables de entorno
 
 El instalador configura variables de usuario alineadas con [`.env.example`](.env.example): `API_BASE_URL`, `LOGIN_ENDPOINT`, `REGISTROS_ENDPOINT`, `COVERTURAS_ENDPOINT`, `ENVIOS_PX_ENDPOINT`, `RECEIVERS_ENDPOINT`, `ADDRESSES_ENDPOINT`, `CONTACTS_ENDPOINT`, `TITLES_ENDPOINT`, `JOB_ROLES_ENDPOINT`, `ORGANIZATIONS_ENDPOINT`, `VOLANTES_ENDPOINT`, `SEPOMEX_ENDPOINT`, `API_TIMEOUT_SECONDS`, `OPENAI_MODEL`, `TIMEOUT_SECONDS` y `EXPORT_DIR`. `API_BASE_URL` queda en producción (`https://tools.feuh.com.mx`).
 
@@ -305,6 +324,8 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 - Capa de datos del cliente API-only: `skills/data_access_layer.md`.
 
 ## Una vez hecho lo anterior instalar la aplicación actual siguiendo estos pasos
+
+*(Solo migración desde despliegues anteriores al instalador Inno actual; para versiones nuevas usa [Actualizar a una versión nueva](#3-actualizar-a-una-versión-nueva).)*
 
 - Desinstalar la aplicación anterior
 - Quitar las variables de entorno con el siguiente código abriendo la terminal de powershell como administrador
