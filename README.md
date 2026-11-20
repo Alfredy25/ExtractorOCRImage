@@ -52,9 +52,16 @@ Resumen (valores por defecto en `app/config/settings.py`). La plantilla está en
 | `COVERTURAS_ENDPOINT` | Ruta de coberturas Paquetexpress (por defecto `/coverages/`). |
 | `ENVIOS_PX_ENDPOINT` | Ruta de envíos Paquetexpress (por defecto `/shipments-px/`). |
 | `RECEIVERS_ENDPOINT` | Ruta del directorio de destinatarios (por defecto `/receivers/`). |
+| `ADDRESSES_ENDPOINT` | Domicilios de destinatarios (por defecto `/addresses/`). |
+| `CONTACTS_ENDPOINT` | Contactos (por defecto `/contacts/`). |
+| `TITLES_ENDPOINT` | Títulos / cargos (por defecto `/titles/`). |
+| `JOB_ROLES_ENDPOINT` | Puestos (por defecto `/job-roles/`). |
+| `ORGANIZATIONS_ENDPOINT` | Organizaciones (por defecto `/organizations/`). |
+| `VOLANTES_ENDPOINT` | Volantes (por defecto `/volante/`). |
+| `SEPOMEX_ENDPOINT` | Catálogo SEPOMEX (por defecto `/sepomex/`). |
 | `API_TIMEOUT_SECONDS` | Timeout HTTP hacia el backend (segundos). |
 | `OPENAI_API_KEY` | Clave para llamadas a OpenAI desde el cliente. |
-| `OPENAI_MODEL` | Modelo (por defecto `gpt-4o`). |
+| `OPENAI_MODEL` | Modelo (por defecto `gpt-6-luna`). |
 | `TIMEOUT_SECONDS` | Timeout de llamadas a OpenAI. |
 | `EXPORT_DIR` | Carpeta por defecto para exportaciones generadas en el cliente. |
 
@@ -250,7 +257,7 @@ El script del instalador está en:
 installer\ExtractorOCR.iss
 ```
 
-Abre **Inno Setup Compiler**, carga ese archivo y ejecuta **Build > Compile**. El instalador resultante se genera en:
+Abre **Inno Setup Compiler**, carga ese archivo y ejecuta **Build > Compile**. El instalador resultan~~t~~e se genera en:
 
 ```text
 installer_output\Instalador_ExtractorOCR.exe
@@ -270,7 +277,7 @@ Los logs no se guardan dentro de la carpeta instalada; la app los crea automáti
 
 ### 3. Variables de entorno
 
-El instalador configura variables de usuario alineadas con [`.env.example`](.env.example): `API_BASE_URL`, `LOGIN_ENDPOINT`, `REGISTROS_ENDPOINT`, `COVERTURAS_ENDPOINT`, `ENVIOS_PX_ENDPOINT`, `API_TIMEOUT_SECONDS`, `OPENAI_MODEL`, `TIMEOUT_SECONDS` y `EXPORT_DIR`. `API_BASE_URL` queda en producción (`https://tools.feuh.com.mx`).
+El instalador configura variables de usuario alineadas con [`.env.example`](.env.example): `API_BASE_URL`, `LOGIN_ENDPOINT`, `REGISTROS_ENDPOINT`, `COVERTURAS_ENDPOINT`, `ENVIOS_PX_ENDPOINT`, `RECEIVERS_ENDPOINT`, `ADDRESSES_ENDPOINT`, `CONTACTS_ENDPOINT`, `TITLES_ENDPOINT`, `JOB_ROLES_ENDPOINT`, `ORGANIZATIONS_ENDPOINT`, `VOLANTES_ENDPOINT`, `SEPOMEX_ENDPOINT`, `API_TIMEOUT_SECONDS`, `OPENAI_MODEL`, `TIMEOUT_SECONDS` y `EXPORT_DIR`. `API_BASE_URL` queda en producción (`https://tools.feuh.com.mx`).
 
 La clave `OPENAI_API_KEY` no debe incluirse en el instalador ni en el repositorio. Agrégala como variable de entorno de usuario en cada máquina:
 
@@ -284,6 +291,8 @@ Después de agregarla, cierra y vuelve a abrir la app. Si la app ya estaba abier
 echo $env:OPENAI_API_KEY
 ```
 
+Tras instalar, las variables nuevas no las ven los procesos que ya estaban en ejecución. Cierra por completo Extractor OCR y vuelve a abrirlo para que tome `API_BASE_URL`, los endpoints y el resto de variables de usuario. Si el instalador ofrece abrir la aplicación al terminar, es normal que el primer intento de sesión falle o use valores viejos: cierra esa ventana, abre de nuevo desde el menú Inicio y debería funcionar. En casos puntuales puede hacer falta cerrar sesión de Windows o reiniciar el equipo; el instalador usa `ChangesEnvironment=yes` para avisar al sistema, pero no siempre basta para procesos ya abiertos.
+
 No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya están configuradas en Windows. Si cambias valores del instalador, recompila `installer\ExtractorOCR.iss` y vuelve a instalar.
 
 ## Script legacy
@@ -295,11 +304,10 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 - Convenciones y agentes del repositorio: [AGENTS.md](AGENTS.md).
 - Capa de datos del cliente API-only: `skills/data_access_layer.md`.
 
-
 ## Una vez hecho lo anterior instalar la aplicación actual siguiendo estos pasos
+
 - Desinstalar la aplicación anterior
 - Quitar las variables de entorno con el siguiente código abriendo la terminal de powershell como administrador
-
   ```powershell
   $names = @(
     'API_BASE_URL','LOGIN_ENDPOINT','REGISTROS_ENDPOINT','COVERTURAS_ENDPOINT',
@@ -326,7 +334,8 @@ No hace falta copiar `.env` junto al `.exe` si las variables de entorno ya está
 - Ejecutar el nuevo instalador creado con Inno Setup
 - Iniciar Session
 
-## Al programar quitarlas de esta sesión las variables de entorno 
+## Al programar quitarlas de esta sesión las variables de entorno
+
 ```powershell
 Remove-Item Env:API_BASE_URL -ErrorAction SilentlyContinue
 Remove-Item Env:LOGIN_ENDPOINT -ErrorAction SilentlyContinue

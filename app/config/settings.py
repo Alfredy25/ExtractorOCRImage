@@ -10,7 +10,7 @@ from app.config.constants import AI_RETRY_COUNT, SEDES, ZOOM_FACTOR
 load_dotenv()
 
 # Modelo OpenAI (fijo)
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-6-luna")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Timeout para llamadas API (OpenAI)
