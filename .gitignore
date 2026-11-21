@@ -13,7 +13,6 @@ proyecto_extraccion_OCR/dist/
 dist/
 build/
 *.spec
-*.ico
 
 # Otros
 *.log
